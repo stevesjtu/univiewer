@@ -32,7 +32,7 @@ public:
 		return nw;
 	}
 
-	virtual void readDispfile(const std::string & filename);
+	virtual void readDispfile(const vector<string> & filename);
 	virtual void initialize();
 	virtual void setVtkpnt0(vtkPoints *input) { pvtkPosition = input; }
 	unsigned & getNodenum() { return nodeNum; }
@@ -74,12 +74,16 @@ void Model::initialize() {
 
 }
 
-void Model::readDispfile(const std::string & filename)
+void Model::readDispfile(const vector<string> & filename)
 {
 	ifstream infile;
-	infile.open(filename, ios::in | ios::binary);
+	infile.open(filename[0], ios::in | ios::binary);
 	nodeNum = pvtkPosition->GetNumberOfPoints();
-	dofs = nodeNum * 3;
+	unsigned nodedeg = 3;
+	if (filename.size() == 2) {
+		nodedeg = atoi(filename[1].c_str());
+	}
+	dofs = nodeNum * nodedeg;
 	VectorXd datavec(dofs);
 	double steptime;
 	while (!infile.eof()) {
@@ -88,8 +92,21 @@ void Model::readDispfile(const std::string & filename)
 		dispvecCollection.push_back(datavec);
 		stepCollection.push_back(steptime);
 	}
-
 	stepNum = (unsigned)dispvecCollection.size();
+
+	if (filename.size() == 2) {
+		MatrixXd datamat;
+		MatrixXd datahalf;
+		for (unsigned s = 0; s < stepNum; ++s) {
+			datamat = dispvecCollection[s];
+			datamat.resize(nodedeg, dispvecCollection[s].size() / nodedeg);
+			datahalf = datamat.topRows(3);
+			datahalf.resize(nodeNum * 3, 1);
+			dispvecCollection[s] = datahalf;
+		}
+
+	}
+
 	infile.close();
 
 }

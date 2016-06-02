@@ -286,7 +286,7 @@ public:
 
 	virtual void setAnimationMethod( void(*f)(void*), vector<string> &dispFiles ) {
 		programmableFilter->SetExecuteMethod(f, this);
-		pModel->readDispfile(dispFiles[0]);
+		pModel->readDispfile(dispFiles);
 		stepNum = pModel->getStepNum();
 
 		pModel->initialize();
