@@ -194,6 +194,29 @@ protected:
 	bool ShowMarker;
 	bool ShowMesh;
     bool ShowLabel;
+
+	void parser(int argc, char** argv, vector<string> &files1, vector<string> &files2)
+	{
+		vector<string> *ptr_vector_name = NULL;
+		for (int i = 1; i<argc; ++i) {
+
+			if ((*argv[i] == '-') || (*argv[i] == '/')) {
+				switch (*(argv[i] + 1)) {
+				case 'm':
+					ptr_vector_name = &files1;
+					break;
+				case 'o':
+					ptr_vector_name = &files2;
+					break;
+				default:
+					break;
+				}
+				continue;
+			}
+			ptr_vector_name->push_back(argv[i]);
+		}
+	}
+
 public:
 	virtual ~ControlView() {}
 	ControlView(): stepNum(0), step(0),  play(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
@@ -225,24 +248,8 @@ public:
 	virtual void inputModelfiles(vector<string> &modelFiles, vector<string>&dispFiles,
 			const int& argc,  char* argv[]) 
 	{
-		vector<string> *ptr_vector_name = NULL;
-		for (int i = 1; i<argc; ++i) {
 
-			if ((*argv[i] == '-') || (*argv[i] == '/')) {
-				switch (*(argv[i] + 1)) {
-				case 'm':
-					ptr_vector_name = &modelFiles;
-					break;
-				case 'o':
-					ptr_vector_name = &dispFiles;
-					break;
-				default:
-					break;
-				}
-				continue;
-			}
-			ptr_vector_name->push_back(argv[i]);
-		}
+		parser(argc, argv, modelFiles, dispFiles);
 
 		ugridReaders.resize(modelFiles.size());
 		auto appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
