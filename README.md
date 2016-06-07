@@ -1,17 +1,18 @@
-# univiewer
+# univiewer(converter)
 a lightweight FEM viewer using VTK
+help to convert 3D models to \*.vtu, \*.ply and so on
 
 ## what is it
-this code was implemented by VTK and Eigen, it can be a tool to display FEM model and the motion animation. and with a slider bar and play/pause button, you can use it easily.
+a converter that convert 3D format
 
 ## who may be interested
 FEM or Multibody major researcher
 
 ## how to use it
-**syntax**   `univiewer /m modelfile.vtu /o dispfile.dat [3]`, `[]` means optional argument.
+**syntax**   `univiewer /m modelfile.vtu /o dispfile.ply`, vice visa.
 
 Because of the dependency of the code, you should have,  
 1. VTK toolkit  
 2. Eigen  
-3. your own input file ( model file (\*.vtu), binary file of displacement (\*.dat) )  
+3. your own input file ( model file (\*.vtu), or (\*.ply))
 
