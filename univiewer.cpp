@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 	//shared_ptr<ControlView_PLYfileSeries> pControlView = ControlView_PLYfileSeries::New();
 	shared_ptr<ControlView> pControlView = ControlView::New();
 	//pControlView->ConvertPLY2Unstrgrid(argc, argv);
+	//pControlView->ConvertUnstrgrid2PLY(argc, argv);
 	pControlView->inputModelfiles(modelFiles, dispFiles, argc, argv);
 
 	pControlView->setMainActor();

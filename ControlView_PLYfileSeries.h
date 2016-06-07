@@ -5,13 +5,12 @@
 
 #include"ControlView.h"
 #include "vtkPLYReader.h"
+#include "vtkPLYWriter.h"
 #include "vtkXMLUnstructuredGridWriter.h"
 class ControlView_PLYfileSeries : public ControlView
 {
 protected:
 	
-	vector<vtkSmartPointer<vtkPLYReader>> plyReaders;
-
 public:
 	virtual ~ControlView_PLYfileSeries() {};
 	ControlView_PLYfileSeries() {};
@@ -24,7 +23,7 @@ public:
 
 		const string prefix(argv[1]);
 		const unsigned filenum(atoi(argv[2]));
-
+		vector<vtkSmartPointer<vtkPLYReader>> plyReaders;
 		plyReaders.resize(filenum);
 		stringstream ss("");
 		for (unsigned i = 0; i< filenum; ++i) {
@@ -82,7 +81,24 @@ public:
 		exit(0);
 	}
 
+	void ConvertUnstrgrid2PLY(const int & argc, char *argv[]) {
+		
+		vtkSmartPointer<vtkXMLUnstructuredGridReader> ugridReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+		ugridReader->SetFileName(argv[2]);
+		ugridReader->Update();
 
+		vtkSmartPointer<vtkGeometryFilter> geometryFilter = vtkSmartPointer<vtkGeometryFilter>::New();
+		geometryFilter->SetInputData(ugridReader->GetOutput());
+
+		vtkSmartPointer<vtkPLYWriter> plyWriter = vtkSmartPointer<vtkPLYWriter>::New();
+		plyWriter->SetFileName("mdel_longplate40.ply");
+		plyWriter->SetInputConnection(geometryFilter->GetOutputPort());
+		plyWriter->Update();
+
+		cout << "writting ply file complete!" << endl;
+ 		exit(0);
+
+	}
 };
 
 
