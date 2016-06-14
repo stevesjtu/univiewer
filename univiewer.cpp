@@ -4,13 +4,11 @@
 int main(int argc, char *argv[])
 {
 
-	//vector<string> modelFiles;
-	//vector<string> dispFiles;
-	
 	shared_ptr<Model> pModel = Model::New();
 	shared_ptr<ControlView_Converter> pControlView = ControlView_Converter::New();
-	//pControlView->inputModelfiles(modelFiles, dispFiles, argc, argv);
 	pControlView->ConvertPLY2UGrid(argc, argv);
+
+	//pControlView->ConvertUGrid2PLY(argc, argv);
 
 	pControlView->setMainActor();
 	pControlView->setAxesActor();
@@ -19,16 +17,6 @@ int main(int argc, char *argv[])
     
 	pControlView->setRender();
 
-	//if (!dispFiles.empty()) {
-	//	pControlView->setContent(pModel);
-	//	pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK, dispFiles);
-	//	pControlView->setSliderBar();
-	//}
-    
-    // derived class member function
-    //pControlView->setfileName(&modelFiles, &dispFiles);
-    //pControlView->AddText();
-        
 	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
 	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
 
