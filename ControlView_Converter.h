@@ -147,7 +147,7 @@ public:
 
 	///////////////////////////////////////////////////////////////////////////////////////
 	// syntax
-	// exec /m ugridfile.xml /o ugridfile1.xml
+	// exec /m ugridfile1.xml [ugridfile2.xml]/o ugridfile3.xml
 	///////////////////////////////////////////////////////////////////////////////////////
 	void ModifyUGrid(const int& argc, char *argv[])
 	{
@@ -159,20 +159,27 @@ public:
 			system("pause");
 			exit(0);
 		}
-
+		// vtkAppendFilter
+		vtkSmartPointer<vtkAppendFilter> appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
+		vtkSmartPointer<vtkProgrammableFilter> programfilter = vtkSmartPointer<vtkProgrammableFilter>::New();
 		vector<vtkSmartPointer<vtkXMLUnstructuredGridReader> > ugridReader(ugridfiles.size());
 		for (unsigned i = 0; i < ugridfiles.size(); ++i) {
 			ugridReader[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
 			ugridReader[i]->SetFileName(ugridfiles[i].c_str());
 			ugridReader[i]->Update();
+			appendFilter->AddInputConnection(ugridReader[i]->GetOutputPort());
 		}
-		// programableFilter
-		vtkSmartPointer<vtkProgrammableFilter> programfilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-		programfilter->SetInputConnection(ugridReader[0]->GetOutputPort());
+		appendFilter->Update();
+		//vtkSmartPointer<vtkProgrammableFilter> programfilter = vtkSmartPointer<vtkProgrammableFilter>::New();
+		//programfilter->SetInputConnection(ugridReader[0]->GetOutputPort());
+
+		// the second UnstructuredGird
+
+		programfilter->SetInputData(appendFilter->GetOutput(0));
 		vtkPoints *point = programfilter->GetUnstructuredGridInput()->GetPoints();
 
-		MatrixXd node(3, point->GetNumberOfPoints());
-		for (unsigned i = 0; i < point->GetNumberOfPoints(); ++i) {
+		MatrixXd node(3, point->GetNumberOfPoints()/2);
+		for (unsigned i = 0; i < point->GetNumberOfPoints()/2; ++i) {
 			double *pnode = point->GetPoint(i);
 			node.col(i) << pnode[0], pnode[1], pnode[2];
 		}
@@ -182,13 +189,14 @@ public:
 		rotationZ = (MatrixXd(3, 3) << cos(thetaZ), -sin(thetaZ), 0.0, sin(thetaZ), cos(thetaZ), 0.0, 0.0, 0.0, 1.0).finished();
 		MatrixXd node1 = rotationZ* node;
 
-		for (unsigned i = 0; i < point->GetNumberOfPoints(); ++i) {
+		for (unsigned i = 0; i < point->GetNumberOfPoints()/2; ++i) {
 			double *pnode = point->GetPoint(i);
 			pnode[0] = node1(0, i) + 0.3;
 			pnode[1] = node1(1, i) - 0.2;
-			pnode[2] = node1(2, i) + 0.1;
+			pnode[2] = node1(2, i) + 0.05;
 			point->SetPoint(i, pnode);
 		}
+		//
 		programfilter->GetUnstructuredGridOutput()->SetPoints(point);
 		vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
 		writer->SetFileName(ugridfiles1[0].c_str());
