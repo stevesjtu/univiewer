@@ -6,9 +6,9 @@ int main(int argc, char *argv[])
 
 	shared_ptr<Model> pModel = Model::New();
 	shared_ptr<ControlView_Converter> pControlView = ControlView_Converter::New();
-	pControlView->ConvertPLY2UGrid(argc, argv);
-
-	//pControlView->ConvertUGrid2PLY(argc, argv);
+	//pControlView->ConvertPLY2UGrid(argc, argv);
+	pControlView->ConvertUGrid2PLY(argc, argv);
+	//pControlView->ModifyUGrid(argc, argv);
 
 	pControlView->setMainActor();
 	pControlView->setAxesActor();

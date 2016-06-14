@@ -147,6 +147,63 @@ public:
 
 	///////////////////////////////////////////////////////////////////////////////////////
 	// syntax
+	// exec /m ugridfile.xml /o ugridfile1.xml
+	///////////////////////////////////////////////////////////////////////////////////////
+	void ModifyUGrid(const int& argc, char *argv[])
+	{
+		vector<string> ugridfiles;
+		vector<string> ugridfiles1;
+		parser(argc, argv, ugridfiles, ugridfiles1);
+		if (ugridfiles1.size() != 1 && ugridfiles1.size() != ugridfiles.size()) {
+			printf("please input appropriate amount of the .ply file name.");
+			system("pause");
+			exit(0);
+		}
+
+		vector<vtkSmartPointer<vtkXMLUnstructuredGridReader> > ugridReader(ugridfiles.size());
+		for (unsigned i = 0; i < ugridfiles.size(); ++i) {
+			ugridReader[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+			ugridReader[i]->SetFileName(ugridfiles[i].c_str());
+			ugridReader[i]->Update();
+		}
+		// programableFilter
+		vtkSmartPointer<vtkProgrammableFilter> programfilter = vtkSmartPointer<vtkProgrammableFilter>::New();
+		programfilter->SetInputConnection(ugridReader[0]->GetOutputPort());
+		vtkPoints *point = programfilter->GetUnstructuredGridInput()->GetPoints();
+
+		MatrixXd node(3, point->GetNumberOfPoints());
+		for (unsigned i = 0; i < point->GetNumberOfPoints(); ++i) {
+			double *pnode = point->GetPoint(i);
+			node.col(i) << pnode[0], pnode[1], pnode[2];
+		}
+		Matrix3d rotationZ;
+		double thetaZ = M_PI / 2.0;
+		
+		rotationZ = (MatrixXd(3, 3) << cos(thetaZ), -sin(thetaZ), 0.0, sin(thetaZ), cos(thetaZ), 0.0, 0.0, 0.0, 1.0).finished();
+		MatrixXd node1 = rotationZ* node;
+
+		for (unsigned i = 0; i < point->GetNumberOfPoints(); ++i) {
+			double *pnode = point->GetPoint(i);
+			pnode[0] = node1(0, i) + 0.3;
+			pnode[1] = node1(1, i) - 0.2;
+			pnode[2] = node1(2, i) + 0.1;
+			point->SetPoint(i, pnode);
+		}
+		programfilter->GetUnstructuredGridOutput()->SetPoints(point);
+		vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+		writer->SetFileName(ugridfiles1[0].c_str());
+		writer->SetInputData(programfilter->GetUnstructuredGridInput());
+		writer->Update();
+		cout << "writting modified ugrid file complete!" << endl;
+
+		// display it
+		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
+		programmableFilter = programfilter;
+		//programmableFilter->SetInputConnection(ugridReader[0]->GetOutputPort());
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////
+	// syntax
 	// exec /m plyfile1.ply [plyfile2.ply] /o ugridfile.xml
 	///////////////////////////////////////////////////////////////////////////////////////
 	void ConvertPLY2UGrid(const int & argc, char *argv[]) 
@@ -193,7 +250,8 @@ public:
 				unstructuredGrid[i] = vtkSmartPointer<vtkUnstructuredGrid>::New();
 				unstructuredGrid[i]->ShallowCopy(appendFilter[i]->GetOutput());
 				writer[i] = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-				writer[i]->SetFileName(ugridfiles[0].c_str());
+				writer[i]->SetFileName(ugridfiles[i].c_str());
+				writer[i]->SetInputData(unstructuredGrid[i]);
 				writer[i]->Update();
 			}
 
