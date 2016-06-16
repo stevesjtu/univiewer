@@ -4,6 +4,7 @@
 #include "ControlView.h"
 #include "Model.h"
 
+
 #ifdef __APPLE__
     #define UNIVIEWER_API
 #else
@@ -35,6 +36,8 @@ public:
 	}
 	
 	int plotModel(int argc, char *argv[]);
+    int plotModel(char file[]);
+    int plotModel(MatrixXu &elem, MatrixXd &node);
 };
 
 int Univiewer::plotModel(int argc, char *argv[])
@@ -66,4 +69,43 @@ int Univiewer::plotModel(int argc, char *argv[])
 
 	return EXIT_SUCCESS;
 }
+
+int Univiewer::plotModel(char file[])
+{
+    char xx[] = "x";
+    char m[] = {'/','m'};
+    char *argv[] = {xx, m, file};
+    return plotModel(3, argv);
+}
+
+int Univiewer::plotModel(MatrixXu &elem, MatrixXd &node)
+{
+
+    shared_ptr<Model> pModel = Model::New();
+    shared_ptr<ControlView> pControlView = ControlView::New();
+    pControlView->inputModel(elem, node);
+
+    pControlView->setMainActor();
+    pControlView->setAxesActor();
+    pControlView->setTextActor();
+    pControlView->setLabelActor();
+    
+    pControlView->setRender();
+    
+//    if (!dispFiles.empty()) {
+//        pControlView->setContent(pModel);
+//        pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK, dispFiles);
+//        pControlView->setSliderBar();
+//    }
+    
+    pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
+    pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
+    
+    pControlView->Display();
+    return 0;
+
+}
+
+
+
 #endif // UNIVIEWER_H

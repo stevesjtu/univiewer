@@ -29,6 +29,7 @@
 #include "vtkCommand.h"
 #include "vtkInteractorStyleTrackballCamera.h"
 
+#include "vtkTriangle.h"
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkUnsignedCharArray.h"
@@ -154,6 +155,7 @@ protected:
 	vtkSmartPointer<vtkTextActor> textActor;
     vtkSmartPointer<vtkActor2D> labelActor;
 
+    vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid;
     vector<vtkSmartPointer<vtkXMLUnstructuredGridReader> > ugridReaders;
     vtkSmartPointer<vtkLabeledDataMapper> labelMapper;
 	vtkSmartPointer<vtkDataSetMapper> mapper;
@@ -222,6 +224,36 @@ public:
     vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
     vtkSmartPointer<vtkCallbackCommand> &getTimerCallback(){return timerCallback;}
 
+    virtual void inputModel(MatrixXu &elem, MatrixXd &node)
+    {
+        unsigned nodeNum = node.cols();
+        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+        for (unsigned i=0;i< nodeNum; ++i){
+            points->InsertNextPoint(node.col(i).x(), node.col(i).y(), node.col(i).z());
+        }
+        
+        unsigned elemNum = elem.cols();
+        vector<vtkSmartPointer<vtkTriangle> > triangle(elemNum);
+        vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
+
+        for(unsigned e=0; e< elemNum; ++e){
+            triangle[e] = vtkSmartPointer<vtkTriangle>::New();
+            triangle[e]->GetPointIds()->SetId(0, elem(0, e));
+            triangle[e]->GetPointIds()->SetId(1, elem(1, e));
+            triangle[e]->GetPointIds()->SetId(2, elem(2, e));
+            cellArray->InsertNextCell(triangle[e]);
+        }
+        
+        unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+        unstructuredGrid->SetPoints(points);
+        unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
+        
+        programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
+        programmableFilter->AddInputData(unstructuredGrid);
+    }
+    
+    
+    
 	virtual void inputModelfiles(vector<string> &modelFiles, vector<string>&dispFiles,
 			const int& argc,  char* argv[]) 
 	{
