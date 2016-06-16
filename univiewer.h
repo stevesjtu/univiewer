@@ -4,13 +4,21 @@
 #include "ControlView.h"
 #include "Model.h"
 
-#ifdef UNIVIEWER_EXPORTS
-#define UNIVIEWER_API __declspec(dllexport)
+#ifdef __APPLE__
+    #define UNIVIEWER_API
 #else
-#define UNIVIEWER_API __declspec(dllimport)
+    #ifdef UNIVIEWER_EXPORTS
+    #define UNIVIEWER_API __declspec(dllexport)
+    #else
+    #define UNIVIEWER_API __declspec(dllimport)
+    #endif
 #endif
 
+#ifdef __APPLE__
+class Univiewer
+#else
 class UNIVIEWER_API Univiewer
+#endif
 {
 protected:
 	vector<string> modelFiles;

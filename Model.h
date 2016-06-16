@@ -22,7 +22,7 @@ protected:
 	VectorXd node0;
 
 	vtkPoints * pvtkPosition;
-	vector<vtkSmartPointer<vtkPoints>> pvtkPnts;
+	vector<vtkSmartPointer<vtkPoints> > pvtkPnts;
 public:
 	virtual ~Model() {};
 	Model() {};
