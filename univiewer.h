@@ -36,6 +36,7 @@ public:
     int plotModel(MatrixXu &elem, MatrixXd &node);
 	int plotModel(TriangleMesh &mesh);
 	int plotModel(vector<TriangleMesh> &mesh);
+	int plotModel(vector<TriangleMesh> &mesh, MatrixXu &pairs);
 };
 
 int Univiewer::plotModel(int argc, char *argv[])
@@ -110,5 +111,23 @@ int Univiewer::plotModel(vector<TriangleMesh> &mesh)
 	return 0;
 }
 
+int Univiewer::plotModel(vector<TriangleMesh> &mesh, MatrixXu &pairs)
+{
+	shared_ptr<ControlView> pControlView = ControlView::New();
+
+	pControlView->inputModel(mesh, pairs);
+
+	pControlView->setMainActor();
+	pControlView->setAxesActor();
+	pControlView->setTextActor();
+	pControlView->setLabelActor();
+
+	pControlView->setRender();
+
+	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
+
+	pControlView->Display();
+	return 0;
+}
 
 #endif // UNIVIEWER_H

@@ -89,14 +89,15 @@ struct TriangleMesh
 class ControlView
 {
 protected:
-	vtkSmartPointer<vtkActor> actor;
+	vector<vtkSmartPointer<vtkActor>> actors;
+
 	vtkSmartPointer<vtkActor> axesActor;
 	vtkSmartPointer<vtkTextActor> textActor;
     vtkSmartPointer<vtkActor2D> labelActor;
 
     vector<vtkSmartPointer<vtkXMLUnstructuredGridReader> > ugridReaders;
     vtkSmartPointer<vtkLabeledDataMapper> labelMapper;
-	vtkSmartPointer<vtkDataSetMapper> mapper;
+	vector<vtkSmartPointer<vtkDataSetMapper>> mappers;
 
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkRenderer> renderer;
@@ -112,7 +113,7 @@ protected:
 	vtkSmartPointer<vtkPolyDataMapper> axesMapper;
 
 	//vtkSmartPointer<vtkAppendFilter> appendFilter;
-	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
+	vector<vtkSmartPointer<vtkProgrammableFilter>> programmableFilters;
 	vtkSmartPointer<vtkCallbackCommand> timerCallback;
 	vtkSmartPointer<vtkCallbackCommand> keypressCallback;
 	vtkSmartPointer<vtkCallbackCommand> windowCallback;
@@ -164,9 +165,10 @@ public:
 	bool & IsShowMesh() { return ShowMesh; }
     bool & IsShowLabel() { return ShowLabel; }
 
-	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
+	vector<vtkSmartPointer<vtkProgrammableFilter>> & getProgrammableFilter() { return programmableFilters; }
 	//vtkSmartPointer<vtkAppendFilter> &getAppendFilter() { return appendFilter; }
-	vtkSmartPointer<vtkActor> &getActor() { return actor; }
+	vector<vtkSmartPointer<vtkActor>> &getActor() { return actors; }
+	vtkSmartPointer<vtkActor> &getActor(unsigned i) { return actors[i]; }
 	vtkSmartPointer<vtkTextActor> &getTextActor() {return textActor;}
 	vtkSmartPointer<vtkActor> &getAxesActor() { return axesActor; }
     vtkSmartPointer<vtkActor2D> &getLabelActor() { return labelActor; }
@@ -188,8 +190,9 @@ public:
         unstructuredGrid->SetPoints(points);
         unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
         
-        programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-		programmableFilter->AddInputData(unstructuredGrid);
+		programmableFilters.resize(1);
+        programmableFilters[0] = vtkSmartPointer<vtkProgrammableFilter>::New();
+		programmableFilters[0]->AddInputData(unstructuredGrid);
 
     }
 
@@ -199,25 +202,73 @@ public:
 	virtual void inputModel(vector<TriangleMesh> &mesh)
 	{
 
-		vtkSmartPointer<vtkAppendFilter> appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
-		vtkSmartPointer<vtkPoints> points;
-		vtkSmartPointer<vtkCellArray> cellArray;
+		programmableFilters.resize(mesh.size());
 
 		for (unsigned i = 0; i < mesh.size(); ++i) {
-			points = vtkSmartPointer<vtkPoints>::New();
-			cellArray = vtkSmartPointer<vtkCellArray>::New();
+			vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+			vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
 			inputModel_unit(*mesh[i].pelem, *mesh[i].pnode, points, cellArray);
 			vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 			unstructuredGrid->SetPoints(points);
 			unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
-			appendFilter->AddInputData(unstructuredGrid);
+
+			//////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Create cell data colors////////////////////////////////////////////////////////////////////////////////
+			unsigned char defaultColor[4] = { 255, 255, 255, 255 };
+			unsigned char red[4] = { 240, 20, 20, 255 };
+
+			vtkSmartPointer<vtkUnsignedCharArray> colorsArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
+			colorsArray->SetNumberOfComponents(4);
+			colorsArray->SetName("Colors");
+			for (unsigned i = 0; i< unstructuredGrid->GetNumberOfCells(); ++i)
+				colorsArray->InsertNextTupleValue(red);
+
+			//colorsArray->SetTupleValue(unstructuredGrid->GetNumberOfCells() - 1, red);
+			unstructuredGrid->GetCellData()->SetScalars(colorsArray);
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+			programmableFilters[i] = vtkSmartPointer<vtkProgrammableFilter>::New();
+			programmableFilters[i]->AddInputData(unstructuredGrid);
 		}
-
-		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-		programmableFilter->AddInputConnection(appendFilter->GetOutputPort());
-
+		
 	}
 
+	virtual void inputModel(vector<TriangleMesh> &mesh, MatrixXu &pairs)
+	{
+		programmableFilters.resize(mesh.size());
+		assert(pairs.cols() == mesh.size());
+
+		unsigned char defaultColor[4] = { 255,255,255,255 };
+		unsigned char contactColor[2][4] = { { 200, 10, 10, 255 },
+											 { 10, 200, 10, 255 } };
+
+		for (unsigned i = 0; i < mesh.size(); ++i) {
+			vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+			vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
+			inputModel_unit(*mesh[i].pelem, *mesh[i].pnode, points, cellArray);
+			vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+			unstructuredGrid->SetPoints(points);
+			unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
+
+			//////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// Create cell data colors////////////////////////////////////////////////////////////////////////////////
+			vtkSmartPointer<vtkUnsignedCharArray> colorsArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
+			colorsArray->SetNumberOfComponents(4);
+			colorsArray->SetName("Colors");
+			for (unsigned j = 0; j< unstructuredGrid->GetNumberOfCells(); ++j)
+				colorsArray->InsertNextTupleValue(defaultColor);
+
+			for(unsigned p = 0; p< pairs.rows(); ++p)
+				colorsArray->SetTupleValue(pairs(p, i), contactColor[i]);
+
+			unstructuredGrid->GetCellData()->SetScalars(colorsArray);
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+			programmableFilters[i] = vtkSmartPointer<vtkProgrammableFilter>::New();
+			programmableFilters[i]->AddInputData(unstructuredGrid);
+		}
+
+	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//input model for files
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,19 +291,16 @@ public:
 		}
 
 		ugridReaders.resize(modelFiles.size());
-		vtkSmartPointer<vtkAppendFilter> appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
+		programmableFilters.resize(modelFiles.size());
 		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
 			
 			ugridReaders[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
 			ugridReaders[i]->SetFileName(modelFiles[i].c_str());
 			ugridReaders[i]->Update();
-			appendFilter->AddInputConnection(ugridReaders[i]->GetOutputPort());
-			//appendFilter->AddInputData(ugridReaders[i]->GetOutput());
+			programmableFilters[i] = vtkSmartPointer<vtkProgrammableFilter>::New();
+			programmableFilters[i]->AddInputData(ugridReaders[i]->GetOutput());
 		}
-		appendFilter->Update();
 
-		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-		programmableFilter->AddInputConnection(appendFilter->GetOutputPort());
 	}
 
 	virtual void setKeyboardMethod(void (*f)(vtkObject* , long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
@@ -271,14 +319,20 @@ public:
 
 	virtual void setMainActor() {
 		// Create a mapper and actor
-		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-		mapper->SetInputConnection(programmableFilter->GetOutputPort());
-		actor = vtkSmartPointer<vtkActor>::New();
-		actor->SetMapper(mapper);
-		actor->GetProperty()->SetColor(0.9, 0.9, 0.9);
-		actor->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
-		actor->GetProperty()->EdgeVisibilityOn();
-		//actor->SetScale(0.1);
+		mappers.resize(programmableFilters.size());
+		actors.resize(programmableFilters.size());
+
+		for (unsigned i = 0; i < programmableFilters.size(); ++i) {
+			mappers[i] = vtkSmartPointer<vtkDataSetMapper>::New();
+			mappers[i]->SetInputData(programmableFilters[i]->GetUnstructuredGridInput());
+			actors[i] = vtkSmartPointer<vtkActor>::New();
+			actors[i]->SetMapper(mappers[i]);
+			actors[i]->GetProperty()->SetColor(1.0, 1.0, 1.0);
+			actors[i]->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
+			actors[i]->GetProperty()->EdgeVisibilityOn();
+			//actor->SetScale(0.1);
+		}
+		
 	}
 
     virtual void setLabelActor(){
@@ -414,7 +468,9 @@ public:
 
 	virtual void Display() {
 		// Add the actor to the scene
-		renderer->AddActor(actor);
+		for(unsigned i=0;i < actors.size(); ++i)
+			renderer->AddActor(actors[i]);
+
 		renderer->AddActor(axesActor);
 		renderer->AddActor2D(textActor);
         renderer->AddActor2D(labelActor);
@@ -450,11 +506,15 @@ void KeypressCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(ev
 	}
 
 	if (strcmp(iren->GetKeySym(), "u") == 0) {
-		if (pCtr->IsShowMesh())
-			pCtr->getActor()->GetProperty()->EdgeVisibilityOff();
-		else
-			pCtr->getActor()->GetProperty()->EdgeVisibilityOn();
-
+		if (pCtr->IsShowMesh()) {
+			for(unsigned i=0;i<pCtr->getActor().size();++i)
+				pCtr->getActor(i)->GetProperty()->EdgeVisibilityOff();
+		}
+		else {
+			for (unsigned i = 0; i<pCtr->getActor().size(); ++i)
+				pCtr->getActor(i)->GetProperty()->EdgeVisibilityOn();
+		}
+			
 		pCtr->IsShowMesh() = !pCtr->IsShowMesh();
 	}
 
