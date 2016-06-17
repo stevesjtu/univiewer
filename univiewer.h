@@ -3,7 +3,7 @@
 #define UNIVIEWER_H
 #include "ControlView.h"
 
-#ifdef __APPLE__
+#ifndef USING_DLL
     #define UNIVIEWER_API
 #else
     #ifdef UNIVIEWER_EXPORTS

@@ -1,3 +1,4 @@
+//#define USING_DLL
 #include "univiewer.h"
 
 int main(int argc, char *argv[])
