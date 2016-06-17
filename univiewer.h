@@ -2,7 +2,6 @@
 #ifndef UNIVIEWER_H
 #define UNIVIEWER_H
 #include "ControlView.h"
-#include "Model.h"
 
 #ifdef __APPLE__
     #define UNIVIEWER_API
@@ -22,9 +21,7 @@ class UNIVIEWER_API Univiewer
 {
 protected:
 	vector<string> modelFiles;
-	vector<string> dispFiles;
 
-	shared_ptr<Model> pModel;
 	shared_ptr<ControlView> pControlView;
 
 public:
@@ -44,11 +41,9 @@ public:
 int Univiewer::plotModel(int argc, char *argv[])
 {
 	vector<string> modelFiles;
-	vector<string> dispFiles;
 
-	shared_ptr<Model> pModel = Model::New();
 	shared_ptr<ControlView> pControlView = ControlView::New();
-	pControlView->inputModelfiles(modelFiles, dispFiles, argc, argv);
+	pControlView->inputModelfiles(modelFiles, argc, argv);
 
 	pControlView->setMainActor();
 	pControlView->setAxesActor();
@@ -57,14 +52,7 @@ int Univiewer::plotModel(int argc, char *argv[])
 
 	pControlView->setRender();
 
-	if (!dispFiles.empty()) {
-		pControlView->setContent(pModel);
-		pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK, dispFiles);
-		pControlView->setSliderBar();
-	}
-
 	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
-	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
 
 	pControlView->Display();
 
@@ -92,7 +80,6 @@ int Univiewer::plotModel(MatrixXu &elem, MatrixXd &node)
     pControlView->setRender();
     
     pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
-    pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
     
     pControlView->Display();
     return 0;
@@ -118,7 +105,6 @@ int Univiewer::plotModel(vector<TriangleMesh> &mesh)
 	pControlView->setRender();
 
 	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
-	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
 
 	pControlView->Display();
 	return 0;
