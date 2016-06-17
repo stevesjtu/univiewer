@@ -4,7 +4,6 @@
 #include "ControlView.h"
 #include "Model.h"
 
-
 #ifdef __APPLE__
     #define UNIVIEWER_API
 #else
@@ -14,6 +13,18 @@
     #define UNIVIEWER_API __declspec(dllimport)
     #endif
 #endif
+
+struct TriangleMesh
+{
+	TriangleMesh() {};
+	TriangleMesh(MatrixXu &elem, MatrixXd &node) {
+		pelem = &elem;
+		pnode = &node;
+	}
+	MatrixXu *pelem;
+	MatrixXd *pnode;
+};
+
 
 #ifdef __APPLE__
 class Univiewer
@@ -38,6 +49,7 @@ public:
 	int plotModel(int argc, char *argv[]);
     int plotModel(char file[]);
     int plotModel(MatrixXu &elem, MatrixXd &node);
+	int plotModel(TriangleMesh &mesh);
 };
 
 int Univiewer::plotModel(int argc, char *argv[])
@@ -106,6 +118,8 @@ int Univiewer::plotModel(MatrixXu &elem, MatrixXd &node)
 
 }
 
-
-
+int Univiewer::plotModel(TriangleMesh &mesh)
+{
+	return plotModel(*mesh.pelem, *mesh.pnode);
+}
 #endif // UNIVIEWER_H

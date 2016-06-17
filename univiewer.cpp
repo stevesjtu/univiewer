@@ -14,7 +14,8 @@ int main(int argc, char *argv[])
     node.col(2) = Vector3d(0.0, 1.0, 0.0);
     node.col(3) = Vector3d(1.0, 1.0, 0.0);
     
-    uv->plotModel(elem, node);
+	TriangleMesh mesh(elem, node);
+    uv->plotModel(mesh);
     cout<< "xxxx" <<endl;
     return 0;
 }
