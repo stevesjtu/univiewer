@@ -14,18 +14,6 @@
     #endif
 #endif
 
-struct TriangleMesh
-{
-	TriangleMesh() {};
-	TriangleMesh(MatrixXu &elem, MatrixXd &node) {
-		pelem = &elem;
-		pnode = &node;
-	}
-	MatrixXu *pelem;
-	MatrixXd *pnode;
-};
-
-
 #ifdef __APPLE__
 class Univiewer
 #else
@@ -50,6 +38,7 @@ public:
     int plotModel(char file[]);
     int plotModel(MatrixXu &elem, MatrixXd &node);
 	int plotModel(TriangleMesh &mesh);
+	int plotModel(vector<TriangleMesh> &mesh);
 };
 
 int Univiewer::plotModel(int argc, char *argv[])
@@ -92,8 +81,6 @@ int Univiewer::plotModel(char file[])
 
 int Univiewer::plotModel(MatrixXu &elem, MatrixXd &node)
 {
-
-    shared_ptr<Model> pModel = Model::New();
     shared_ptr<ControlView> pControlView = ControlView::New();
     pControlView->inputModel(elem, node);
 
@@ -103,12 +90,6 @@ int Univiewer::plotModel(MatrixXu &elem, MatrixXd &node)
     pControlView->setLabelActor();
     
     pControlView->setRender();
-    
-//    if (!dispFiles.empty()) {
-//        pControlView->setContent(pModel);
-//        pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK, dispFiles);
-//        pControlView->setSliderBar();
-//    }
     
     pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
     pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
@@ -122,4 +103,26 @@ int Univiewer::plotModel(TriangleMesh &mesh)
 {
 	return plotModel(*mesh.pelem, *mesh.pnode);
 }
+
+int Univiewer::plotModel(vector<TriangleMesh> &mesh)
+{
+	shared_ptr<ControlView> pControlView = ControlView::New();
+
+	pControlView->inputModel(mesh);
+
+	pControlView->setMainActor();
+	pControlView->setAxesActor();
+	pControlView->setTextActor();
+	pControlView->setLabelActor();
+
+	pControlView->setRender();
+
+	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
+	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
+
+	pControlView->Display();
+	return 0;
+}
+
+
 #endif // UNIVIEWER_H

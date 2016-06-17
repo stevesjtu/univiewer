@@ -146,6 +146,16 @@ void CreateImagePlay(vtkSmartPointer<vtkImageData> image)
     }
 }
 
+struct TriangleMesh
+{
+	TriangleMesh() {};
+	TriangleMesh(MatrixXu &elem, MatrixXd &node) {
+		pelem = &elem;
+		pnode = &node;
+	}
+	MatrixXu *pelem;
+	MatrixXd *pnode;
+};
 
 class ControlView
 {
@@ -155,7 +165,6 @@ protected:
 	vtkSmartPointer<vtkTextActor> textActor;
     vtkSmartPointer<vtkActor2D> labelActor;
 
-    vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid;
     vector<vtkSmartPointer<vtkXMLUnstructuredGridReader> > ugridReaders;
     vtkSmartPointer<vtkLabeledDataMapper> labelMapper;
 	vtkSmartPointer<vtkDataSetMapper> mapper;
@@ -173,6 +182,7 @@ protected:
 	vtkSmartPointer<vtkUnsignedCharArray> colors;
 	vtkSmartPointer<vtkPolyDataMapper> axesMapper;
 
+	//vtkSmartPointer<vtkAppendFilter> appendFilter;
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
 	vtkSmartPointer<vtkCallbackCommand> timerCallback;
 	vtkSmartPointer<vtkCallbackCommand> keypressCallback;
@@ -196,6 +206,29 @@ protected:
 	bool ShowMarker;
 	bool ShowMesh;
     bool ShowLabel;
+
+	virtual void inputModel_unit(MatrixXu &elem, MatrixXd &node,
+					vtkSmartPointer<vtkPoints> &points, vtkSmartPointer<vtkCellArray> &cellArray)
+	{
+		unsigned nodeNum = node.cols();
+		;
+		for (unsigned i = 0; i< nodeNum; ++i) {
+			points->InsertNextPoint(node.col(i).x(), node.col(i).y(), node.col(i).z());
+		}
+
+		unsigned elemNum = elem.cols();
+		vector<vtkSmartPointer<vtkTriangle> > triangle(elemNum);
+		
+
+		for (unsigned e = 0; e< elemNum; ++e) {
+			triangle[e] = vtkSmartPointer<vtkTriangle>::New();
+			triangle[e]->GetPointIds()->SetId(0, elem(0, e));
+			triangle[e]->GetPointIds()->SetId(1, elem(1, e));
+			triangle[e]->GetPointIds()->SetId(2, elem(2, e));
+			cellArray->InsertNextCell(triangle[e]);
+		}
+	}
+
 public:
 	virtual ~ControlView() {}
 	ControlView(): stepNum(0), step(0),  play(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
@@ -214,6 +247,7 @@ public:
 
 	shared_ptr<Model> & getModel() { return pModel; }
 	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
+	//vtkSmartPointer<vtkAppendFilter> &getAppendFilter() { return appendFilter; }
 	vtkSmartPointer<vtkActor> &getActor() { return actor; }
 	vtkSmartPointer<vtkTextActor> &getTextActor() {return textActor;}
 	vtkSmartPointer<vtkActor> &getAxesActor() { return axesActor; }
@@ -224,36 +258,53 @@ public:
     vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
     vtkSmartPointer<vtkCallbackCommand> &getTimerCallback(){return timerCallback;}
 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//input model for elem node structure
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     virtual void inputModel(MatrixXu &elem, MatrixXd &node)
     {
-        unsigned nodeNum = node.cols();
-        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-        for (unsigned i=0;i< nodeNum; ++i){
-            points->InsertNextPoint(node.col(i).x(), node.col(i).y(), node.col(i).z());
-        }
-        
-        unsigned elemNum = elem.cols();
-        vector<vtkSmartPointer<vtkTriangle> > triangle(elemNum);
-        vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
 
-        for(unsigned e=0; e< elemNum; ++e){
-            triangle[e] = vtkSmartPointer<vtkTriangle>::New();
-            triangle[e]->GetPointIds()->SetId(0, elem(0, e));
-            triangle[e]->GetPointIds()->SetId(1, elem(1, e));
-            triangle[e]->GetPointIds()->SetId(2, elem(2, e));
-            cellArray->InsertNextCell(triangle[e]);
-        }
-        
-        unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+		vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
+		inputModel_unit(elem, node, points, cellArray);
+
+		vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
         unstructuredGrid->SetPoints(points);
         unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
         
         programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-        programmableFilter->AddInputData(unstructuredGrid);
+		programmableFilter->AddInputData(unstructuredGrid);
+
     }
-    
-    
-    
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//input model for <vector> mesh structure
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	virtual void inputModel(vector<TriangleMesh> &mesh)
+	{
+
+		vtkSmartPointer<vtkAppendFilter> appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
+		vtkSmartPointer<vtkPoints> points;
+		vtkSmartPointer<vtkCellArray> cellArray;
+
+		for (unsigned i = 0; i < mesh.size(); ++i) {
+			points = vtkSmartPointer<vtkPoints>::New();
+			cellArray = vtkSmartPointer<vtkCellArray>::New();
+			inputModel_unit(*mesh[i].pelem, *mesh[i].pnode, points, cellArray);
+			vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+			unstructuredGrid->SetPoints(points);
+			unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
+			appendFilter->AddInputData(unstructuredGrid);
+		}
+
+		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
+		programmableFilter->AddInputConnection(appendFilter->GetOutputPort());
+
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//input model for files
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	virtual void inputModelfiles(vector<string> &modelFiles, vector<string>&dispFiles,
 			const int& argc,  char* argv[]) 
 	{
@@ -277,15 +328,17 @@ public:
 		}
 
 		ugridReaders.resize(modelFiles.size());
-		auto appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
+		vtkSmartPointer<vtkAppendFilter> appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
 		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
 			
 			ugridReaders[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
 			ugridReaders[i]->SetFileName(modelFiles[i].c_str());
 			ugridReaders[i]->Update();
 			appendFilter->AddInputConnection(ugridReaders[i]->GetOutputPort());
+			//appendFilter->AddInputData(ugridReaders[i]->GetOutput());
 		}
 		appendFilter->Update();
+
 		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
 		programmableFilter->AddInputConnection(appendFilter->GetOutputPort());
 	}
