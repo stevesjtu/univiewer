@@ -89,7 +89,7 @@ struct TriangleMesh
 class ControlView
 {
 protected:
-	vector<vtkSmartPointer<vtkActor>> actors;
+	vector<vtkSmartPointer<vtkActor> > actors;
 
 	vtkSmartPointer<vtkActor> axesActor;
 	vtkSmartPointer<vtkTextActor> textActor;
@@ -97,7 +97,7 @@ protected:
 
     vector<vtkSmartPointer<vtkXMLUnstructuredGridReader> > ugridReaders;
     vtkSmartPointer<vtkLabeledDataMapper> labelMapper;
-	vector<vtkSmartPointer<vtkDataSetMapper>> mappers;
+	vector<vtkSmartPointer<vtkDataSetMapper> > mappers;
 
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkRenderer> renderer;
@@ -113,7 +113,7 @@ protected:
 	vtkSmartPointer<vtkPolyDataMapper> axesMapper;
 
 	//vtkSmartPointer<vtkAppendFilter> appendFilter;
-	vector<vtkSmartPointer<vtkProgrammableFilter>> programmableFilters;
+	vector<vtkSmartPointer<vtkProgrammableFilter> > programmableFilters;
 	vtkSmartPointer<vtkCallbackCommand> timerCallback;
 	vtkSmartPointer<vtkCallbackCommand> keypressCallback;
 	vtkSmartPointer<vtkCallbackCommand> windowCallback;
@@ -138,7 +138,7 @@ protected:
 
 		unsigned elemNum = elem.cols();
 		vector<vtkSmartPointer<vtkTriangle> > triangle(elemNum);
-		
+
 
 		for (unsigned e = 0; e< elemNum; ++e) {
 			triangle[e] = vtkSmartPointer<vtkTriangle>::New();
@@ -165,9 +165,9 @@ public:
 	bool & IsShowMesh() { return ShowMesh; }
     bool & IsShowLabel() { return ShowLabel; }
 
-	vector<vtkSmartPointer<vtkProgrammableFilter>> & getProgrammableFilter() { return programmableFilters; }
+	vector<vtkSmartPointer<vtkProgrammableFilter> > & getProgrammableFilter() { return programmableFilters; }
 	//vtkSmartPointer<vtkAppendFilter> &getAppendFilter() { return appendFilter; }
-	vector<vtkSmartPointer<vtkActor>> &getActor() { return actors; }
+	vector<vtkSmartPointer<vtkActor> > &getActor() { return actors; }
 	vtkSmartPointer<vtkActor> &getActor(unsigned i) { return actors[i]; }
 	vtkSmartPointer<vtkTextActor> &getTextActor() {return textActor;}
 	vtkSmartPointer<vtkActor> &getAxesActor() { return axesActor; }
@@ -189,7 +189,7 @@ public:
 		vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
         unstructuredGrid->SetPoints(points);
         unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
-        
+
 		programmableFilters.resize(1);
         programmableFilters[0] = vtkSmartPointer<vtkProgrammableFilter>::New();
 		programmableFilters[0]->AddInputData(unstructuredGrid);
@@ -215,13 +215,12 @@ public:
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// Create cell data colors////////////////////////////////////////////////////////////////////////////////
 			unsigned char defaultColor[4] = { 255, 255, 255, 255 };
-			unsigned char red[4] = { 240, 20, 20, 255 };
 
 			vtkSmartPointer<vtkUnsignedCharArray> colorsArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
 			colorsArray->SetNumberOfComponents(4);
 			colorsArray->SetName("Colors");
 			for (unsigned i = 0; i< unstructuredGrid->GetNumberOfCells(); ++i)
-				colorsArray->InsertNextTupleValue(red);
+				colorsArray->InsertNextTupleValue(defaultColor);
 
 			//colorsArray->SetTupleValue(unstructuredGrid->GetNumberOfCells() - 1, red);
 			unstructuredGrid->GetCellData()->SetScalars(colorsArray);
@@ -230,7 +229,7 @@ public:
 			programmableFilters[i] = vtkSmartPointer<vtkProgrammableFilter>::New();
 			programmableFilters[i]->AddInputData(unstructuredGrid);
 		}
-		
+
 	}
 
 	virtual void inputModel(vector<TriangleMesh> &mesh, MatrixXu &pairs)
@@ -239,8 +238,8 @@ public:
 		assert(pairs.cols() == mesh.size());
 
 		unsigned char defaultColor[4] = { 255,255,255,255 };
-		unsigned char contactColor[2][4] = { { 200, 10, 10, 255 },
-											 { 10, 200, 10, 255 } };
+		unsigned char contactColor[2][4] = { { 150, 240, 20, 200 },
+											 { 246, 50, 20, 200 } };
 
 		for (unsigned i = 0; i < mesh.size(); ++i) {
 			vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
@@ -272,7 +271,7 @@ public:
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//input model for files
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	virtual void inputModelfiles(vector<string> &modelFiles, const int& argc,  char* argv[]) 
+	virtual void inputModelfiles(vector<string> &modelFiles, const int& argc,  char* argv[])
 	{
 		vector<string> *ptr_vector_name = NULL;
 		for (int i = 1; i<argc; ++i) {
@@ -293,7 +292,7 @@ public:
 		ugridReaders.resize(modelFiles.size());
 		programmableFilters.resize(modelFiles.size());
 		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
-			
+
 			ugridReaders[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
 			ugridReaders[i]->SetFileName(modelFiles[i].c_str());
 			ugridReaders[i]->Update();
@@ -332,7 +331,7 @@ public:
 			actors[i]->GetProperty()->EdgeVisibilityOn();
 			//actor->SetScale(0.1);
 		}
-		
+
 	}
 
     virtual void setLabelActor(){
@@ -514,7 +513,7 @@ void KeypressCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(ev
 			for (unsigned i = 0; i<pCtr->getActor().size(); ++i)
 				pCtr->getActor(i)->GetProperty()->EdgeVisibilityOn();
 		}
-			
+
 		pCtr->IsShowMesh() = !pCtr->IsShowMesh();
 	}
 
