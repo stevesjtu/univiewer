@@ -50,6 +50,8 @@
 #include "vtkWidgetEventTranslator.h"
 #include "vtkSliderRepresentation2D.h"
 #include "vtkSliderWidget.h"
+#include "vtkAVIWriter.h"
+
 #include "Model.h"
 
 #define DEFAULT_TIMERCALLBACK TimerCallback
@@ -185,6 +187,8 @@ protected:
     vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation;
     vtkSmartPointer<vtkButtonWidget> buttonWidget;
 
+	vtkSmartPointer<vtkAVIWriter> writer = vtkSmartPointer<vtkAVIWriter>::New();
+
 	shared_ptr<Model> pModel;
 	//////////////////////////////////
 	//////////////////////////////////
@@ -210,6 +214,7 @@ public:
 	bool & IsShowMesh() { return ShowMesh; }
     bool & IsShowLabel() { return ShowLabel; }
 
+	vtkSmartPointer<vtkAVIWriter> &getWriter() { return writer; }
 	shared_ptr<Model> & getModel() { return pModel; }
 	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
 	vtkSmartPointer<vtkActor> &getActor() { return actor; }
@@ -293,7 +298,7 @@ public:
 		renderWindowInteractor->CreateRepeatingTimer(10);
 		timerCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 		timerCallback->SetCallback(TimerCallbackFunction);
-		timerCallback->SetClientData(programmableFilter);
+		timerCallback->SetClientData(this);
 		renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, timerCallback);
 
 	}
@@ -316,6 +321,11 @@ public:
 		// Create a mapper and actor
 		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
 		mapper->SetInputConnection(programmableFilter->GetOutputPort());
+
+		//writer->SetInputConnection(programmableFilter->GetOutputPort());
+		//writer->SetFileName("test.avi");
+		//writer->Start();
+
 		actor = vtkSmartPointer<vtkActor>::New();
 		actor->SetMapper(mapper);
 		actor->GetProperty()->SetColor(0.9, 0.9, 0.9);
@@ -561,10 +571,15 @@ public:
 
 void TimerCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
 {
-	auto programmableFilter = static_cast<vtkProgrammableFilter*>(clientData);
+	
+	auto cv = static_cast<ControlView*>(clientData);
+	auto programmableFilter = cv->getProgrammableFilter();
+
 	auto *iren = static_cast<vtkRenderWindowInteractor*>(caller);
 	programmableFilter->Modified();
 	iren->Render();
+	//cv->getWriter()->Write();
+
 }
 
 

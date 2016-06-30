@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
 
 	pControlView->Display();
-
+	//pControlView->getWriter()->End();
 	return EXIT_SUCCESS;
 }
 
