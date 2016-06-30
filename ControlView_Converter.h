@@ -155,7 +155,7 @@ public:
 		vector<string> ugridfiles1;
 		parser(argc, argv, ugridfiles, ugridfiles1);
 		if (ugridfiles1.size() != 1 && ugridfiles1.size() != ugridfiles.size()) {
-			printf("please input appropriate amount of the .ply file name.");
+			printf("please input appropriate amount of the .xml file name.");
 			system("pause");
 			exit(0);
 		}
