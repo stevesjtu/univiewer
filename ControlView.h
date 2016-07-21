@@ -63,6 +63,11 @@
 using namespace Eigen;
 using namespace std;
 
+typedef Matrix<unsigned, Dynamic, Dynamic> MatrixXu;
+typedef Matrix<unsigned, Dynamic, 1> VectorXu;
+typedef Matrix<unsigned, 3, 1> Vector3u;
+typedef Array<unsigned, Dynamic, 1> ArrayXu;
+
 #define DEFAULT_TIMERCALLBACK TimerCallback
 #define DEFAULT_KEYPRESSCALLBACK KeypressCallbackFunction
 #define DEFAULT_WINDOWCALLBACK WindowModifiedCallback
