@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
 	meshes.push_back(TriangleMesh(elem, node));
 	meshes.push_back(TriangleMesh(elem, node1));
-	MatrixXu pair = (MatrixXu(1, 2) << 0, 1).finished();
+	MatrixXu pair = (MatrixXu(2, 1) << 0, 1).finished();
     uv->plotModel(meshes, pair);
     cout<< "xxxx" <<endl;
     return 0;

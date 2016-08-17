@@ -240,7 +240,7 @@ public:
 	virtual void inputModel(vector<TriangleMesh> &mesh, MatrixXu &pairs)
 	{
 		programmableFilters.resize(mesh.size());
-		assert(pairs.cols() == mesh.size());
+		assert(pairs.rows() == mesh.size());
 
 		unsigned char defaultColor[4] = { 255,255,255,255 };
 		unsigned char contactColor[2][4] = { { 150, 240, 20, 200 },
@@ -261,9 +261,9 @@ public:
 			colorsArray->SetName("Colors");
 			for (unsigned j = 0; j< unstructuredGrid->GetNumberOfCells(); ++j)
 				colorsArray->InsertNextTupleValue(defaultColor);
-
-			for(unsigned p = 0; p< pairs.rows(); ++p)
-				colorsArray->SetTupleValue(pairs(p, i), contactColor[i]);
+			
+			for(unsigned p = 0; p< pairs.cols(); ++p)
+				colorsArray->SetTupleValue(pairs(i, p), contactColor[i]);
 
 			unstructuredGrid->GetCellData()->SetScalars(colorsArray);
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
