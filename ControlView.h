@@ -50,7 +50,7 @@
 #include "vtkWidgetEventTranslator.h"
 #include "vtkSliderRepresentation2D.h"
 #include "vtkSliderWidget.h"
-#include "vtkAVIWriter.h"
+//#include "vtkAVIWriter.h"
 
 #include "Model.h"
 
@@ -187,7 +187,7 @@ protected:
     vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation;
     vtkSmartPointer<vtkButtonWidget> buttonWidget;
 
-	vtkSmartPointer<vtkAVIWriter> writer = vtkSmartPointer<vtkAVIWriter>::New();
+	//vtkSmartPointer<vtkAVIWriter> writer = vtkSmartPointer<vtkAVIWriter>::New();
 
 	shared_ptr<Model> pModel;
 	//////////////////////////////////
@@ -214,7 +214,7 @@ public:
 	bool & IsShowMesh() { return ShowMesh; }
     bool & IsShowLabel() { return ShowLabel; }
 
-	vtkSmartPointer<vtkAVIWriter> &getWriter() { return writer; }
+	//vtkSmartPointer<vtkAVIWriter> &getWriter() { return writer; }
 	shared_ptr<Model> & getModel() { return pModel; }
 	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
 	vtkSmartPointer<vtkActor> &getActor() { return actor; }
@@ -233,7 +233,11 @@ public:
 		vector<string> *ptr_vector_name = NULL;
 		for (int i = 1; i<argc; ++i) {
 
+#ifdef __APPLE__
+            if (*argv[i] == '-') {
+#else
 			if ((*argv[i] == '-') || (*argv[i] == '/')) {
+#endif
 				switch (*(argv[i] + 1)) {
 				case 'm':
 					ptr_vector_name = &modelFiles;
