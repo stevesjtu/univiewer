@@ -54,11 +54,11 @@
 
 #include <iostream>
 #include <vector>
+#include <utility>
 #include <string>
 #include <fstream>
 #include <memory>
-#include "Eigen/eigen"
-#include <vtkPoints.h>
+#include "Eigen/Dense"
 
 using namespace Eigen;
 using namespace std;
@@ -80,15 +80,26 @@ void TimerCallback(void* arguments);
 void WindowModifiedCallback(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 void KeypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
+
 struct TriangleMesh
 {
 	TriangleMesh() {};
+
 	TriangleMesh(MatrixXu &elem, MatrixXd &node) {
 		pelem = &elem;
 		pnode = &node;
+		fpnode = NULL;
 	}
+
+	TriangleMesh(MatrixXu &elem, Map<MatrixXf> &node) {
+		pelem = &elem;
+		fpnode = &node;
+		pnode = NULL;
+	}
+
 	MatrixXu *pelem;
 	MatrixXd *pnode;
+	Map<MatrixXf> *fpnode;
 };
 
 class ControlView
@@ -132,11 +143,12 @@ protected:
 	bool ShowMesh;
     bool ShowLabel;
 
-	virtual void inputModel_unit(MatrixXu &elem, MatrixXd &node,
+	template<typename Tmatrix>
+	void inputModel_unit(MatrixXu &elem, Tmatrix &node,
 					vtkSmartPointer<vtkPoints> &points, vtkSmartPointer<vtkCellArray> &cellArray)
 	{
 		unsigned nodeNum = node.cols();
-		;
+
 		for (unsigned i = 0; i< nodeNum; ++i) {
 			points->InsertNextPoint(node.col(i).x(), node.col(i).y(), node.col(i).z());
 		}
@@ -153,6 +165,29 @@ protected:
 			cellArray->InsertNextCell(triangle[e]);
 		}
 	}
+
+	//template<typename T>
+	//virtual void inputModel_unit(MatrixXu &elem, T *node,
+	//	vtkSmartPointer<vtkPoints> &points, vtkSmartPointer<vtkCellArray> &cellArray)
+	//{
+	//	unsigned nodeNum = node.cols();
+
+	//	for (unsigned i = 0; i < nodeNum; ++i) {
+	//		points->InsertNextPoint(node.col(i).x(), node.col(i).y(), node.col(i).z());
+	//	}
+
+	//	unsigned elemNum = elem.cols();
+	//	vector<vtkSmartPointer<vtkTriangle> > triangle(elemNum);
+
+
+	//	for (unsigned e = 0; e < elemNum; ++e) {
+	//		triangle[e] = vtkSmartPointer<vtkTriangle>::New();
+	//		triangle[e]->GetPointIds()->SetId(0, elem(0, e));
+	//		triangle[e]->GetPointIds()->SetId(1, elem(1, e));
+	//		triangle[e]->GetPointIds()->SetId(2, elem(2, e));
+	//		cellArray->InsertNextCell(triangle[e]);
+	//	}
+	//}
 
 public:
 	virtual ~ControlView() {}
@@ -184,7 +219,7 @@ public:
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//input model for elem node structure
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void inputModel(MatrixXu &elem, MatrixXd &node)
+    void inputModel(MatrixXu &elem, MatrixXd &node)
     {
 
 		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
@@ -204,7 +239,7 @@ public:
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//input model for <vector> mesh structure
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	virtual void inputModel(vector<TriangleMesh> &mesh)
+	void inputModel(vector<TriangleMesh> &mesh)
 	{
 
 		programmableFilters.resize(mesh.size());
@@ -224,7 +259,7 @@ public:
 			vtkSmartPointer<vtkUnsignedCharArray> colorsArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
 			colorsArray->SetNumberOfComponents(4);
 			colorsArray->SetName("Colors");
-			for (unsigned i = 0; i< unstructuredGrid->GetNumberOfCells(); ++i)
+			for (unsigned j = 0; j< unstructuredGrid->GetNumberOfCells(); ++j)
 				colorsArray->InsertNextTupleValue(defaultColor);
 
 			//colorsArray->SetTupleValue(unstructuredGrid->GetNumberOfCells() - 1, red);
@@ -237,10 +272,10 @@ public:
 
 	}
 
-	virtual void inputModel(vector<TriangleMesh> &mesh, MatrixXu &pairs)
+	void inputModel(vector<TriangleMesh> &mesh, const vector<pair<unsigned, unsigned>> &pairs)
 	{
 		programmableFilters.resize(mesh.size());
-		assert(pairs.rows() == mesh.size());
+		//assert(pairs.rows() == mesh.size());
 
 		unsigned char defaultColor[4] = { 255,255,255,255 };
 		unsigned char contactColor[2][4] = { { 150, 240, 20, 200 },
@@ -249,7 +284,11 @@ public:
 		for (unsigned i = 0; i < mesh.size(); ++i) {
 			vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 			vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
-			inputModel_unit(*mesh[i].pelem, *mesh[i].pnode, points, cellArray);
+			if (mesh[i].pnode)
+				inputModel_unit<MatrixXd>(*mesh[i].pelem, *mesh[i].pnode, points, cellArray);
+			else
+				inputModel_unit<Map<MatrixXf>>(*mesh[i].pelem, *mesh[i].fpnode, points, cellArray);
+
 			vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 			unstructuredGrid->SetPoints(points);
 			unstructuredGrid->SetCells(VTK_TRIANGLE, cellArray);
@@ -261,9 +300,13 @@ public:
 			colorsArray->SetName("Colors");
 			for (unsigned j = 0; j< unstructuredGrid->GetNumberOfCells(); ++j)
 				colorsArray->InsertNextTupleValue(defaultColor);
-			
-			for(unsigned p = 0; p< pairs.cols(); ++p)
-				colorsArray->SetTupleValue(pairs(i, p), contactColor[i]);
+
+			if (pairs.size() != 0) {
+				for (unsigned p = 0; p < pairs.size(); ++p) {
+					if (i == 0) colorsArray->SetTupleValue(pairs[p].first, contactColor[i]);
+					else if(i==1) colorsArray->SetTupleValue(pairs[p].second, contactColor[i]);
+				}
+			}
 
 			unstructuredGrid->GetCellData()->SetScalars(colorsArray);
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -273,10 +316,11 @@ public:
 		}
 
 	}
+
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//input model for files
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	virtual void inputModelfiles(vector<string> &modelFiles, const int& argc,  char* argv[])
+	void inputModelfiles(vector<string> &modelFiles, const int& argc,  char* argv[])
 	{
 		vector<string> *ptr_vector_name = NULL;
 		for (int i = 1; i<argc; ++i) {

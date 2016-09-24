@@ -36,7 +36,7 @@ public:
     int plotModel(MatrixXu &elem, MatrixXd &node);
 	int plotModel(TriangleMesh &mesh);
 	int plotModel(vector<TriangleMesh> &mesh);
-	int plotModel(vector<TriangleMesh> &mesh, MatrixXu &pairs);
+	int plotModel(vector<TriangleMesh> &mesh, const vector<pair<unsigned, unsigned>> &pairs);
 };
 
 int Univiewer::plotModel(int argc, char *argv[])
@@ -111,7 +111,7 @@ int Univiewer::plotModel(vector<TriangleMesh> &mesh)
 	return 0;
 }
 
-int Univiewer::plotModel(vector<TriangleMesh> &mesh, MatrixXu &pairs)
+int Univiewer::plotModel(vector<TriangleMesh> &mesh, const vector<pair<unsigned, unsigned>> &pairs)
 {
 	shared_ptr<ControlView> pControlView = ControlView::New();
 
