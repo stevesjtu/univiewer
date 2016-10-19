@@ -230,6 +230,10 @@ public:
 	virtual void inputModelfiles(vector<string> &modelFiles, vector<string>&dispFiles,
 			const int& argc,  char* argv[]) 
 	{
+		if (argc == 1) {
+			cout << "Type 'Univiewer /h' for more help." << endl;
+			exit(0);
+		}
 		vector<string> *ptr_vector_name = NULL;
 		for (int i = 1; i<argc; ++i) {
 
@@ -244,6 +248,18 @@ public:
 					break;
 				case 'o':
 					ptr_vector_name = &dispFiles;
+					break;
+				case 'h':
+					cout << "Usage: Univiewer /m file1.xml file2.xml ... fileN.xml /o disp.dat" << endl;
+					cout << "The 'disp.dat' is a data file that contains the displacements\n   of nodes for all the models(file1.xml, file2.xml and so on)" << endl;
+					cout << "The 'disp.dat' is a binary file with all the data as the type\n   of double, the detail format is as follows:" << endl;
+					cout << "#####################################################################################################" << endl;
+					cout << "time1 \n node_1_disp_x node_1_disp_y node_1_disp_z \n node_2_disp_x node_2_disp_y node_2_disp_z \n ... \n node_b_disp_x node_b_disp_y node_b_disp_z" << endl; 
+					cout << "time2 \n ......" << endl;
+					cout << "#####################################################################################################" << endl;
+					cout << "NOTE: Binary file is not as same as txt file which contains symbols like \\n \\t, and all the data saved as String." << endl;
+					cout << "The Binary file contains data saved as its own type without any symbols like \\n \\t." << endl;
+					exit(0);
 					break;
 				default:
 					break;
