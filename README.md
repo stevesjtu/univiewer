@@ -15,3 +15,5 @@ Because of the dependency of the code, you should have,
 2. Eigen  
 3. your own input file ( model file (\*.vtu), binary file of displacement (\*.dat) )  
 
+## Download binary
+[download link](https://github.com/stevesjtu/Univiewer/releases)
