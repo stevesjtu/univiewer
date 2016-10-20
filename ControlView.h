@@ -250,15 +250,16 @@ public:
 					ptr_vector_name = &dispFiles;
 					break;
 				case 'h':
+					cout << endl;
 					cout << "Usage: Univiewer /m file1.xml file2.xml ... fileN.xml /o disp.dat" << endl;
-					cout << "The 'disp.dat' is a data file that contains the displacements\n   of nodes for all the models(file1.xml, file2.xml and so on)" << endl;
-					cout << "The 'disp.dat' is a binary file with all the data as the type\n   of double, the detail format is as follows:" << endl;
+					cout << endl;
+					cout << "The 'fileN.xml' is a model file that is compatible with VTK API, and other programs. It is a text file using *.vtu format, but you can also add your own data." << endl;
+					cout << "The 'disp.dat' is a data file that contains the displacements of nodes for all the models(file1.xml, file2.xml and so on). It is a binary file with all the data as the type of double, the detail data sequence is as follows:" << endl << endl;
 					cout << "#####################################################################################################" << endl;
-					cout << "time1 \n node_1_disp_x node_1_disp_y node_1_disp_z \n node_2_disp_x node_2_disp_y node_2_disp_z \n ... \n node_b_disp_x node_b_disp_y node_b_disp_z" << endl; 
+					cout << "time1 \n node_1_disp_x node_1_disp_y node_1_disp_z \n node_2_disp_x node_2_disp_y node_2_disp_z \n ... \n node_n_disp_x node_n_disp_y node_n_disp_z" << endl; 
 					cout << "time2 \n ......" << endl;
-					cout << "#####################################################################################################" << endl;
-					cout << "NOTE: Binary file is not as same as txt file which contains symbols like \\n \\t, and all the data saved as String." << endl;
-					cout << "The Binary file contains data saved as its own type without any symbols like \\n \\t." << endl;
+					cout << "#####################################################################################################" << endl << endl;
+					cout << "NOTE: Binary files are not same as txt files which contains symbols like \\n \\t, and all the data saved as String. A Binary file contains data saved as its own type without any symbols like \\n \\t." << endl;
 					exit(0);
 					break;
 				default:
