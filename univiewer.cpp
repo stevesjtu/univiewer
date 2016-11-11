@@ -1,5 +1,3 @@
-//#define vtkRenderingCore_AUTOINIT 4(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingFreeTypeOpenGL,vtkRenderingOpenGL)
-//#define vtkRenderingVolume_AUTOINIT 1(vtkRenderingVolumeOpenGL)
 #include "ControlView_addText.h"
 int main(int argc, char *argv[])
 {
@@ -12,16 +10,19 @@ int main(int argc, char *argv[])
 	pControlView->inputModelfiles(modelFiles, dispFiles, argc, argv);
 
 	pControlView->setMainActor();
-	pControlView->setAxesActor();
-	pControlView->setTextActor();
-    pControlView->setLabelActor();
-    
+
+	int prt = AXESLINE_PART | AXESFRAME_PART | CURRENTTIMER_PART | SLIDEBAR_PART; // add all the configure
+
 	pControlView->setRender();
 
 	if (!dispFiles.empty()) {
+		
 		pControlView->setContent(pModel);
 		pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK, dispFiles);
-		pControlView->setSliderBar();
+		
+	}
+	else {
+		prt ^= SLIDEBAR_PART;  // delete the SLIDERBAR_PART configure
 	}
     
     // derived class member function
@@ -31,8 +32,8 @@ int main(int argc, char *argv[])
 	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
 	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
 
-	pControlView->Display();
-	//pControlView->getWriter()->End();
+	pControlView->Display(prt);
+	
 	return EXIT_SUCCESS;
 }
 
