@@ -3,7 +3,6 @@
 #define CONTROLVIEWADDTEXT_H
 
 #include"ControlView.h"
-#include "vtkVectorText.h"
 
 class ControlView_addText : public ControlView
 {

@@ -1,4 +1,4 @@
-#include "ControlView_addText.h"
+#include "ControlView.h"
 int main(int argc, char *argv[])
 {
 
@@ -6,12 +6,13 @@ int main(int argc, char *argv[])
 	vector<string> dispFiles;
 	
 	shared_ptr<Model> pModel = Model::New();
-	shared_ptr<ControlView_addText> pControlView = ControlView_addText::New();
+	shared_ptr<ControlView> pControlView = ControlView::New();
 	pControlView->inputModelfiles(modelFiles, dispFiles, argc, argv);
 
 	pControlView->setMainActor();
 
-	int prt = AXESLINE_PART | AXESFRAME_PART | CURRENTTIMER_PART | SLIDEBAR_PART; // add all the configure
+	// add all the configure
+	int prt = AXESLINE_PART | AXESFRAME_PART | CURRENTTIMER_PART | SLIDEBAR_PART | LOOKUPTABLE_PART; 
 
 	pControlView->setRender();
 
@@ -26,8 +27,8 @@ int main(int argc, char *argv[])
 	}
     
     // derived class member function
-    pControlView->setfileName(&modelFiles, &dispFiles);
-    pControlView->AddText();
+    //pControlView->setfileName(&modelFiles, &dispFiles);
+    //pControlView->AddText();
         
 	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
 	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);

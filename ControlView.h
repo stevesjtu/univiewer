@@ -26,13 +26,14 @@
 #include "Axespart.h"
 #include "Textpart.h"
 #include "Sliderbarpart.h"
+#include "lutpart.h"
 
-
-#define AXESLINE_PART 0x0001
-#define AXESFRAME_PART 0x0002
-#define SLIDEBAR_PART 0x0004
-#define LABLENODE_PART 0x0008
-#define CURRENTTIMER_PART 0x00010
+#define AXESLINE_PART		0x0001
+#define AXESFRAME_PART		0x0002
+#define SLIDEBAR_PART		0x0004
+#define LABLENODE_PART		0x0008
+#define CURRENTTIMER_PART	0x0010
+#define LOOKUPTABLE_PART	0x0020
 
 #define DEFAULT_TIMERCALLBACK TimerCallback
 #define DEFAULT_KEYPRESSCALLBACK KeypressCallbackFunction
@@ -69,15 +70,19 @@ protected:
 	shared_ptr<Sliderbar> sliderbar;
 
 	shared_ptr<CurrentTimer> currenttimer;
+
+	shared_ptr<LookUpTable> lookuptable;
 	//
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
 	vtkSmartPointer<vtkCallbackCommand> timerCallback;
 	vtkSmartPointer<vtkCallbackCommand> keypressCallback;
 	vtkSmartPointer<vtkCallbackCommand> windowCallback;
 
-	//
+	// test 
+	vtkSmartPointer<vtkDoubleArray> scalars;
+	vtkSmartPointer<vtkScalarBarActor> scalarBar;
+	vtkSmartPointer<vtkLookupTable> hueLut;
 
-	
 	//
 	shared_ptr<Model> pModel;
 	//////////////////////////////////
@@ -175,7 +180,7 @@ public:
 		}
 		appendFilter->Update();
 		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-		programmableFilter->AddInputConnection(appendFilter->GetOutputPort());
+		programmableFilter->SetInputConnection(appendFilter->GetOutputPort());
 	}
 
 	void setContent(shared_ptr<Model> &model) {
@@ -234,12 +239,18 @@ public:
 
 	void setMainActor() {
 		// Create a mapper and actor
+
 		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-		mapper->SetInputConnection(programmableFilter->GetOutputPort());
+		
+		// DEBUGGING HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//###########################################################################
+		//mapper->SetInputConnection(programmableFilter->GetOutputPort());
+		mapper->SetInputData(programmableFilter->GetUnstructuredGridInput());
+		//###########################################################################
 
 		actor = vtkSmartPointer<vtkActor>::New();
 		actor->SetMapper(mapper);
-		actor->GetProperty()->SetColor(0.9, 0.9, 0.9);
+		//actor->GetProperty()->SetColor(0.9, 0.9, 0.9);
 		actor->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
 		actor->GetProperty()->EdgeVisibilityOn();
 		//actor->SetScale(0.1);
@@ -298,6 +309,13 @@ public:
 			currenttimer->setTextActor();
 			renderer->AddActor2D(currenttimer->getTextActor());
 		}
+		
+		if (TobeRegisteredParts & LOOKUPTABLE_PART) {
+			lookuptable = LookUpTable::New();
+			lookuptable->setScalars(mapper, programmableFilter->GetUnstructuredGridInput());
+			renderer->AddActor2D(lookuptable->getScalarBar());
+		}
+		
 
 		// Add the actor to the scene
 		renderer->AddActor(actor);

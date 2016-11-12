@@ -47,13 +47,11 @@ public:
     
 	
 	vtkPoints *getvtkPnts(unsigned i) { return pvtkPnts[i]; }
-	
-	virtual void update(unsigned num);
+
 };
 
-void Model::initialize() {
-
-	
+void Model::initialize() 
+{
 	node0.resize(dofs);
 
 	for (unsigned n = 0; n < nodeNum; ++n) {
@@ -111,13 +109,5 @@ void Model::readDispfile(const vector<string> & filename)
 
 }
 
-void Model::update(unsigned num)
-{
-	//node = node0 + dispvecCollection[num];
-
-	//for (int n = 0; n < (int)nodeNum; ++n)
-	//	pvtkPnts->SetPoint(n, node.data() + (n* 3));
-
-}
 
 #endif //MODEL_H
