@@ -27,21 +27,16 @@ public:
 	}
 
 	vtkSmartPointer<vtkScalarBarActor> &getScalarBar() { return scalarBar; }
-
-	void setScalars(vtkSmartPointer<vtkDataSetMapper> &mapper, vtkUnstructuredGrid* usgrid)
+	vtkSmartPointer<vtkDoubleArray> &getScalars() { return scalars; }
+	void setScalars(vtkSmartPointer<vtkDataSetMapper> &mapper, const unsigned nodenum)
 	{
-		
 		scalars = vtkSmartPointer<vtkDoubleArray>::New();
-		unsigned numPts = usgrid->GetNumberOfPoints();
-		scalars->SetNumberOfValues(numPts);
-		for (unsigned i = 0; i < numPts; ++i) {
-			scalars->SetValue(i, static_cast<double>(i) / (double)numPts);
-		}
-		usgrid->GetPointData()->SetScalars(scalars);
+		scalars->SetNumberOfValues(nodenum);
 
 		mapper->ScalarVisibilityOn();
 		mapper->SetScalarModeToUsePointData();
 		mapper->SetColorModeToMapScalars();
+		mapper->Update();
 
 		scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
 		scalarBar->SetLookupTable(mapper->GetLookupTable());

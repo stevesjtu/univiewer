@@ -36,16 +36,33 @@
 #define LOOKUPTABLE_PART	0x0020
 
 #define DEFAULT_TIMERCALLBACK TimerCallback
-#define DEFAULT_KEYPRESSCALLBACK KeypressCallbackFunction
+#define DEFAULT_KEYPRESSCALLBACK KeypressCallback
 #define DEFAULT_WINDOWCALLBACK WindowModifiedCallback
 
-// Timer callback proxy
-void TimerCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData));
+// Timer callback subclass
+class CommandSubclass : public vtkCommand
+{
+public:
+	vtkTypeMacro(CommandSubclass, vtkCommand);
+	static CommandSubclass *New()
+	{
+		return new CommandSubclass;
+	}
+	void Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId),
+		void *vtkNotUsed(callData))
+	{
+		vtkRenderWindowInteractor *iren =
+			static_cast<vtkRenderWindowInteractor*>(caller);
+		this->ProgrammableFilter->Modified();
+		iren->Render();
+	}
+	vtkSmartPointer<vtkProgrammableFilter> ProgrammableFilter;
+};
 
 // real callback function
 void TimerCallback(void* arguments);
 void WindowModifiedCallback(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
-void KeypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+void KeypressCallback(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
 class ControlView
 {
@@ -74,14 +91,10 @@ protected:
 	shared_ptr<LookUpTable> lookuptable;
 	//
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
-	vtkSmartPointer<vtkCallbackCommand> timerCallback;
+	vtkSmartPointer<CommandSubclass> timerCallback;
+
 	vtkSmartPointer<vtkCallbackCommand> keypressCallback;
 	vtkSmartPointer<vtkCallbackCommand> windowCallback;
-
-	// test 
-	vtkSmartPointer<vtkDoubleArray> scalars;
-	vtkSmartPointer<vtkScalarBarActor> scalarBar;
-	vtkSmartPointer<vtkLookupTable> hueLut;
 
 	//
 	shared_ptr<Model> pModel;
@@ -124,7 +137,7 @@ public:
     vtkSmartPointer<vtkRenderer> &getRenderer(){return renderer;}
 
     vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
-    vtkSmartPointer<vtkCallbackCommand> &getTimerCallback(){return timerCallback;}
+    vtkSmartPointer<CommandSubclass> &getTimerCallback(){return timerCallback;}
 
 	void inputModelfiles(vector<string> &modelFiles, vector<string>&dispFiles,
 			const int& argc,  char* argv[]) 
@@ -205,6 +218,14 @@ public:
 			//sliderRep->SetTitleText(ss.str().c_str());
 		}
 		sliderbar->getSliderRep()->SetValue(step);
+		
+		unsigned numPts = programmableFilter->GetUnstructuredGridOutput()->GetNumberOfPoints();
+		vtkSmartPointer<vtkDoubleArray> &scls = lookuptable->getScalars();
+		for (unsigned i = 0; i < numPts; ++i) {
+			scls->SetValue(i, static_cast<double>(sin((i + step)*0.1)));
+		}
+
+		programmableFilter->GetUnstructuredGridOutput()->GetPointData()->SetScalars(scls);
 		programmableFilter->GetUnstructuredGridOutput()->SetPoints(pModel->getvtkPnts(step));	
 		
 	}
@@ -213,12 +234,16 @@ public:
 		programmableFilter->SetExecuteMethod(f, this);
 		pModel->readDispfile(dispFiles);
 		stepNum = pModel->getStepNum();
-
 		pModel->initialize();
+
 		renderWindowInteractor->CreateRepeatingTimer(10);
-		timerCallback = vtkSmartPointer<vtkCallbackCommand>::New();
-		timerCallback->SetCallback(TimerCallbackFunction);
-		timerCallback->SetClientData(this);
+		//timerCallback = vtkSmartPointer<vtkCallbackCommand>::New();
+		//timerCallback->SetCallback(TimerCallbackFunction);
+		//timerCallback->SetClientData(this);
+
+		timerCallback = vtkSmartPointer<CommandSubclass>::New();
+		timerCallback->ProgrammableFilter = programmableFilter;
+
 		renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, timerCallback);
 
 	}
@@ -242,11 +267,7 @@ public:
 
 		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
 		
-		// DEBUGGING HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//###########################################################################
-		//mapper->SetInputConnection(programmableFilter->GetOutputPort());
-		mapper->SetInputData(programmableFilter->GetUnstructuredGridInput());
-		//###########################################################################
+		mapper->SetInputConnection(programmableFilter->GetOutputPort());
 
 		actor = vtkSmartPointer<vtkActor>::New();
 		actor->SetMapper(mapper);
@@ -312,11 +333,10 @@ public:
 		
 		if (TobeRegisteredParts & LOOKUPTABLE_PART) {
 			lookuptable = LookUpTable::New();
-			lookuptable->setScalars(mapper, programmableFilter->GetUnstructuredGridInput());
+			lookuptable->setScalars(mapper, pModel->getNodenum());
 			renderer->AddActor2D(lookuptable->getScalarBar());
 		}
 		
-
 		// Add the actor to the scene
 		renderer->AddActor(actor);
 		
@@ -331,18 +351,17 @@ public:
 };
 
 
-void TimerCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
-{
-	
-	auto cv = static_cast<ControlView*>(clientData);
-	auto programmableFilter = cv->getProgrammableFilter();
-
-	auto *iren = static_cast<vtkRenderWindowInteractor*>(caller);
-	programmableFilter->Modified();
-	iren->Render();
-
-}
-
+//void TimerCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
+//{
+//	
+//	auto cv = static_cast<ControlView*>(clientData);
+//	auto programmableFilter = cv->getProgrammableFilter();
+//
+//	auto *iren = static_cast<vtkRenderWindowInteractor*>(caller);
+//	programmableFilter->Modified();
+//	iren->Render();
+//
+//}
 
 void TimerCallback(void* arguments)
 {
@@ -388,7 +407,7 @@ void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(even
 	++isfirst;
 }
 
-void KeypressCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
+void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
 {
 
 	vtkRenderWindowInteractor *iren =
