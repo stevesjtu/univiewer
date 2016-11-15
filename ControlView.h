@@ -44,7 +44,7 @@ class CommandSubclass : public vtkCommand
 {
 public:
 	vtkTypeMacro(CommandSubclass, vtkCommand);
-	static CommandSubclass *New()
+	static vtkSmartPointer<CommandSubclass> New()
 	{
 		return new CommandSubclass;
 	}
@@ -223,8 +223,9 @@ public:
 		vtkSmartPointer<vtkDoubleArray> &scls = lookuptable->getScalars();
 		for (unsigned i = 0; i < numPts; ++i) {
 			scls->SetValue(i, static_cast<double>(sin((i + step)*0.1)));
+			
 		}
-
+		
 		programmableFilter->GetUnstructuredGridOutput()->GetPointData()->SetScalars(scls);
 		programmableFilter->GetUnstructuredGridOutput()->SetPoints(pModel->getvtkPnts(step));	
 		
@@ -237,10 +238,6 @@ public:
 		pModel->initialize();
 
 		renderWindowInteractor->CreateRepeatingTimer(10);
-		//timerCallback = vtkSmartPointer<vtkCallbackCommand>::New();
-		//timerCallback->SetCallback(TimerCallbackFunction);
-		//timerCallback->SetClientData(this);
-
 		timerCallback = vtkSmartPointer<CommandSubclass>::New();
 		timerCallback->ProgrammableFilter = programmableFilter;
 
@@ -351,18 +348,6 @@ public:
 };
 
 
-//void TimerCallbackFunction(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
-//{
-//	
-//	auto cv = static_cast<ControlView*>(clientData);
-//	auto programmableFilter = cv->getProgrammableFilter();
-//
-//	auto *iren = static_cast<vtkRenderWindowInteractor*>(caller);
-//	programmableFilter->Modified();
-//	iren->Render();
-//
-//}
-
 void TimerCallback(void* arguments)
 {
 	ControlView* pCtr = static_cast<ControlView*>(arguments);
@@ -419,17 +404,7 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 	    if (strcmp(iren->GetKeySym(), "space") == 0){
 	        pCtr->IsPlay() = !pCtr->IsPlay();
 			pCtr->getSliderbar()->getButtonRepresentation()->SetState(!pCtr->getSliderbar()->getButtonRepresentation()->GetState());
-	//        if(pCtr->IsPlay()){
-	//            pCtr->IsPlay() = !pCtr->IsPlay();
-	//            pCtr->getRenderWindowInteractor()->InvokeEvent(vtkCommand::DisableEvent, pCtr->getTimerCallback());
-	//        }
-	//        else{
-	//            pCtr->IsPlay() = !pCtr->IsPlay();
-	//            pCtr->getRenderWindowInteractor()->InvokeEvent(vtkCommand::EnableEvent, pCtr->getTimerCallback());
-	//        }
-
 	    }
-
 
 		if (strcmp(iren->GetKeySym(), "b") == 0) {
 			pCtr->IsPlay() = false;
