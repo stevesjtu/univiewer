@@ -5,11 +5,10 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <memory>
-#include "Eigen/eigen"
 #include <vtkPoints.h>
 
-using namespace Eigen;
 using namespace std;
 
 
@@ -17,9 +16,9 @@ class Model // base class
 {
 protected:
 	unsigned stepNum, nodeNum, dofs;
-	vector<VectorXd> dispvecCollection;
+	vector<vector<double> > dispvecCollection;
 	vector<double> stepCollection;
-	VectorXd node0;
+	vector<double> node0;
 
 	vtkPoints * pvtkPosition;
 	vector<vtkSmartPointer<vtkPoints> > pvtkPnts;
@@ -36,15 +35,10 @@ public:
 	virtual void initialize();
 	virtual void setVtkpnt0(vtkPoints *input) { pvtkPosition = input; }
 	unsigned & getNodenum() { return nodeNum; }
-	VectorXd & getNode0() { return node0; }
-	VectorXd getNode0(unsigned id) { return node0.segment<3>(id * 3); }
+
 	unsigned & getStepNum() { return stepNum; }
 	vector<double> & getStep() { return stepCollection; }
 	double getStep(unsigned i) { return stepCollection[i]; }
-
-	vector<VectorXd> & getDispvecCollection() { return dispvecCollection; }
-	VectorXd & getDispvecCollection(unsigned i) { return dispvecCollection[i]; }
-    
 	
 	vtkPoints *getvtkPnts(unsigned i) { return pvtkPnts[i]; }
 
@@ -52,21 +46,27 @@ public:
 
 void Model::initialize() 
 {
-	node0.resize(dofs);
-
+	node0.resize(3* nodeNum);
+	unsigned index = 0;
 	for (unsigned n = 0; n < nodeNum; ++n) {
 		double *xyz = pvtkPosition->GetPoint(n);
-		node0.segment<3>(3 * n) = Vector3d(*xyz, *(xyz + 1), *(xyz + 2));
+		node0[index++] = *xyz;
+		node0[index++] = *(xyz + 1);
+		node0[index++] = *(xyz + 2);
 	}
 
 	pvtkPnts.resize(dispvecCollection.size());
-	Vector3d position;
+	double position[3];
 	for (unsigned s = 0; s < stepNum; ++s){
 		pvtkPnts[s] = vtkSmartPointer<vtkPoints>::New();
 		pvtkPnts[s]->SetNumberOfPoints(nodeNum);
+		index = 0;
 		for (unsigned n = 0; n < nodeNum; ++n) {
-			position = node0.segment<3>(3 * n) + dispvecCollection[s].segment<3>(3* n);
-			pvtkPnts[s]->SetPoint(n, position.data() );
+			position[0] = node0[index] + dispvecCollection[s][index];
+			position[1] = node0[index+1] + dispvecCollection[s][index+2];
+			position[2] = node0[index+2] + dispvecCollection[s][index+2];
+			index += 3;
+			pvtkPnts[s]->SetPoint(n, position );
 		}
 	}
 
@@ -82,7 +82,7 @@ void Model::readDispfile(const vector<string> & filename)
 		nodedeg = atoi(filename[1].c_str());
 	}
 	dofs = nodeNum * nodedeg;
-	VectorXd datavec(dofs);
+	vector<double> datavec(dofs);
 	double steptime;
 	while (!infile.eof()) {
 		infile.read((char*)&steptime, sizeof(double));
@@ -93,14 +93,19 @@ void Model::readDispfile(const vector<string> & filename)
 	stepNum = (unsigned)dispvecCollection.size();
 
 	if (filename.size() == 2) {
-		MatrixXd datamat;
-		MatrixXd datahalf;
+
+		unsigned index;
+		vector<double> dataPosition;
 		for (unsigned s = 0; s < stepNum; ++s) {
-			datamat = dispvecCollection[s];
-			datamat.resize(nodedeg, dispvecCollection[s].size() / nodedeg);
-			datahalf = datamat.topRows(3);
-			datahalf.resize(nodeNum * 3, 1);
-			dispvecCollection[s] = datahalf;
+			auto &data = dispvecCollection[s];
+			index = 0;
+			for (unsigned i = 0; i < nodeNum; ++i) {
+				dataPosition.push_back(data[index]);
+				dataPosition.push_back(data[index+1]);
+				dataPosition.push_back(data[index+2]);
+				index += nodedeg;
+			}
+			dispvecCollection[s] = dataPosition;
 		}
 
 	}
