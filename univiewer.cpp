@@ -25,7 +25,9 @@ int main(int argc, char *argv[])
 	else {
 		prt ^= SLIDEBAR_PART;  // delete the SLIDERBAR_PART configure
 	}
-    
+
+	prt ^= LOOKUPTABLE_PART;
+
     // derived class member function
     //pControlView->setfileName(&modelFiles, &dispFiles);
     //pControlView->AddText();

@@ -115,13 +115,14 @@ public:
 		return nw;
 	}
 
+	unsigned getBodyNum() { return (unsigned)ugridReaders.size(); }
 	unsigned &getStepNum() { return stepNum; }
 	unsigned & getStep() { return step; }
 	bool & IsPlay() { return play; }
 	bool & IsShowMarker() { return ShowMarker; }
 	bool & IsShowMesh() { return ShowMesh; }
     bool & IsShowLabel() { return ShowLabel; }
-	
+
 	shared_ptr<Model> & getModel() { return pModel; }
 	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
 	vtkSmartPointer<vtkActor> &getActor() { return actor; }
@@ -219,14 +220,14 @@ public:
 		}
 		sliderbar->getSliderRep()->SetValue(step);
 		
-		unsigned numPts = programmableFilter->GetUnstructuredGridOutput()->GetNumberOfPoints();
-		vtkSmartPointer<vtkDoubleArray> &scls = lookuptable->getScalars();
-		for (unsigned i = 0; i < numPts; ++i) {
-			scls->SetValue(i, static_cast<double>(sin((i + step)*0.1)));
-			
-		}
+		//unsigned numPts = programmableFilter->GetUnstructuredGridOutput()->GetNumberOfPoints();
+		//vtkSmartPointer<vtkDoubleArray> &scls = lookuptable->getScalars();
+		//for (unsigned i = 0; i < numPts; ++i) {
+		//	scls->SetValue(i, static_cast<double>(sin((i + step)*0.1)));
+		//	
+		//}
 		
-		programmableFilter->GetUnstructuredGridOutput()->GetPointData()->SetScalars(scls);
+		//programmableFilter->GetUnstructuredGridOutput()->GetPointData()->SetScalars(scls);
 		programmableFilter->GetUnstructuredGridOutput()->SetPoints(pModel->getvtkPnts(step));	
 		
 	}
@@ -437,12 +438,15 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 	}
 
 	if (strcmp(iren->GetKeySym(), "l") == 0) {
-        if (pCtr->IsShowLabel())
-			pCtr->getLabelnode()->getlabelActor()->VisibilityOff();
-        else
-			pCtr->getLabelnode()->getlabelActor()->VisibilityOn();
 
-        pCtr->IsShowLabel() = !pCtr->IsShowLabel();
+		if (pCtr->getBodyNum() == 1) {
+			if (pCtr->IsShowLabel())
+				pCtr->getLabelnode()->getlabelActor()->VisibilityOff();
+			else
+				pCtr->getLabelnode()->getlabelActor()->VisibilityOn();
+
+			pCtr->IsShowLabel() = !pCtr->IsShowLabel();
+		}
 	}
 
 	iren->Render();

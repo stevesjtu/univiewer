@@ -63,7 +63,7 @@ void Model::initialize()
 		index = 0;
 		for (unsigned n = 0; n < nodeNum; ++n) {
 			position[0] = node0[index] + dispvecCollection[s][index];
-			position[1] = node0[index+1] + dispvecCollection[s][index+2];
+			position[1] = node0[index+1] + dispvecCollection[s][index+1];
 			position[2] = node0[index+2] + dispvecCollection[s][index+2];
 			index += 3;
 			pvtkPnts[s]->SetPoint(n, position );
@@ -76,41 +76,48 @@ void Model::readDispfile(const vector<string> & filename)
 {
 	ifstream infile;
 	infile.open(filename[0], ios::in | ios::binary);
-	nodeNum = pvtkPosition->GetNumberOfPoints();
-	unsigned nodedeg = 3;
-	if (filename.size() == 2) {
-		nodedeg = atoi(filename[1].c_str());
-	}
-	dofs = nodeNum * nodedeg;
-	vector<double> datavec(dofs);
-	double steptime;
-	while (!infile.eof()) {
-		infile.read((char*)&steptime, sizeof(double));
-		infile.read((char*)datavec.data(), sizeof(double) * (dofs));
-		dispvecCollection.push_back(datavec);
-		stepCollection.push_back(steptime);
-	}
-	stepNum = (unsigned)dispvecCollection.size();
-
-	if (filename.size() == 2) {
-
-		unsigned index;
-		vector<double> dataPosition;
-		for (unsigned s = 0; s < stepNum; ++s) {
-			auto &data = dispvecCollection[s];
-			index = 0;
-			for (unsigned i = 0; i < nodeNum; ++i) {
-				dataPosition.push_back(data[index]);
-				dataPosition.push_back(data[index+1]);
-				dataPosition.push_back(data[index+2]);
-				index += nodedeg;
-			}
-			dispvecCollection[s] = dataPosition;
+	if (infile.is_open()) {
+		nodeNum = pvtkPosition->GetNumberOfPoints();
+		unsigned nodedeg = 3;
+		if (filename.size() == 2) {
+			nodedeg = atoi(filename[1].c_str());
 		}
+		dofs = nodeNum * nodedeg;
+		vector<double> datavec(dofs);
+		double steptime;
+		while (!infile.eof()) {
+			infile.read((char*)&steptime, sizeof(double));
+			infile.read((char*)datavec.data(), sizeof(double) * (dofs));
+			dispvecCollection.push_back(datavec);
+			stepCollection.push_back(steptime);
+		}
+		stepNum = (unsigned)dispvecCollection.size();
 
+		if (filename.size() == 2) {
+
+			unsigned index;
+			vector<double> dataPosition;
+			for (unsigned s = 0; s < stepNum; ++s) {
+				auto &data = dispvecCollection[s];
+				index = 0;
+				for (unsigned i = 0; i < nodeNum; ++i) {
+					dataPosition.push_back(data[index]);
+					dataPosition.push_back(data[index+1]);
+					dataPosition.push_back(data[index+2]);
+					index += nodedeg;
+				}
+				dispvecCollection[s] = dataPosition;
+			}
+
+		}
+		infile.close();
+	}
+	else {
+		cout << "Can not open dispfiles." << endl;
+		exit(0);
 	}
 
-	infile.close();
+
 
 }
 

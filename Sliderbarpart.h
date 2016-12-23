@@ -211,7 +211,7 @@ public:
 		buttonRepresentation->PlaceWidget(bds);
 
 		buttonWidget->On();
-
+		
 	}
 };
 
