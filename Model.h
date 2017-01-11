@@ -7,10 +7,48 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
-#include <vtkPoints.h>
+#include "vtkPoints.h"
+#include "vtkLine.h"
+#include "vtkVertex.h"
+#include "vtkTriangle.h"
+
+#include "vtkUnstructuredGrid.h"
+#include "vtkAppendFilter.h"
+
+#include "vtkSmartPointer.h"
+#include "vtkSphereSource.h"
+
+#include "vtkCellArray.h"
+#include "vtkDataSetMapper.h"
+#include "vtkActor.h"
+#include "vtkProperty.h"
 
 using namespace std;
 
+class ContactTypes
+{
+private:
+	unsigned stepNum;
+
+	typedef vector<pair<unsigned, unsigned>> pairCollect;
+	pairCollect node_triangle;
+	pairCollect triangle_node;
+	pairCollect edge_edge;
+	pairCollect node_edge;
+	pairCollect edge_node;
+	pairCollect node_node;
+
+	vector<vtkSmartPointer<vtkUnstructuredGrid>> unstructuredGrids;
+
+};
+
+class Displacement
+{
+private:
+	vector<vtkSmartPointer<vtkPoints> > pvtkPnts;
+
+
+};
 
 class Model // base class
 {
@@ -20,7 +58,7 @@ protected:
 	vector<double> stepCollection;
 	vector<double> node0;
 
-	vtkPoints * pvtkPosition;
+	vtkPoints *pvtkPosition;
 	vector<vtkSmartPointer<vtkPoints> > pvtkPnts;
 public:
 	virtual ~Model() {};

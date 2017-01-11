@@ -106,7 +106,7 @@ public:
 		colors->InsertNextTupleValue(blue);
 		// Color the lines.
 		linesPolyData->GetCellData()->SetScalars(colors);
-
+		
 		// Setup the visualization pipeline
 		axesMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		axesMapper->SetInputData(linesPolyData);

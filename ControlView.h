@@ -39,6 +39,10 @@
 #define DEFAULT_KEYPRESSCALLBACK KeypressCallback
 #define DEFAULT_WINDOWCALLBACK WindowModifiedCallback
 
+#define MODEL 0x0001
+#define ANIMATION 0x0002
+#define ANIMATIONCONTACT 0x0003
+
 // Timer callback subclass
 class CommandSubclass : public vtkCommand
 {
@@ -106,6 +110,9 @@ protected:
 	bool ShowMarker;
 	bool ShowMesh;
     bool ShowLabel;
+
+	vector<string> dispFiles;
+
 public:
 	virtual ~ControlView() {}
 	ControlView(): stepNum(0), step(0),  play(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
@@ -140,13 +147,14 @@ public:
     vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
     vtkSmartPointer<CommandSubclass> &getTimerCallback(){return timerCallback;}
 
-	void inputModelfiles(vector<string> &modelFiles, vector<string>&dispFiles,
-			const int& argc,  char* argv[]) 
+	int inputModelfiles(const int& argc,  char* argv[]) 
 	{
 		if (argc == 1) {
 			cout << "Type 'Univiewer /h' for more help." << endl;
 			exit(0);
 		}
+
+		vector<string> modelFiles;
 		vector<string> *ptr_vector_name = NULL;
 		for (int i = 1; i<argc; ++i) {
 
@@ -160,7 +168,7 @@ public:
 					ptr_vector_name = &modelFiles;
 					break;
 				case 'o':
-					ptr_vector_name = &dispFiles;
+					ptr_vector_name = &this->dispFiles;
 					break;
 				case 'h':
 					cout << endl;
@@ -190,15 +198,21 @@ public:
 			ugridReaders[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
 			ugridReaders[i]->SetFileName(modelFiles[i].c_str());
 			ugridReaders[i]->Update();
+
 			appendFilter->AddInputConnection(ugridReaders[i]->GetOutputPort());
 		}
 		appendFilter->Update();
 		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
 		programmableFilter->SetInputConnection(appendFilter->GetOutputPort());
+
+		if (this->dispFiles.empty()) return MODEL;
+		return ANIMATION;
+
 	}
 
-	void setContent(shared_ptr<Model> &model) {
-		pModel = model;
+	void InitializeDisp() {
+
+		pModel = Model::New();
 		pModel->setVtkpnt0(programmableFilter->GetUnstructuredGridInput()->GetPoints());
 	}
 
@@ -232,9 +246,9 @@ public:
 		
 	}
 
-	void setAnimationMethod( void(*f)(void*), vector<string> &dispFiles ) {
+	void setAnimationMethod( void(*f)(void*)) {
 		programmableFilter->SetExecuteMethod(f, this);
-		pModel->readDispfile(dispFiles);
+		pModel->readDispfile(this->dispFiles);
 		stepNum = pModel->getStepNum();
 		pModel->initialize();
 
@@ -299,6 +313,8 @@ public:
 	}
 
 	void Display(int TobeRegisteredParts) {
+
+		setMainActor();
 
 		if (TobeRegisteredParts & AXESLINE_PART) {
 			axesline = Axesline::New();
