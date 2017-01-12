@@ -138,13 +138,14 @@ void Model::readDispfile(const vector<string> & filename)
 			for (unsigned s = 0; s < stepNum; ++s) {
 				auto &data = dispvecCollection[s];
 				index = 0;
+				dataPosition.clear();
 				for (unsigned i = 0; i < nodeNum; ++i) {
 					dataPosition.push_back(data[index]);
 					dataPosition.push_back(data[index+1]);
 					dataPosition.push_back(data[index+2]);
 					index += nodedeg;
 				}
-				dispvecCollection[s] = dataPosition;
+				dispvecCollection[s].swap(dataPosition);
 			}
 
 		}
