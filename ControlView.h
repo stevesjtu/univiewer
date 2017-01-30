@@ -238,9 +238,8 @@ public:
 		//vtkSmartPointer<vtkDoubleArray> &scls = lookuptable->getScalars();
 		//for (unsigned i = 0; i < numPts; ++i) {
 		//	scls->SetValue(i, static_cast<double>(sin((i + step)*0.1)));
-		//	
 		//}
-		
+		//
 		//programmableFilter->GetUnstructuredGridOutput()->GetPointData()->SetScalars(scls);
 		programmableFilter->GetUnstructuredGridOutput()->SetPoints(pModel->getvtkPnts(step));	
 		
