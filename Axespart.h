@@ -134,15 +134,16 @@ public:
 	}
 	void setAxesWidget(vtkSmartPointer<vtkRenderWindowInteractor> &renderWindowInteractor)
 	{
+
 		axes = vtkSmartPointer<vtkAxesActor>::New();
 		widget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
 		widget->SetOutlineColor(0.9300, 0.5700, 0.1300);
 		widget->SetOrientationMarker(axes);
 		widget->SetInteractor(renderWindowInteractor);
 		widget->SetViewport(0.0, 0.0, 0.2, 0.2);
-		widget->SetEnabled(1);
-		widget->InteractiveOn();
-		widget->SetInteractive(0);
+		widget->EnabledOn();
+		widget->InteractiveOff();
+		
 	}
 };
 

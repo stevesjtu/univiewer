@@ -1,7 +1,7 @@
 #pragma once
 #ifndef CONTROLVIEW_H
 #define CONTROLVIEW_H
-#include "vtkXMLUnstructuredGridReader.h"
+
 #include "vtkUnstructuredGrid.h"
 #include "vtkAppendFilter.h"
 
@@ -43,6 +43,54 @@
 #define ANIMATION 0x0002
 #define ANIMATIONCONTACT 0x0003
 
+void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
+											  vector<string> &dispFiles,
+											  vector<string> &contFiles)
+{
+	if (argc == 1) {
+		cout << "Type 'Univiewer /h' for more help." << endl;
+		exit(0);
+	}
+	vector<string> *ptr_vector_name = NULL;
+	for (int i = 1; i<argc; ++i) {
+
+#ifdef __APPLE__
+		if (*argv[i] == '-') {
+#else
+		if ((*argv[i] == '-') || (*argv[i] == '/')) {
+#endif
+			switch (*(argv[i] + 1)) {
+			case 'm':
+				ptr_vector_name = &modelFiles;
+				break;
+			case 'o':
+				ptr_vector_name = &dispFiles;
+				break;
+			case 'c':
+				ptr_vector_name = &contFiles;
+			case 'h':
+				cout << endl;
+				cout << "Usage: Univiewer /m file1.xml file2.xml ... fileN.xml /o disp.dat" << endl;
+				cout << endl;
+				cout << "The 'fileN.xml' is a model file that is compatible with VTK API, and other programs. It is a text file using *.vtu format, but you can also add your own data." << endl;
+				cout << "The 'disp.dat' is a data file that contains the displacements of nodes for all the models(file1.xml, file2.xml and so on). It is a binary file with all the data as the type of double, the detail data sequence is as follows:" << endl << endl;
+				cout << "#####################################################################################################" << endl;
+				cout << "time1 \n node_1_disp_x node_1_disp_y node_1_disp_z \n node_2_disp_x node_2_disp_y node_2_disp_z \n ... \n node_n_disp_x node_n_disp_y node_n_disp_z" << endl;
+				cout << "time2 \n ......" << endl;
+				cout << "#####################################################################################################" << endl << endl;
+				cout << "NOTE: Binary files are not same as txt files which contains symbols like \\n \\t, and all the data saved as String. A Binary file contains data saved as its own type without any symbols like \\n \\t." << endl;
+				exit(0);
+				break;
+			default:
+				break;
+			}
+			continue;
+		}
+		ptr_vector_name->push_back(argv[i]);
+		}
+}
+
+
 // Timer callback subclass
 class CommandSubclass : public vtkCommand
 {
@@ -71,149 +119,90 @@ void KeypressCallback(vtkObject* caller, long unsigned int eventId, void* client
 class ControlView
 {
 protected:
+	// for the centering point
 	vtkSmartPointer<vtkActor> actor;
-
-    vector<vtkSmartPointer<vtkXMLUnstructuredGridReader> > ugridReaders;
 	vtkSmartPointer<vtkDataSetMapper> mapper;
 
+	// for windows control
 	vtkSmartPointer<vtkRenderWindow> renderWindow;
 	vtkSmartPointer<vtkRenderer> renderer;
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style;
 
-	//
+	// for some part of graphics
 	shared_ptr<Axesline> axesline;
-
 	shared_ptr<Axesframe> axesframe;
-
-	shared_ptr<Labelnode> labelnode;
-
 	shared_ptr<Sliderbar> sliderbar;
-
 	shared_ptr<CurrentTimer> currenttimer;
-
 	shared_ptr<LookUpTable> lookuptable;
-	//
+
+	// for animation and UI
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
 	vtkSmartPointer<CommandSubclass> timerCallback;
-
 	vtkSmartPointer<vtkCallbackCommand> keypressCallback;
 	vtkSmartPointer<vtkCallbackCommand> windowCallback;
 
-	//
-	shared_ptr<Model> pModel;
+	// main part of visulization
+	vector<shared_ptr<Model>> pModels;
 	//////////////////////////////////
 	//////////////////////////////////
-	unsigned stepNum;
-	unsigned step;
+
 	bool play;
 	bool ShowMarker;
 	bool ShowMesh;
     bool ShowLabel;
 
 	vector<string> dispFiles;
+	vector<string> contFiles;
 
 public:
 	virtual ~ControlView() {}
-	ControlView(): stepNum(0), step(0),  play(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
+	ControlView(): play(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
 	static shared_ptr<ControlView> New()
 	{
 		shared_ptr<ControlView> nw = make_shared<ControlView>();
 		return nw;
 	}
+	
+	inline bool & IsPlay() { return play; }
+	inline bool & IsShowMarker() { return ShowMarker; }
+	inline bool & IsShowMesh() { return ShowMesh; }
+    inline bool & IsShowLabel() { return ShowLabel; }
 
-	unsigned getBodyNum() { return (unsigned)ugridReaders.size(); }
-	unsigned &getStepNum() { return stepNum; }
-	unsigned & getStep() { return step; }
-	bool & IsPlay() { return play; }
-	bool & IsShowMarker() { return ShowMarker; }
-	bool & IsShowMesh() { return ShowMesh; }
-    bool & IsShowLabel() { return ShowLabel; }
-
-	shared_ptr<Model> & getModel() { return pModel; }
+	vector<shared_ptr<Model>> & getModels() { return pModels; }
 	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
-	vtkSmartPointer<vtkActor> &getActor() { return actor; }
 
 	shared_ptr<CurrentTimer> &getCurrentTimer() {return currenttimer;}
-
 	shared_ptr<Axesline> &getAxesline() { return axesline; }
-
-    shared_ptr<Labelnode> &getLabelnode() { return labelnode; }
-
 	shared_ptr<Sliderbar> &getSliderbar() { return sliderbar; }
 
     vtkSmartPointer<vtkRenderer> &getRenderer(){return renderer;}
-
     vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
     vtkSmartPointer<CommandSubclass> &getTimerCallback(){return timerCallback;}
 
 	int inputModelfiles(const int& argc,  char* argv[]) 
 	{
-		if (argc == 1) {
-			cout << "Type 'Univiewer /h' for more help." << endl;
-			exit(0);
-		}
-
 		vector<string> modelFiles;
-		vector<string> *ptr_vector_name = NULL;
-		for (int i = 1; i<argc; ++i) {
-
-#ifdef __APPLE__
-            if (*argv[i] == '-') {
-#else
-			if ((*argv[i] == '-') || (*argv[i] == '/')) {
-#endif
-				switch (*(argv[i] + 1)) {
-				case 'm':
-					ptr_vector_name = &modelFiles;
-					break;
-				case 'o':
-					ptr_vector_name = &this->dispFiles;
-					break;
-				case 'h':
-					cout << endl;
-					cout << "Usage: Univiewer /m file1.xml file2.xml ... fileN.xml /o disp.dat" << endl;
-					cout << endl;
-					cout << "The 'fileN.xml' is a model file that is compatible with VTK API, and other programs. It is a text file using *.vtu format, but you can also add your own data." << endl;
-					cout << "The 'disp.dat' is a data file that contains the displacements of nodes for all the models(file1.xml, file2.xml and so on). It is a binary file with all the data as the type of double, the detail data sequence is as follows:" << endl << endl;
-					cout << "#####################################################################################################" << endl;
-					cout << "time1 \n node_1_disp_x node_1_disp_y node_1_disp_z \n node_2_disp_x node_2_disp_y node_2_disp_z \n ... \n node_n_disp_x node_n_disp_y node_n_disp_z" << endl; 
-					cout << "time2 \n ......" << endl;
-					cout << "#####################################################################################################" << endl << endl;
-					cout << "NOTE: Binary files are not same as txt files which contains symbols like \\n \\t, and all the data saved as String. A Binary file contains data saved as its own type without any symbols like \\n \\t." << endl;
-					exit(0);
-					break;
-				default:
-					break;
-				}
-				continue;
-			}
-			ptr_vector_name->push_back(argv[i]);
-		}
-
-		ugridReaders.resize(modelFiles.size());
-		auto appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
+		argParser(argc, argv, modelFiles, dispFiles, contFiles);
+		
+		pModels.resize(modelFiles.size());
 		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
-			
-			ugridReaders[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-			ugridReaders[i]->SetFileName(modelFiles[i].c_str());
-			ugridReaders[i]->Update();
-
-			appendFilter->AddInputConnection(ugridReaders[i]->GetOutputPort());
+			pModels[i] = Model::New();
+			pModels[i]->setOffset(Model::nodeNums* 3);
+			pModels[i]->readModel(modelFiles[i]);
 		}
-		appendFilter->Update();
-		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-		programmableFilter->SetInputConnection(appendFilter->GetOutputPort());
 
 		if (this->dispFiles.empty()) return MODEL;
 		return ANIMATION;
-
 	}
 
 	void InitializeDisp() {
-
-		pModel = Model::New();
-		pModel->setVtkpnt0(programmableFilter->GetUnstructuredGridInput()->GetPoints());
+		shared_ptr<Displacements> pDisp = Displacements::New();
+		pDisp->readDispfile(dispFiles);
+		Model::setDisplacement(pDisp);
+		for( auto& pmodel: pModels) { 
+			pmodel->initializeDisp();
+		}
 	}
 
 	void Update(){
@@ -224,39 +213,26 @@ public:
             play = false;
 		
 		stringstream ss("");
-		ss << "Current Time = " << pModel->getStep(step);
+		ss << "Current Time = " << pModels[0]->getStepVal(Model::step);
 		currenttimer->getTextActor()->SetInput(ss.str().c_str());
 
 		if (play) {
-			step = (step == stepNum - 1) ? 0 : step + 1;
-			//pModel->update(step);
-			//sliderRep->SetTitleText(ss.str().c_str());
+			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
 		}
-		sliderbar->getSliderRep()->SetValue(step);
+		sliderbar->getSliderRep()->SetValue(Model::step);
 		
-		//unsigned numPts = programmableFilter->GetUnstructuredGridOutput()->GetNumberOfPoints();
-		//vtkSmartPointer<vtkDoubleArray> &scls = lookuptable->getScalars();
-		//for (unsigned i = 0; i < numPts; ++i) {
-		//	scls->SetValue(i, static_cast<double>(sin((i + step)*0.1)));
-		//}
-		//
-		//programmableFilter->GetUnstructuredGridOutput()->GetPointData()->SetScalars(scls);
-		programmableFilter->GetUnstructuredGridOutput()->SetPoints(pModel->getvtkPnts(step));	
+		for (auto &pmodel : pModels) {
+			pmodel->updateDisp(Model::step);
+		}
 		
 	}
 
 	void setAnimationMethod( void(*f)(void*)) {
 		programmableFilter->SetExecuteMethod(f, this);
-		pModel->readDispfile(this->dispFiles);
-		stepNum = pModel->getStepNum();
-		pModel->initialize();
-
 		renderWindowInteractor->CreateRepeatingTimer(10);
 		timerCallback = vtkSmartPointer<CommandSubclass>::New();
 		timerCallback->ProgrammableFilter = programmableFilter;
-
 		renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, timerCallback);
-
 	}
 
 	void setKeyboardMethod(void (*f)(vtkObject* , long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
@@ -273,25 +249,48 @@ public:
 		renderWindow->AddObserver(vtkCommand::ModifiedEvent, windowCallback);
 	}
 
-	void setMainActor() {
-		// Create a mapper and actor
+	void AddMainActor() {
+		// Add all the model actor
 
-		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-		
-		mapper->SetInputConnection(programmableFilter->GetOutputPort());
+		for (auto &pmodel : pModels) {
+			pmodel->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
+			pmodel->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
+			pmodel->getActor()->GetProperty()->EdgeVisibilityOn();
+			pmodel->getActor()->SetScale(1.0);
+			renderer->AddActor(pmodel->getActor());
+		}
 
-		actor = vtkSmartPointer<vtkActor>::New();
-		actor->SetMapper(mapper);
-		//actor->GetProperty()->SetColor(0.9, 0.9, 0.9);
-		actor->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
-		actor->GetProperty()->EdgeVisibilityOn();
-		//actor->SetScale(0.1);
 	}
 
 	void setRender() {
+		// create an environment actor (center point)
+		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+		const double p[3] = { 0.0, 0.0, 0.0 };
+		// Create the topology of the point (a vertex)
+		vtkSmartPointer<vtkCellArray> vertices = vtkSmartPointer<vtkCellArray>::New();
+		vtkIdType pid[1];
+		pid[0] = points->InsertNextPoint(p);
+		vertices->InsertNextCell(1, pid);
+		// Create a polydata object
+		vtkSmartPointer<vtkPolyData> point = vtkSmartPointer<vtkPolyData>::New();
+		// Set the points and vertices we created as the geometry and topology of the polydata
+		point->SetPoints(points);
+		point->SetVerts(vertices);
+		
+		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
+		programmableFilter->SetInputData(point);
+
+		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+		mapper->SetInputConnection(programmableFilter->GetOutputPort());
+		actor = vtkSmartPointer<vtkActor>::New();
+		actor->SetMapper(mapper);
+		actor->GetProperty()->SetColor(0.0, 0.0, 0.0);
+		actor->GetProperty()->SetPointSize(1.0);
+
 		// Create a renderer, render window, and interactor
 		renderer = vtkSmartPointer<vtkRenderer>::New();
-		renderer->GetActiveCamera()->SetClippingRange(0.01, 1000);
+		renderer->SetNearClippingPlaneTolerance(1e-3);
+		renderer->GetActiveCamera()->SetClippingRange(1e-3, 1000);
 		renderer->SetAmbient(1.0, 1.0, 1.0);
 		renderer->SetLightFollowCamera(1);
 
@@ -313,8 +312,7 @@ public:
 
 	void Display(int TobeRegisteredParts) {
 
-		setMainActor();
-
+		
 		if (TobeRegisteredParts & AXESLINE_PART) {
 			axesline = Axesline::New();
 			axesline->setAxesActor();
@@ -327,15 +325,16 @@ public:
 		}
 
 		if (TobeRegisteredParts & LABLENODE_PART) {
-			labelnode = Labelnode::New();
-			labelnode->setLabelActor(ugridReaders);
-			renderer->AddActor2D(labelnode->getlabelActor());
-			labelnode->getlabelActor()->VisibilityOff();
+			for (auto& pmodel : pModels) {
+				pmodel->setLabelnode();
+				renderer->AddActor2D(pmodel->getLabelactor());
+				pmodel->getLabelactor()->VisibilityOff();
+			}
 		}
 
 		if (TobeRegisteredParts & SLIDEBAR_PART) {
 			sliderbar = Sliderbar::New();
-			sliderbar->setSliderBar(renderer, renderWindowInteractor, step, stepNum);
+			sliderbar->setSliderBar(renderer, renderWindowInteractor, Model::step, Model::stepNum);
 		}
 
 		if (TobeRegisteredParts & CURRENTTIMER_PART) {
@@ -346,13 +345,14 @@ public:
 		
 		if (TobeRegisteredParts & LOOKUPTABLE_PART) {
 			lookuptable = LookUpTable::New();
-			lookuptable->setScalars(mapper, pModel->getNodenum());
+			lookuptable->setScalars(mapper, Model::nodeNums);
 			renderer->AddActor2D(lookuptable->getScalarBar());
 		}
 		
 		// Add the actor to the scene
 		renderer->AddActor(actor);
-		
+		AddMainActor();
+
 		renderer->GradientBackgroundOn();
 		renderer->SetBackground2(13.0 / 255.0, 71.0 / 255.0, 161.0 / 255.0);
 		renderer->SetBackground(144.0 / 255.0, 202.0 / 255.0, 249.0 / 255.0);
@@ -379,7 +379,7 @@ void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(even
 	
 	static int isfirst = 0;   // a trick to prevent read Sliderbar before it is created.
 	if (isfirst > 1) {
-		if(pCtr->getStepNum()!=0){
+		if(Model::stepNum!=0){
 
 			pCtr->getCurrentTimer()->getTextActor()->SetPosition(windowSize[0] - 170, windowSize[1] - 25);
 
@@ -416,7 +416,7 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 
 	ControlView* pCtr = static_cast<ControlView*>(clientData);
 
-    if(pCtr->getStepNum()!=0){
+    if(Model::stepNum!=0){
 	    if (strcmp(iren->GetKeySym(), "space") == 0){
 	        pCtr->IsPlay() = !pCtr->IsPlay();
 			pCtr->getSliderbar()->getButtonRepresentation()->SetState(!pCtr->getSliderbar()->getButtonRepresentation()->GetState());
@@ -425,13 +425,13 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 		if (strcmp(iren->GetKeySym(), "b") == 0) {
 			pCtr->IsPlay() = false;
 			pCtr->getSliderbar()->getButtonRepresentation()->SetState(0);
-			pCtr->getStep() = (pCtr->getStep() == pCtr->getStepNum() - 1) ? pCtr->getStepNum() - 1 : pCtr->getStep() + 1;
+			Model::step = (Model::step == Model::stepNum - 1) ? Model::stepNum - 1 : Model::step + 1;
 		}
 
 		if (strcmp(iren->GetKeySym(), "v") == 0) {
 			pCtr->IsPlay() = false;
 			pCtr->getSliderbar()->getButtonRepresentation()->SetState(0);
-			pCtr->getStep() = (pCtr->getStep() == 0) ? 0 : pCtr->getStep() - 1;
+			Model::step = (Model::step == 0) ? 0 : Model::step - 1;
 		}
     }
 	if (strcmp(iren->GetKeySym(), "i") == 0) {
@@ -444,24 +444,30 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 	}
 
 	if (strcmp(iren->GetKeySym(), "u") == 0) {
-		if (pCtr->IsShowMesh())
-			pCtr->getActor()->GetProperty()->EdgeVisibilityOff();
-		else
-			pCtr->getActor()->GetProperty()->EdgeVisibilityOn();
-
+		if (pCtr->IsShowMesh()) {
+			for(auto &pmodel: pCtr->getModels())
+				pmodel->getActor()->GetProperty()->EdgeVisibilityOff();
+		}
+		else {
+			for (auto &pmodel : pCtr->getModels())
+				pmodel->getActor()->GetProperty()->EdgeVisibilityOn();
+		}
+			
 		pCtr->IsShowMesh() = !pCtr->IsShowMesh();
 	}
 
 	if (strcmp(iren->GetKeySym(), "l") == 0) {
 
-		if (pCtr->getBodyNum() == 1) {
-			if (pCtr->IsShowLabel())
-				pCtr->getLabelnode()->getlabelActor()->VisibilityOff();
-			else
-				pCtr->getLabelnode()->getlabelActor()->VisibilityOn();
-
-			pCtr->IsShowLabel() = !pCtr->IsShowLabel();
+		if (pCtr->IsShowLabel()) {
+			for(auto& pmodel : pCtr->getModels())
+				pmodel->getLabelactor()->VisibilityOff();
 		}
+		else {
+			for (auto& pmodel : pCtr->getModels())
+				pmodel->getLabelactor()->VisibilityOn();
+		}
+
+		pCtr->IsShowLabel() = !pCtr->IsShowLabel();
 	}
 
 	iren->Render();

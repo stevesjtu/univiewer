@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 	shared_ptr<ControlView> pControlView = ControlView::New();
 	pControlView->setRender();
 	// add all the configure
-	int prt = AXESLINE_PART | AXESFRAME_PART | CURRENTTIMER_PART | SLIDEBAR_PART | LOOKUPTABLE_PART; 
+	int prt = AXESLINE_PART | AXESFRAME_PART | CURRENTTIMER_PART | SLIDEBAR_PART | LOOKUPTABLE_PART | LABLENODE_PART;
 
 	if (pControlView->inputModelfiles(argc, argv) == ANIMATION) {
 		pControlView->InitializeDisp();
@@ -24,7 +24,6 @@ int main(int argc, char *argv[])
 
 #ifdef HOW_TO_WRITE_UNSTRUCTUREDGRID
 	vtkSmartPointer<vtkUnstructuredGrid> ug = vtkSmartPointer<vtkUnstructuredGrid>::New();
-
 
 	// Create points
 	double origin[3] = { 0.0, 0.0, 0.0 };
