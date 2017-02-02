@@ -1,14 +1,13 @@
 #pragma once
 #ifndef TEXTPART_H
 #define TEXTPART_H
-#include "vtkSmartPointer.h"
 
+#include "ParamDefine.h"
+// text 
 #include "vtkTextActor.h"
 #include "vtkTextProperty.h"
 
-#include<memory>
 using namespace std;
-
 
 class CurrentTimer
 {

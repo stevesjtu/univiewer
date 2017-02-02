@@ -2,15 +2,12 @@
 #ifndef LUTPART_H
 #define LUTPART_H
 
+#include "ParamDefine.h"
+
 #include "vtkDoubleArray.h"
 #include "vtkLookupTable.h"
 #include "vtkPointData.h"
 #include "vtkScalarBarActor.h"
-#include "vtkSmartPointer.h"
-#include "vtkActor.h"
-#include "vtkDataSetMapper.h"
-#include "vtkUnstructuredGrid.h"
-#include "vtkDataSetMapper.h"
 
 class LookUpTable
 {

@@ -1,23 +1,25 @@
 #pragma once
 #ifndef SLIDERBARPART_H
 #define SLIDERBARPART_H
-#include "vtkSmartPointer.h"
+
+#include "ParamDefine.h"
+
 #include "vtkSliderRepresentation2D.h"
+#include "vtkSliderWidget.h"
+
 #include "vtkImageData.h"
 #include "vtkCoordinate.h"
-#include "vtkButtonWidget.h"
 #include "vtkTexturedButtonRepresentation2D.h"
+#include "vtkButtonWidget.h"
+
 #include "vtkProperty2D.h"
 #include "vtkWidgetEvent.h"
 #include "vtkWidgetEventTranslator.h"
-#include "vtkSliderRepresentation2D.h"
-#include "vtkSliderWidget.h"
+
 #include "vtkCommand.h"
+
 #include "vtkRenderer.h"
-
-
-#include<memory>
-
+#include "vtkRenderWindowInteractor.h"
 using namespace std;
 
 void CreateImagePause(vtkSmartPointer<vtkImageData> image)
@@ -109,9 +111,9 @@ private:
 
 	vtkSmartPointer<vtkSliderRepresentation2D> sliderRep;
 	vtkSmartPointer<vtkSliderWidget> sliderWidget;
+
 	vtkSmartPointer<vtkSliderCallback> SliderCallback;
-	vtkSmartPointer<vtkImageData> imagePlay;
-	vtkSmartPointer<vtkImageData> imagePause;
+
 	vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation;
 	vtkSmartPointer<vtkButtonWidget> buttonWidget;
 
@@ -179,8 +181,8 @@ public:
 		sliderWidget->AddObserver(vtkCommand::InteractionEvent, SliderCallback);
 
 		// button widget
-		imagePlay = vtkSmartPointer<vtkImageData>::New();
-		imagePause = vtkSmartPointer<vtkImageData>::New();
+		vtkSmartPointer<vtkImageData> imagePlay = vtkSmartPointer<vtkImageData>::New();
+		vtkSmartPointer<vtkImageData> imagePause = vtkSmartPointer<vtkImageData>::New();
 		CreateImagePlay(imagePlay);
 		CreateImagePause(imagePause);
 		buttonRepresentation = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();

@@ -105,11 +105,11 @@ int main(int argc, char *argv[])
 	vtkSmartPointer<vtkActor> actor =
 		vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
-
+	
 	actor->GetProperty()->SetLineWidth(4);
 	actor->GetProperty()->SetPointSize(10);
 	actor->GetProperty()->SetOpacity(0.5);
-
+	
 	vtkSmartPointer<vtkRenderer> renderer =
 		vtkSmartPointer<vtkRenderer>::New();
 	renderer->AddActor(actor);

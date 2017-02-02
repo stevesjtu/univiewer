@@ -2,35 +2,22 @@
 #ifndef CONTROLVIEW_H
 #define CONTROLVIEW_H
 
-#include "vtkUnstructuredGrid.h"
-#include "vtkAppendFilter.h"
-
-#include "vtkSmartPointer.h"
-#include "vtkSphereSource.h"
-
-#include "vtkDataSetMapper.h"
-#include "vtkActor.h"
-#include "vtkProperty.h"
-
-#include "vtkRenderWindow.h"
-#include "vtkRenderer.h"
-
-#include "vtkRenderWindowInteractor.h"
-#include "vtkCamera.h"
-#include "vtkInteractorStyleTrackballCamera.h"
-
-#include "vtkProgrammableFilter.h"
-#include "vtkCallbackCommand.h"
-
 #include "Model.h"
 #include "Axespart.h"
 #include "Textpart.h"
 #include "Sliderbarpart.h"
 #include "lutpart.h"
 
-#define DEFAULT_TIMERCALLBACK TimerCallback
-#define DEFAULT_KEYPRESSCALLBACK KeypressCallback
-#define DEFAULT_WINDOWCALLBACK WindowModifiedCallback
+#include "vtkProperty.h"
+// for animation
+#include "vtkProgrammableFilter.h"
+#include "vtkCallbackCommand.h"
+// for windows render and view
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkCamera.h"
+#include "vtkInteractorStyleTrackballCamera.h"
 
 void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
 											  vector<string> &dispFiles,
@@ -57,6 +44,7 @@ void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
 				break;
 			case 'c':
 				ptr_vector_name = &contFiles;
+				break;
 			case 'h':
 				cout << endl;
 				cout << "Usage: Univiewer /m file1.xml file2.xml ... fileN.xml /o disp.dat" << endl;
@@ -133,7 +121,7 @@ protected:
 
 	// main part of visulization
 	vector<shared_ptr<Model>> pModels;
-	vector<vector<shared_ptr<ContactData>>> pContactss;
+	vector<shared_ptr<ContactData>> pContacts;
 	//////////////////////////////////
 	//////////////////////////////////
 
@@ -145,24 +133,18 @@ protected:
 	vector<string> dispFiles;
 	vector<string> contFiles;
 
-	virtual void AddMainActor() {
+	virtual void AddMainActor() 
+	{
 		// Add all the model actor
-		for (auto &pmodel : pModels) {
-			pmodel->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
-			pmodel->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
-			pmodel->getActor()->GetProperty()->EdgeVisibilityOn();
-			pmodel->getActor()->SetScale(1.0);
-			renderer->AddActor(pmodel->getActor());
-		}
-	}
 
+	}
+	
 public:
 	virtual ~ControlView() {}
 	ControlView(): play(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
 	static shared_ptr<ControlView> New()
 	{
-		shared_ptr<ControlView> nw = make_shared<ControlView>();
-		return nw;
+		return make_shared<ControlView>();
 	}
 	
 	inline bool & IsPlay() { return play; }
@@ -191,6 +173,14 @@ public:
 			pModels[i] = Model::New();
 			pModels[i]->setOffset(Model::nodeNums* 3);
 			pModels[i]->readModel(modelFiles[i]);
+
+			pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
+			pModels[i]->getActor()->GetProperty()->SetOpacity(0.5);
+			pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
+			pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
+			pModels[i]->getActor()->SetScale(1.0);
+
+			renderer->AddActor(pModels[i]->getActor());
 		}
 
 		if (!this->dispFiles.empty()) {
@@ -205,9 +195,18 @@ public:
 		}
 
 		if (!this->contFiles.empty()) {
-			readContfile(contFiles[0], pContactss, pModels);
-		}
+			readContfile(contFiles[0], pContacts, pModels);
+			for (auto& pcontact : pContacts) {
+				pcontact->InitializeUGrid();
+				renderer->AddActor(pcontact->getPActor());
+				renderer->AddActor(pcontact->getNActor());
+				pcontact->getPActor()->GetProperty()->SetLineWidth(2.0);
+				pcontact->getNActor()->GetProperty()->SetLineWidth(2.0);
 
+				pcontact->getPActor()->GetProperty()->SetPointSize(4.0);
+				pcontact->getNActor()->GetProperty()->SetPointSize(4.0);
+			}
+		}
 		return 0;
 	}
 	
@@ -251,6 +250,11 @@ public:
 		for (auto &pmodel : pModels) {
 			pmodel->updateDisp(Model::step);
 		}
+
+		for (auto &pcontact : pContacts) {
+			pcontact->UpdateUGrid(Model::step);
+		}
+
 	}
 
 	virtual void setRender() {
@@ -270,7 +274,7 @@ public:
 		
 		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
 		programmableFilter->SetInputData(point);
-
+		
 		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
 		mapper->SetInputConnection(programmableFilter->GetOutputPort());
 		actor = vtkSmartPointer<vtkActor>::New();
