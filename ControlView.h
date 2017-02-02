@@ -28,20 +28,9 @@
 #include "Sliderbarpart.h"
 #include "lutpart.h"
 
-#define AXESLINE_PART		0x0001
-#define AXESFRAME_PART		0x0002
-#define SLIDEBAR_PART		0x0004
-#define LABLENODE_PART		0x0008
-#define CURRENTTIMER_PART	0x0010
-#define LOOKUPTABLE_PART	0x0020
-
 #define DEFAULT_TIMERCALLBACK TimerCallback
 #define DEFAULT_KEYPRESSCALLBACK KeypressCallback
 #define DEFAULT_WINDOWCALLBACK WindowModifiedCallback
-
-#define MODEL 0x0001
-#define ANIMATION 0x0002
-#define ANIMATIONCONTACT 0x0003
 
 void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
 											  vector<string> &dispFiles,
@@ -144,6 +133,7 @@ protected:
 
 	// main part of visulization
 	vector<shared_ptr<Model>> pModels;
+	vector<vector<shared_ptr<ContactData>>> pContactss;
 	//////////////////////////////////
 	//////////////////////////////////
 
@@ -154,6 +144,17 @@ protected:
 
 	vector<string> dispFiles;
 	vector<string> contFiles;
+
+	virtual void AddMainActor() {
+		// Add all the model actor
+		for (auto &pmodel : pModels) {
+			pmodel->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
+			pmodel->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
+			pmodel->getActor()->GetProperty()->EdgeVisibilityOn();
+			pmodel->getActor()->SetScale(1.0);
+			renderer->AddActor(pmodel->getActor());
+		}
+	}
 
 public:
 	virtual ~ControlView() {}
@@ -180,7 +181,7 @@ public:
     vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
     vtkSmartPointer<CommandSubclass> &getTimerCallback(){return timerCallback;}
 
-	int inputModelfiles(const int& argc,  char* argv[]) 
+	virtual int inputModelfiles(const int& argc,  char* argv[]) 
 	{
 		vector<string> modelFiles;
 		argParser(argc, argv, modelFiles, dispFiles, contFiles);
@@ -192,77 +193,67 @@ public:
 			pModels[i]->readModel(modelFiles[i]);
 		}
 
-		if (this->dispFiles.empty()) return MODEL;
-		return ANIMATION;
-	}
+		if (!this->dispFiles.empty()) {
+			readDispfile(dispFiles, pModels);
 
-	void InitializeDisp() {
-		shared_ptr<Displacements> pDisp = Displacements::New();
-		pDisp->readDispfile(dispFiles);
-		Model::setDisplacement(pDisp);
-		for( auto& pmodel: pModels) { 
-			pmodel->initializeDisp();
+			sliderbar = Sliderbar::New();
+			sliderbar->setSliderBar(renderer, renderWindowInteractor, Model::step, Model::stepNum);
+
+			currenttimer = CurrentTimer::New();
+			currenttimer->setTextActor();
+			renderer->AddActor2D(currenttimer->getTextActor());
+		}
+
+		if (!this->contFiles.empty()) {
+			readContfile(contFiles[0], pContactss, pModels);
+		}
+
+		return 0;
+	}
+	
+	virtual void setAnimationMethod( void(*f)(void*)) {
+		if (!dispFiles.empty()) {
+			programmableFilter->SetExecuteMethod(f, this);
+			renderWindowInteractor->CreateRepeatingTimer(10);
+			timerCallback = vtkSmartPointer<CommandSubclass>::New();
+			timerCallback->ProgrammableFilter = programmableFilter;
+			renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, timerCallback);
 		}
 	}
 
-	void Update(){
-
-        if(sliderbar->getButtonRepresentation()->GetState())
-            play = true;
-        else
-            play = false;
-		
-		stringstream ss("");
-		ss << "Current Time = " << pModels[0]->getStepVal(Model::step);
-		currenttimer->getTextActor()->SetInput(ss.str().c_str());
-
-		if (play) {
-			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
-		}
-		sliderbar->getSliderRep()->SetValue(Model::step);
-		
-		for (auto &pmodel : pModels) {
-			pmodel->updateDisp(Model::step);
-		}
-		
-	}
-
-	void setAnimationMethod( void(*f)(void*)) {
-		programmableFilter->SetExecuteMethod(f, this);
-		renderWindowInteractor->CreateRepeatingTimer(10);
-		timerCallback = vtkSmartPointer<CommandSubclass>::New();
-		timerCallback->ProgrammableFilter = programmableFilter;
-		renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, timerCallback);
-	}
-
-	void setKeyboardMethod(void (*f)(vtkObject* , long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
+	virtual void setKeyboardMethod(void (*f)(vtkObject* , long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
 		keypressCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 		keypressCallback->SetCallback(f);
 		keypressCallback->SetClientData(this);
 		renderWindowInteractor->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
 	}
 
-	void setWindowMethod(void (*f)(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
+	virtual void setWindowMethod(void (*f)(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
 		windowCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 		windowCallback->SetCallback(f);
 		windowCallback->SetClientData(this);
 		renderWindow->AddObserver(vtkCommand::ModifiedEvent, windowCallback);
 	}
 
-	void AddMainActor() {
-		// Add all the model actor
+	virtual void Update() {
+			
+		play = sliderbar->getButtonRepresentation()->GetState() ? true : false;
+
+		stringstream ss("");
+		ss << "Current Time = " << Model::stepCollection[Model::step];
+		currenttimer->getTextActor()->SetInput(ss.str().c_str());
+
+		if (play) {
+			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
+		}
+		sliderbar->getSliderRep()->SetValue(Model::step);
 
 		for (auto &pmodel : pModels) {
-			pmodel->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
-			pmodel->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
-			pmodel->getActor()->GetProperty()->EdgeVisibilityOn();
-			pmodel->getActor()->SetScale(1.0);
-			renderer->AddActor(pmodel->getActor());
+			pmodel->updateDisp(Model::step);
 		}
-
 	}
 
-	void setRender() {
+	virtual void setRender() {
 		// create an environment actor (center point)
 		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 		const double p[3] = { 0.0, 0.0, 0.0 };
@@ -289,8 +280,8 @@ public:
 
 		// Create a renderer, render window, and interactor
 		renderer = vtkSmartPointer<vtkRenderer>::New();
-		renderer->SetNearClippingPlaneTolerance(1e-3);
-		renderer->GetActiveCamera()->SetClippingRange(1e-3, 1000);
+		renderer->SetNearClippingPlaneTolerance(1e-4);
+		renderer->GetActiveCamera()->SetClippingRange(1e-4, 1000);
 		renderer->SetAmbient(1.0, 1.0, 1.0);
 		renderer->SetLightFollowCamera(1);
 
@@ -310,44 +301,27 @@ public:
 
 	}
 
-	void Display(int TobeRegisteredParts) {
+	virtual void Display() {
+		// axesline part
+		axesline = Axesline::New();
+		axesline->setAxesActor();
+		renderer->AddActor(axesline->getAxesActor());
 
-		
-		if (TobeRegisteredParts & AXESLINE_PART) {
-			axesline = Axesline::New();
-			axesline->setAxesActor();
-			renderer->AddActor(axesline->getAxesActor());
-		}
+		// axesframe part
+		axesframe = Axesframe::New();
+		axesframe->setAxesWidget(renderWindowInteractor);
 
-		if (TobeRegisteredParts & AXESFRAME_PART) {
-			axesframe = Axesframe::New();
-			axesframe->setAxesWidget(renderWindowInteractor);
-		}
-
-		if (TobeRegisteredParts & LABLENODE_PART) {
-			for (auto& pmodel : pModels) {
-				pmodel->setLabelnode();
-				renderer->AddActor2D(pmodel->getLabelactor());
-				pmodel->getLabelactor()->VisibilityOff();
-			}
-		}
-
-		if (TobeRegisteredParts & SLIDEBAR_PART) {
-			sliderbar = Sliderbar::New();
-			sliderbar->setSliderBar(renderer, renderWindowInteractor, Model::step, Model::stepNum);
-		}
-
-		if (TobeRegisteredParts & CURRENTTIMER_PART) {
-			currenttimer = CurrentTimer::New();
-			currenttimer->setTextActor();
-			renderer->AddActor2D(currenttimer->getTextActor());
+		// labelnodes part
+		for (auto& pmodel : pModels) {
+			pmodel->setLabelnode();
+			renderer->AddActor2D(pmodel->getLabelactor());
+			pmodel->getLabelactor()->VisibilityOff();
 		}
 		
-		if (TobeRegisteredParts & LOOKUPTABLE_PART) {
-			lookuptable = LookUpTable::New();
-			lookuptable->setScalars(mapper, Model::nodeNums);
-			renderer->AddActor2D(lookuptable->getScalarBar());
-		}
+		// lookuptable part
+		//lookuptable = LookUpTable::New();
+		//lookuptable->setScalars(mapper, Model::nodeNums);
+		//renderer->AddActor2D(lookuptable->getScalarBar());
 		
 		// Add the actor to the scene
 		renderer->AddActor(actor);

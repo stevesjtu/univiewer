@@ -4,21 +4,13 @@ int main(int argc, char *argv[])
 
 	shared_ptr<ControlView> pControlView = ControlView::New();
 	pControlView->setRender();
-	// add all the configure
-	int prt = AXESLINE_PART | AXESFRAME_PART | CURRENTTIMER_PART | SLIDEBAR_PART | LOOKUPTABLE_PART | LABLENODE_PART;
 
-	if (pControlView->inputModelfiles(argc, argv) == ANIMATION) {
-		pControlView->InitializeDisp();
-		pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK);
-	}
-	else {
-		prt ^= SLIDEBAR_PART;  // delete the SLIDERBAR_PART configure
-	}
-	prt ^= LOOKUPTABLE_PART;
+	pControlView->inputModelfiles(argc, argv);
 
+	pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK);
 	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
 	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
-	pControlView->Display(prt);
+	pControlView->Display();
 	
 	return EXIT_SUCCESS;
 
