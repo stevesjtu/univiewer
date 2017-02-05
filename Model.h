@@ -9,7 +9,6 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include <iomanip>
 // primitives
 #include "vtkPoints.h"
 #include "vtkLine.h"
@@ -220,13 +219,7 @@ private:
 	vector<pairCollect> node_edges;
 	vector<pairCollect> edge_nodes;
 	vector<pairCollect> node_nodes;
-
-	vector<vtkSmartPointer<vtkUnstructuredGrid>> pUGrids;
-	vector<vtkSmartPointer<vtkUnstructuredGrid>> nUGrids;
-
-	//vtkSmartPointer<vtkUnstructuredGrid > pActiveUGrid;
-	//vtkSmartPointer<vtkUnstructuredGrid > nActiveUGrid;
-
+	
 	vector<vtkSmartPointer<vtkDataSetMapper>> pMappers;
 	vector<vtkSmartPointer<vtkDataSetMapper>> nMappers;
 	
@@ -360,8 +353,8 @@ void ContactData::InitializeUGrid()
 	auto &pfeMesh = pModel->getFEMesh();
 	auto &nfeMesh = nModel->getFEMesh();
 
-	pUGrids.resize(Model::stepNum);
-	nUGrids.resize(Model::stepNum);
+	//pUGrids.resize(Model::stepNum);
+	//nUGrids.resize(Model::stepNum);
 
 	pMappers.resize(Model::stepNum);
 	nMappers.resize(Model::stepNum);
@@ -373,11 +366,11 @@ void ContactData::InitializeUGrid()
 	vector<int> pTypes, nTypes;
 
 	for (unsigned s = 0; s < Model::stepNum; ++s) {
-		pUGrids[s] = vtkSmartPointer<vtkUnstructuredGrid>::New();
-		nUGrids[s] = vtkSmartPointer<vtkUnstructuredGrid>::New();
+		vtkSmartPointer<vtkUnstructuredGrid> pUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+		vtkSmartPointer<vtkUnstructuredGrid> nUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
-		pUGrids[s]->SetPoints(pfeMesh->getpvtkPnts(s));
-		nUGrids[s]->SetPoints(nfeMesh->getpvtkPnts(s));
+		pUGrid->SetPoints(pfeMesh->getpvtkPnts(s));
+		nUGrid->SetPoints(nfeMesh->getpvtkPnts(s));
 		
 		// some media variables/ cell, color, type
 		pCells = vtkSmartPointer<vtkCellArray>::New();
@@ -434,33 +427,23 @@ void ContactData::InitializeUGrid()
 		}
 
 		// set the UnstructuredGrid
-		pUGrids[s]->SetCells(pTypes.data(), pCells);
-		pUGrids[s]->GetCellData()->SetScalars(pColors);
+		pUGrid->SetCells(pTypes.data(), pCells);
+		pUGrid->GetCellData()->SetScalars(pColors);
 
-		nUGrids[s]->SetCells(nTypes.data(), nCells);
-		nUGrids[s]->GetCellData()->SetScalars(nColors);
+		nUGrid->SetCells(nTypes.data(), nCells);
+		nUGrid->GetCellData()->SetScalars(nColors);
 
 		pMappers[s] = vtkSmartPointer<vtkDataSetMapper>::New();
-		pMappers[s]->SetInputData(pUGrids[s]);
+		pMappers[s]->SetInputData(pUGrid);
 
 		nMappers[s] = vtkSmartPointer<vtkDataSetMapper>::New();
-		nMappers[s]->SetInputData(nUGrids[s]);
+		nMappers[s]->SetInputData(nUGrid);
 	}
 
 	// add them to pipeline
-	//vtkSmartPointer<vtkDataSetMapper> pMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	//pActiveUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
- //   pActiveUGrid->DeepCopy(pUGrids[0]);
-	//pMapper->SetInputData(pActiveUGrid);
-	////pMapper->SetInputData(pUGrids[0]);
 	pActor = vtkSmartPointer<vtkActor>::New();
 	pActor->SetMapper(pMappers[0]);
 	
-	//vtkSmartPointer<vtkDataSetMapper> nMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	//nActiveUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
-	//nActiveUGrid->DeepCopy(nUGrids[0]);
-	//nMapper->SetInputData(nActiveUGrid);
-	//nMapper->SetInputData(nUGrids[0]);
 	nActor = vtkSmartPointer<vtkActor>::New();
 	nActor->SetMapper(nMappers[0]);
 
@@ -468,88 +451,8 @@ void ContactData::InitializeUGrid()
 
 void ContactData::UpdateUGrid(unsigned s)
 {
-
-	//pActiveUGrid->Reset();
-	//nActiveUGrid->Reset();
-
-	//pActiveUGrid->DeepCopy(pUGrids[s]);
-	//nActiveUGrid->DeepCopy(nUGrids[s]);
-
 	pActor->SetMapper(pMappers[s]);
 	nActor->SetMapper(nMappers[s]);
-	// //////////////////////////////////////
-	// debug pUGrids nUGrids point coordinates
-	/////////////////////////////////////////
-	//////////////////////////////////////////////////////////////////////////
-	//ofstream outfile;
-	//outfile.open("pnodes.txt", ios::app);
-	//outfile << "step: " << Model::step << endl;
-	//for (unsigned i = 0; i < pActiveUGrid->GetNumberOfPoints(); ++i) {
-	//	outfile << setprecision(15) << pActiveUGrid->GetPoint(i)[0] << '\t' << pActiveUGrid->GetPoint(i)[1] << '\t' << pActiveUGrid->GetPoint(i)[2] << endl;
-	//}
-	//outfile << endl;
-	//outfile.close();
-
-	//outfile.open("nnodes.txt", ios::app);
-	//outfile << "step: " << Model::step << endl;
-	//for (unsigned i = 0; i < nActiveUGrid->GetNumberOfPoints(); ++i) {
-	//	outfile << setprecision(15) << nActiveUGrid->GetPoint(i)[0] << '\t' << nActiveUGrid->GetPoint(i)[1] << '\t' << nActiveUGrid->GetPoint(i)[2] << endl;
-	//}
-	//outfile << endl;
-	//outfile.close();
-	//////////////////////////////////////////////////////////////////////////
-
-	//for (unsigned i = 0; i < pActiveUGrid->GetNumberOfPoints(); ++i) {
-	//	printf("%f, %f, %f\n", pActiveUGrid->GetPoint(i)[0], pActiveUGrid->GetPoint(i)[1], pActiveUGrid->GetPoint(i)[2]);
-	//}
-	//printf("\n");
-
-	//for (unsigned i = 0; i < nActiveUGrid->GetNumberOfPoints(); ++i) {
-	//	printf("%f, %f, %f\n", nActiveUGrid->GetPoint(i)[0], nActiveUGrid->GetPoint(i)[1], nActiveUGrid->GetPoint(i)[2]);
-	//}
-	//printf("\n");
-	
-	//ofstream outfile;
-	//outfile.open("ptype.txt", ios::app);
-	//outfile << "step: " << Model::step << endl;
-	//for (unsigned i = 0; i < pActiveUGrid->GetNumberOfCells(); ++i) {
-	//	outfile << pActiveUGrid->GetCellType(i)<< '\t';
-	//}
-	//outfile << endl;
-	//outfile.close();
-
-	//outfile.open("ntype.txt", ios::app);
-	//outfile << "step: " << Model::step << endl;
-	//for (unsigned i = 0; i < nActiveUGrid->GetNumberOfCells(); ++i) {
-	//	outfile << nActiveUGrid->GetCellType(i) << '\t';
-	//}
-	//outfile << endl;
-	//outfile.close();
-
-	//for (unsigned i = 0; i < pActiveUGrid->GetNumberOfCells(); ++i) {
-	//	printf("%u\t", pActiveUGrid->GetCellType(i));
-	//}
-	//printf("\n");
-
-	//for (unsigned i = 0; i < nActiveUGrid->GetNumberOfCells(); ++i) {
-	//	printf("%u\t", nActiveUGrid->GetCellType(i));
-	//}
-	//printf("\n");
-
-
-	//pActiveUGrid->SetPoints(pUGrids[s]->GetPoints());
-	//nActiveUGrid->SetPoints(nUGrids[s]->GetPoints());
-
-	//pActiveUGrid->SetCells(pTypes[s].data(), pUGrids[s]->GetCells());
-	//pActiveUGrid->GetCellData()->SetScalars(pUGrids[s]->GetCellData()->GetScalars());
-
-	//nActiveUGrid->SetCells(nTypes[s].data(), nUGrids[s]->GetCells());
-	//nActiveUGrid->GetCellData()->SetScalars(nUGrids[s]->GetCellData()->GetScalars());
-
-	//pMapper->SetInputData(pUGrids[s]);
-	//nMapper->SetInputData(nUGrids[s]);
-
-
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -580,14 +483,6 @@ void readDispfile(const vector<string> & filename, vector<shared_ptr<Model>> &pM
 		}
 		dispvecCollection.pop_back();
 		Model::stepCollection.pop_back();
-
-		//////////////////////////////////////////////////////
-		//dispvecCollection.erase(dispvecCollection.begin(), dispvecCollection.begin()+45);
-		//Model::stepCollection.erase(Model::stepCollection.begin(), Model::stepCollection.begin() + 45);
-
-		//dispvecCollection.erase(dispvecCollection.begin()+3, dispvecCollection.end());
-		//Model::stepCollection.erase(Model::stepCollection.begin()+3, Model::stepCollection.end());
-		//////////////////////////////////////////////////////
 
 		Model::stepNum = (unsigned)dispvecCollection.size();
 
@@ -681,21 +576,6 @@ void readContfile(const string& contfile, vector<shared_ptr<ContactData>> &pCont
 			pContacts[c]->getPrimitivesPairs(NODE_NODE).resize(Model::stepNum);
 		}
 		
-		//////////////////////////////////////////////////////////////
-		//pairCollect skipBytes;
-		//for (unsigned s = 0; s< 45; ++s){
-		//	for (unsigned c = 0; c < pContacts.size(); ++c) {
-		//		// primitives
-		//		readpairs(infile, skipBytes);
-		//		readpairs(infile, skipBytes);
-		//		readpairs(infile, skipBytes);
-		//		readpairs(infile, skipBytes);
-		//		readpairs(infile, skipBytes);
-		//		readpairs(infile, skipBytes);
-		//	} // loop for ContactData
-		//}
-		//////////////////////////////////////////////////////////////
-
 		for (unsigned s = 0; s < Model::stepNum; ++s) {
 			for (unsigned c = 0; c < pContacts.size(); ++c) {
 				// primitives

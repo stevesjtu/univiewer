@@ -170,10 +170,10 @@ public:
 			pModels[i]->readModel(modelFiles[i]);
 
 			pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
-			pModels[i]->getActor()->GetProperty()->SetOpacity(0.2);
+			pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
 			pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
 			pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
-			pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
+			//pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
 			pModels[i]->getActor()->SetScale(1.0);
 
 			renderer->AddActor(pModels[i]->getActor());
@@ -194,16 +194,16 @@ public:
 			readContfile(contFiles[0], pContacts, pModels);
 			for (auto& pcontact : pContacts) {
 				pcontact->InitializeUGrid();
-				renderer->AddActor(pcontact->getPActor());
-				renderer->AddActor(pcontact->getNActor());
+
 				pcontact->getPActor()->GetProperty()->SetLineWidth(2.0);
 				pcontact->getNActor()->GetProperty()->SetLineWidth(2.0);
+				pcontact->getPActor()->GetProperty()->SetPointSize(6.0);
+				pcontact->getNActor()->GetProperty()->SetPointSize(6.0);
+				pcontact->getPActor()->GetProperty()->EdgeVisibilityOff();
+				pcontact->getNActor()->GetProperty()->EdgeVisibilityOff();
 
-				pcontact->getPActor()->GetProperty()->SetPointSize(10.0);
-				pcontact->getNActor()->GetProperty()->SetPointSize(10.0);
-
-				pcontact->getPActor()->GetProperty()->EdgeVisibilityOn();
-				pcontact->getNActor()->GetProperty()->EdgeVisibilityOn();
+				renderer->AddActor(pcontact->getPActor());
+				renderer->AddActor(pcontact->getNActor());
 			}
 		}
 		return 0;
