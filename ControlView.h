@@ -132,12 +132,6 @@ protected:
 
 	vector<string> dispFiles;
 	vector<string> contFiles;
-
-	virtual void AddMainActor() 
-	{
-		// Add all the model actor
-
-	}
 	
 public:
 	virtual ~ControlView() {}
@@ -153,6 +147,7 @@ public:
     inline bool & IsShowLabel() { return ShowLabel; }
 
 	vector<shared_ptr<Model>> & getModels() { return pModels; }
+	vector<shared_ptr<ContactData>> &getContactData() { return pContacts; }
 	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
 
 	shared_ptr<CurrentTimer> &getCurrentTimer() {return currenttimer;}
@@ -175,9 +170,10 @@ public:
 			pModels[i]->readModel(modelFiles[i]);
 
 			pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
-			pModels[i]->getActor()->GetProperty()->SetOpacity(0.5);
+			pModels[i]->getActor()->GetProperty()->SetOpacity(0.2);
 			pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
 			pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
+			pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
 			pModels[i]->getActor()->SetScale(1.0);
 
 			renderer->AddActor(pModels[i]->getActor());
@@ -203,8 +199,11 @@ public:
 				pcontact->getPActor()->GetProperty()->SetLineWidth(2.0);
 				pcontact->getNActor()->GetProperty()->SetLineWidth(2.0);
 
-				pcontact->getPActor()->GetProperty()->SetPointSize(4.0);
-				pcontact->getNActor()->GetProperty()->SetPointSize(4.0);
+				pcontact->getPActor()->GetProperty()->SetPointSize(10.0);
+				pcontact->getNActor()->GetProperty()->SetPointSize(10.0);
+
+				pcontact->getPActor()->GetProperty()->EdgeVisibilityOn();
+				pcontact->getNActor()->GetProperty()->EdgeVisibilityOn();
 			}
 		}
 		return 0;
@@ -238,13 +237,14 @@ public:
 			
 		play = sliderbar->getButtonRepresentation()->GetState() ? true : false;
 
+		if (play) {
+			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
+		}
+
 		stringstream ss("");
 		ss << "Current Time = " << Model::stepCollection[Model::step];
 		currenttimer->getTextActor()->SetInput(ss.str().c_str());
 
-		if (play) {
-			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
-		}
 		sliderbar->getSliderRep()->SetValue(Model::step);
 
 		for (auto &pmodel : pModels) {
@@ -329,7 +329,6 @@ public:
 		
 		// Add the actor to the scene
 		renderer->AddActor(actor);
-		AddMainActor();
 
 		renderer->GradientBackgroundOn();
 		renderer->SetBackground2(13.0 / 255.0, 71.0 / 255.0, 161.0 / 255.0);
@@ -404,6 +403,7 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 			pCtr->IsPlay() = false;
 			pCtr->getSliderbar()->getButtonRepresentation()->SetState(0);
 			Model::step = (Model::step == Model::stepNum - 1) ? Model::stepNum - 1 : Model::step + 1;
+
 		}
 
 		if (strcmp(iren->GetKeySym(), "v") == 0) {

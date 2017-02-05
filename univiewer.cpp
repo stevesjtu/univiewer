@@ -106,9 +106,11 @@ int main(int argc, char *argv[])
 		vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
 	
-	actor->GetProperty()->SetLineWidth(4);
+	actor->GetProperty()->SetLineWidth(2);
 	actor->GetProperty()->SetPointSize(10);
-	actor->GetProperty()->SetOpacity(0.5);
+
+	actor->GetProperty()->SetEdgeColor(1.0, 0.0, 0.0);
+	actor->GetProperty()->EdgeVisibilityOff();
 	
 	vtkSmartPointer<vtkRenderer> renderer =
 		vtkSmartPointer<vtkRenderer>::New();
