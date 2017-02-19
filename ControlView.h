@@ -113,11 +113,9 @@ protected:
 	shared_ptr<CurrentTimer> currenttimer;
 	shared_ptr<LookUpTable> lookuptable;
 	shared_ptr<CommandText> cText;
+	vector<shared_ptr<CommandText> > cTextBodies;
 	// for animation and UI
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
-	//vtkSmartPointer<CommandSubclass> timerCallback;
-	//vtkSmartPointer<vtkCallbackCommand> keypressCallback;
-	//vtkSmartPointer<vtkCallbackCommand> windowCallback;
 
 	// main part of visulization
 	vector<shared_ptr<Model>> pModels;
@@ -151,15 +149,16 @@ public:
 
 	vector<shared_ptr<Model>> & getModels() { return pModels; }
 	vector<shared_ptr<ContactData>> &getContactData() { return pContacts; }
-	vtkSmartPointer<vtkProgrammableFilter> & getProgrammableFilter() { return programmableFilter; }
+	vtkSmartPointer<vtkProgrammableFilter> getProgrammableFilter() { return programmableFilter; }
 
-	shared_ptr<CurrentTimer> &getCurrentTimer() {return currenttimer;}
-	shared_ptr<Axesline> &getAxesline() { return axesline; }
-	shared_ptr<Sliderbar> &getSliderbar() { return sliderbar; }
+	shared_ptr<CommandText> getCommandText() { return cText; }
+	vector<shared_ptr<CommandText>> &getCommandTextBodies() { return cTextBodies; }
+	shared_ptr<CurrentTimer> getCurrentTimer() {return currenttimer;}
+	shared_ptr<Axesline> getAxesline() { return axesline; }
+	shared_ptr<Sliderbar> getSliderbar() { return sliderbar; }
 
-    vtkSmartPointer<vtkRenderer> &getRenderer(){return renderer;}
-    vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
-    //svtkSmartPointer<CommandSubclass> &getTimerCallback(){return timerCallback;}
+    vtkSmartPointer<vtkRenderer> getRenderer(){return renderer;}
+    vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor(){return renderWindowInteractor;}
 
 	virtual int inputModelfiles(const int& argc,  char* argv[]) 
 	{
@@ -342,9 +341,27 @@ public:
 		// command text
 		cText = CommandText::New();
 		cText->setRenderWindowInteractor(renderWindowInteractor);
-		cText->setCommandTextContent("System View");
-		cText->setTextSizePosition();
-		cText->setTextCallback();
+		int *winSize = renderWindowInteractor->GetRenderWindow()->GetSize();
+		cText->setCommandTextContent("System View", 1.0, 1.0, 1.0, 0.5, 1);
+		//cText->setTextSizePosition(10, winSize[1] - 30, 20);
+		vtkSmartPointer<systemReleaseTextCallback> systemRelease = vtkSmartPointer<systemReleaseTextCallback>::New();
+		cText->setTextCallback(systemRelease);
+
+		std::stringstream ss("");
+		for (unsigned i = 0; i < pModels.size(); ++i) {
+			shared_ptr<CommandText> ct = CommandText::New();
+			ct->setRenderWindowInteractor(renderWindowInteractor);
+			ss.str("");
+			ss.clear();
+			ss << "* Body_" << i;
+			ct->setCommandTextContent(ss.str(), 1.0, 1.0, 1.0, 0.5, 1);
+			//ct->setTextSizePosition(18, winSize[1] - 30 - 15* (i+1), 15);
+			vtkSmartPointer<releaseTextCallback> release = vtkSmartPointer<releaseTextCallback>::New();
+			ct->setTextCallback(release);
+			cTextBodies.push_back(ct);
+			cText->addLeafNode(ct->getTextWidget());
+		}
+
 
 		// axesline part
 		axesline = Axesline::New();
@@ -394,29 +411,24 @@ void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(even
 	int* windowSize = window->GetSize();
 	ControlView* pCtr = static_cast<ControlView*>(clientData);
 	
-	static int isfirst = 0;   // a trick to prevent read Sliderbar before it is created.
-	if (isfirst > 1) {
-		if(Model::stepNum!=0){
+	if(Model::stepNum!=0){
 
-			pCtr->getCurrentTimer()->getTextActor()->SetPosition(windowSize[0] - 180, windowSize[1] - 25);
+		pCtr->getCurrentTimer()->getTextActor()->SetPosition(windowSize[0] - 180, windowSize[1] - 25);
 
-			pCtr->getSliderbar()->getSliderRep()->GetPoint1Coordinate()->SetValue(windowSize[0] - 260 - windowSize[0]/4.0, windowSize[1] - 15);
+		pCtr->getSliderbar()->getSliderRep()->GetPoint1Coordinate()->SetValue(windowSize[0] - 260 - windowSize[0]/4.0, windowSize[1] - 15);
+		pCtr->getSliderbar()->getSliderRep()->GetPoint2Coordinate()->SetValue(windowSize[0] - 260, windowSize[1] - 15);
 
-			pCtr->getSliderbar()->getSliderRep()->GetPoint2Coordinate()->SetValue(windowSize[0] - 260, windowSize[1] - 15);
-
-			//vtkSmartPointer<vtkCoordinate> upperRight = vtkSmartPointer<vtkCoordinate>::New();
-			//upperRight->SetCoordinateSystemToNormalizedDisplay();
-			//upperRight->SetValue(1.0, 1.0);
-
-			int width = 20, height = 20;
-			pCtr->getSliderbar()->getPlayButton()->setButtonSizePosition(width, height, windowSize[0] - 235 - width, windowSize[1] - 5 - height);
-
-			pCtr->getSliderbar()->getNextButton()->setButtonSizePosition(width, height, windowSize[0] - 210 - width, windowSize[1] - 5 - height);
-			pCtr->getSliderbar()->getPrevButton()->setButtonSizePosition(width, height, windowSize[0] - 185 - width, windowSize[1] - 5 - height);
-
-		}
+		int width = 20, height = 20;
+		pCtr->getSliderbar()->getPlayButton()->setButtonSizePosition(width, height, windowSize[0] - 235 - width, windowSize[1] - 5 - height);
+		pCtr->getSliderbar()->getNextButton()->setButtonSizePosition(width, height, windowSize[0] - 210 - width, windowSize[1] - 5 - height);
+		pCtr->getSliderbar()->getPrevButton()->setButtonSizePosition(width, height, windowSize[0] - 185 - width, windowSize[1] - 5 - height);
 	}
-	++isfirst;
+
+	pCtr->getCommandText()->setTextSizePosition(10, windowSize[1] - 30, 20);
+	for (unsigned i = 0; i < pCtr->getModels().size(); ++i) {
+		pCtr->getCommandTextBodies()[i]->setTextSizePosition(10, windowSize[1] - 30 - 15 * (i+1), 15);
+	}
+
 }
 
 void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
@@ -430,10 +442,14 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
     if(Model::stepNum!=0){
 	    if (strcmp(iren->GetKeySym(), "space") == 0){
 	        pCtr->IsPlay() = !pCtr->IsPlay();
-			if (pCtr->IsPlay())
+			if (pCtr->IsPlay()) {
 				pCtr->getSliderbar()->getPlayButton()->setState(1);
-			else
+				pCtr->IsStepPlay() = false;
+			}
+			else {
 				pCtr->getSliderbar()->getPlayButton()->setState(0);
+			}
+				
 	    }
 
 		if (strcmp(iren->GetKeySym(), "b") == 0) {

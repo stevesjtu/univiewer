@@ -375,8 +375,8 @@ public:
 		sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
 		sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
 
-		sliderRep->GetPoint1Coordinate()->SetValue(winsize[0] - 460, winsize[1] - 15);
-		sliderRep->GetPoint2Coordinate()->SetValue(winsize[0] - 260, winsize[1] - 15);
+		//sliderRep->GetPoint1Coordinate()->SetValue(winsize[0] - 260 - winsize[0] / 4.0, winsize[1] - 15);
+		//sliderRep->GetPoint2Coordinate()->SetValue(winsize[0] - 260, winsize[1] - 15);
 
 		sliderRep->SetEndCapLength(0);
 
@@ -400,8 +400,8 @@ public:
 		CreateImagePause(imagePause);
 		playButton = CommandButton::New();
 		playButton->setTwoStatesButtonContent(imagePlay, imagePause, renderWindowInteractor);
-		int width = 20, height = 20;
-		playButton->setButtonSizePosition(width, height, winsize[0] - 235 - width, winsize[1] - 5 - height);
+		//int width = 20, height = 20;
+		//playButton->setButtonSizePosition(width, height, winsize[0] - 235 - width, winsize[1] - 5 - height);
 		vtkSmartPointer<playCallback> playButtonCallback = vtkSmartPointer<playCallback>::New();
 		playButtonCallback->play = &play;
 		playButtonCallback->stepPlay = &stepPlay;
@@ -417,8 +417,8 @@ public:
 		nextButton->setOneStatesButtonContent(imageNext, renderWindowInteractor);
 		prevButton->setOneStatesButtonContent(imagePrev, renderWindowInteractor);
 	
-		nextButton->setButtonSizePosition(width, height, winsize[0] - 210 - width, winsize[1] - 5 - height);
-		prevButton->setButtonSizePosition(width, height, winsize[0] - 185 - width, winsize[1] - 5 - height);
+		//nextButton->setButtonSizePosition(width, height, winsize[0] - 210 - width, winsize[1] - 5 - height);
+		//prevButton->setButtonSizePosition(width, height, winsize[0] - 185 - width, winsize[1] - 5 - height);
 		// call back
 		vtkSmartPointer<NextPressedCallback> nextPressedCallback = vtkSmartPointer<NextPressedCallback>::New();
 		nextPressedCallback->step = &step;
