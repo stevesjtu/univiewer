@@ -112,12 +112,12 @@ protected:
 	shared_ptr<Sliderbar> sliderbar;
 	shared_ptr<CurrentTimer> currenttimer;
 	shared_ptr<LookUpTable> lookuptable;
-
+	shared_ptr<CommandText> cText;
 	// for animation and UI
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
-	vtkSmartPointer<CommandSubclass> timerCallback;
-	vtkSmartPointer<vtkCallbackCommand> keypressCallback;
-	vtkSmartPointer<vtkCallbackCommand> windowCallback;
+	//vtkSmartPointer<CommandSubclass> timerCallback;
+	//vtkSmartPointer<vtkCallbackCommand> keypressCallback;
+	//vtkSmartPointer<vtkCallbackCommand> windowCallback;
 
 	// main part of visulization
 	vector<shared_ptr<Model>> pModels;
@@ -125,7 +125,7 @@ protected:
 	//////////////////////////////////
 	//////////////////////////////////
 
-	bool play;
+	bool play, stepPlay;
 	bool ShowMarker;
 	bool ShowMesh;
     bool ShowLabel;
@@ -133,15 +133,18 @@ protected:
 	vector<string> dispFiles;
 	vector<string> contFiles;
 	
+	//int nextButtonState, prevButtonState;
+
 public:
 	virtual ~ControlView() {}
-	ControlView(): play(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
+	ControlView(): play(false), stepPlay(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
 	static shared_ptr<ControlView> New()
 	{
 		return make_shared<ControlView>();
 	}
 	
 	inline bool & IsPlay() { return play; }
+	inline bool & IsStepPlay() { return stepPlay; }
 	inline bool & IsShowMarker() { return ShowMarker; }
 	inline bool & IsShowMesh() { return ShowMesh; }
     inline bool & IsShowLabel() { return ShowLabel; }
@@ -156,7 +159,7 @@ public:
 
     vtkSmartPointer<vtkRenderer> &getRenderer(){return renderer;}
     vtkSmartPointer<vtkRenderWindowInteractor> &getRenderWindowInteractor(){return renderWindowInteractor;}
-    vtkSmartPointer<CommandSubclass> &getTimerCallback(){return timerCallback;}
+    //svtkSmartPointer<CommandSubclass> &getTimerCallback(){return timerCallback;}
 
 	virtual int inputModelfiles(const int& argc,  char* argv[]) 
 	{
@@ -183,10 +186,10 @@ public:
 			readDispfile(dispFiles, pModels);
 
 			sliderbar = Sliderbar::New();
-			sliderbar->setSliderBar(renderer, renderWindowInteractor, Model::step, Model::stepNum);
+			sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
 
 			currenttimer = CurrentTimer::New();
-			currenttimer->setTextActor();
+			currenttimer->setTextActor(renderWindow);
 			renderer->AddActor2D(currenttimer->getTextActor());
 		}
 
@@ -213,48 +216,72 @@ public:
 		if (!dispFiles.empty()) {
 			programmableFilter->SetExecuteMethod(f, this);
 			renderWindowInteractor->CreateRepeatingTimer(10);
-			timerCallback = vtkSmartPointer<CommandSubclass>::New();
+			vtkSmartPointer<CommandSubclass> timerCallback = vtkSmartPointer<CommandSubclass>::New();
 			timerCallback->ProgrammableFilter = programmableFilter;
 			renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, timerCallback);
 		}
 	}
 
 	virtual void setKeyboardMethod(void (*f)(vtkObject* , long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
-		keypressCallback = vtkSmartPointer<vtkCallbackCommand>::New();
+		vtkSmartPointer<vtkCallbackCommand> keypressCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 		keypressCallback->SetCallback(f);
 		keypressCallback->SetClientData(this);
 		renderWindowInteractor->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
 	}
 
 	virtual void setWindowMethod(void (*f)(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
-		windowCallback = vtkSmartPointer<vtkCallbackCommand>::New();
+		vtkSmartPointer<vtkCallbackCommand> windowCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 		windowCallback->SetCallback(f);
 		windowCallback->SetClientData(this);
 		renderWindow->AddObserver(vtkCommand::ModifiedEvent, windowCallback);
 	}
 
-	virtual void Update() {
-			
-		play = sliderbar->getButtonRepresentation()->GetState() ? true : false;
-
-		if (play) {
-			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
-		}
-
+	void playThisStep(unsigned &step)
+	{
 		stringstream ss("");
-		ss << "Current Time = " << Model::stepCollection[Model::step];
+		ss << "Current Time = " << Model::stepCollection[step];
 		currenttimer->getTextActor()->SetInput(ss.str().c_str());
 
-		sliderbar->getSliderRep()->SetValue(Model::step);
+		sliderbar->getSliderRep()->SetValue(step);
 
 		for (auto &pmodel : pModels) {
-			pmodel->updateDisp(Model::step);
+			pmodel->updateDisp(step);
 		}
 
 		for (auto &pcontact : pContacts) {
-			pcontact->UpdateUGrid(Model::step);
+			pcontact->UpdateUGrid(step);
 		}
+	}
 
+	virtual void Update() {
+			
+		//if (nextButtonState != sliderbar->getNextButton()->getState()) {
+		//	play = false;
+		//	sliderbar->getPlayButton()->setState(0);
+		//	Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
+		//	playThisStep(Model::step);
+		//	nextButtonState = sliderbar->getNextButton()->getState();
+		//}
+
+		//if (prevButtonState != sliderbar->getPrevButton()->getState()) {
+		//	play = false;
+		//	sliderbar->getPlayButton()->setState(0);
+		//	Model::step = (Model::step == 0) ? 0 : Model::step - 1;
+		//	playThisStep(Model::step);
+		//	prevButtonState = sliderbar->getPrevButton()->getState();
+		//}
+
+		//play = sliderbar->getPlayButton()->getState()? true: false;
+		if (stepPlay) {
+			play = false;
+			sliderbar->getPlayButton()->setState(0);
+			playThisStep(Model::step);
+		}
+		
+		if (play) {
+			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
+			playThisStep(Model::step);
+		}
 	}
 
 	virtual void setRender() {
@@ -294,6 +321,9 @@ public:
 		renderWindow->SetSize(800, 640);
 		renderWindow->SetWindowName("MLV 2.0");
         renderWindow->Render();
+		renderWindow->PointSmoothingOn();
+		renderWindow->LineSmoothingOn();
+		renderWindow->PolygonSmoothingOn();
 
 		renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 		renderWindowInteractor->SetRenderWindow(renderWindow);
@@ -306,6 +336,16 @@ public:
 	}
 
 	virtual void Display() {
+
+		//nextButtonState = sliderbar->getNextButton()->getState();
+		//prevButtonState = sliderbar->getPrevButton()->getState();
+		// command text
+		cText = CommandText::New();
+		cText->setRenderWindowInteractor(renderWindowInteractor);
+		cText->setCommandTextContent("System View");
+		cText->setTextSizePosition();
+		cText->setTextCallback();
+
 		// axesline part
 		axesline = Axesline::New();
 		axesline->setAxesActor();
@@ -358,28 +398,22 @@ void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(even
 	if (isfirst > 1) {
 		if(Model::stepNum!=0){
 
-			pCtr->getCurrentTimer()->getTextActor()->SetPosition(windowSize[0] - 170, windowSize[1] - 25);
+			pCtr->getCurrentTimer()->getTextActor()->SetPosition(windowSize[0] - 180, windowSize[1] - 25);
 
-			pCtr->getSliderbar()->getSliderRep()->GetPoint1Coordinate()->SetValue(windowSize[0] - 200 - windowSize[0]/4.0, windowSize[1] - 15);
+			pCtr->getSliderbar()->getSliderRep()->GetPoint1Coordinate()->SetValue(windowSize[0] - 260 - windowSize[0]/4.0, windowSize[1] - 15);
 
-			pCtr->getSliderbar()->getSliderRep()->GetPoint2Coordinate()->SetValue(windowSize[0] - 200, windowSize[1] - 15);
+			pCtr->getSliderbar()->getSliderRep()->GetPoint2Coordinate()->SetValue(windowSize[0] - 260, windowSize[1] - 15);
 
-			vtkSmartPointer<vtkCoordinate> upperRight = vtkSmartPointer<vtkCoordinate>::New();
-			upperRight->SetCoordinateSystemToNormalizedDisplay();
-			upperRight->SetValue(1.0, 1.0);
+			//vtkSmartPointer<vtkCoordinate> upperRight = vtkSmartPointer<vtkCoordinate>::New();
+			//upperRight->SetCoordinateSystemToNormalizedDisplay();
+			//upperRight->SetValue(1.0, 1.0);
 
-			double bds[6];
-			double sz = 20.0;
+			int width = 20, height = 20;
+			pCtr->getSliderbar()->getPlayButton()->setButtonSizePosition(width, height, windowSize[0] - 235 - width, windowSize[1] - 5 - height);
 
-			bds[0] = upperRight->GetComputedDisplayValue(pCtr->getRenderer())[0] - sz - 175;
-			bds[1] = bds[0] + sz;
-			bds[2] = upperRight->GetComputedDisplayValue(pCtr->getRenderer())[1] - sz - 5;
-			bds[3] = bds[2] + sz;
-			bds[4] = bds[5] = 0.0;
+			pCtr->getSliderbar()->getNextButton()->setButtonSizePosition(width, height, windowSize[0] - 210 - width, windowSize[1] - 5 - height);
+			pCtr->getSliderbar()->getPrevButton()->setButtonSizePosition(width, height, windowSize[0] - 185 - width, windowSize[1] - 5 - height);
 
-			// Scale to 1, default is .5
-			pCtr->getSliderbar()->getButtonRepresentation()->SetPlaceFactor(1.0);
-			pCtr->getSliderbar()->getButtonRepresentation()->PlaceWidget(bds);
 		}
 	}
 	++isfirst;
@@ -396,20 +430,24 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
     if(Model::stepNum!=0){
 	    if (strcmp(iren->GetKeySym(), "space") == 0){
 	        pCtr->IsPlay() = !pCtr->IsPlay();
-			pCtr->getSliderbar()->getButtonRepresentation()->SetState(!pCtr->getSliderbar()->getButtonRepresentation()->GetState());
+			if (pCtr->IsPlay())
+				pCtr->getSliderbar()->getPlayButton()->setState(1);
+			else
+				pCtr->getSliderbar()->getPlayButton()->setState(0);
 	    }
 
 		if (strcmp(iren->GetKeySym(), "b") == 0) {
 			pCtr->IsPlay() = false;
-			pCtr->getSliderbar()->getButtonRepresentation()->SetState(0);
+			pCtr->getSliderbar()->getPlayButton()->setState(0);
 			Model::step = (Model::step == Model::stepNum - 1) ? Model::stepNum - 1 : Model::step + 1;
-
+			pCtr->IsStepPlay() = true;
 		}
 
 		if (strcmp(iren->GetKeySym(), "v") == 0) {
 			pCtr->IsPlay() = false;
-			pCtr->getSliderbar()->getButtonRepresentation()->SetState(0);
+			pCtr->getSliderbar()->getPlayButton()->setState(0);
 			Model::step = (Model::step == 0) ? 0 : Model::step - 1;
+			pCtr->IsStepPlay() = true;
 		}
     }
 	if (strcmp(iren->GetKeySym(), "i") == 0) {
