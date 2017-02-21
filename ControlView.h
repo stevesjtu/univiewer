@@ -345,6 +345,7 @@ public:
 		cText->setCommandTextContent("System View", 1.0, 1.0, 1.0, 0.5, 1);
 		//cText->setTextSizePosition(10, winSize[1] - 30, 20);
 		vtkSmartPointer<systemReleaseTextCallback> systemRelease = vtkSmartPointer<systemReleaseTextCallback>::New();
+		systemRelease->renderWindowInteractor = renderWindowInteractor;
 		cText->setTextCallback(systemRelease);
 
 		std::stringstream ss("");

@@ -195,7 +195,7 @@ public:
 	NextPressedCallback() {}
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
-		*step = (*step == *stepNum - 1) ? 0 : *step + 1;
+		*step = (*step == *stepNum - 1) ? *stepNum - 1 : *step + 1;
 		*stepPlay = true;
 	}
 	unsigned *step, *stepNum;

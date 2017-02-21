@@ -77,8 +77,10 @@ public:
 		for (auto &tw : textWidgetLeaf) {
 			tw->SetEnabled(!tw->GetEnabled());
 		}
+		renderWindowInteractor->Render();
 	}
 
+	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 };
 
 
