@@ -9,10 +9,12 @@
 #include "vtkPointData.h"
 #include "vtkScalarBarActor.h"
 
+#include "Model.h"
+
 class LookUpTable
 {
 private:
-	vtkSmartPointer<vtkDoubleArray> scalars;
+
 	vtkSmartPointer<vtkScalarBarActor> scalarBar;
 	vtkSmartPointer<vtkLookupTable> hueLut;
 public:
@@ -24,31 +26,31 @@ public:
 	}
 
 	vtkSmartPointer<vtkScalarBarActor> &getScalarBar() { return scalarBar; }
-	vtkSmartPointer<vtkDoubleArray> &getScalars() { return scalars; }
-	void setScalars(vtkSmartPointer<vtkDataSetMapper> &mapper, const unsigned nodenum)
+
+	void setScalars(vtkSmartPointer<vtkDataSetMapper> &mapper, vector<shared_ptr<Model>> &pModels)
 	{
-		scalars = vtkSmartPointer<vtkDoubleArray>::New();
-		scalars->SetNumberOfValues(nodenum);
-
-		mapper->ScalarVisibilityOn();
-		mapper->SetScalarModeToUsePointData();
-		mapper->SetColorModeToMapScalars();
-		mapper->Update();
-
-		scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
-		scalarBar->SetLookupTable(mapper->GetLookupTable());
-		scalarBar->SetTitle("Title");
-		scalarBar->SetNumberOfLabels(6);
 
 		hueLut = vtkSmartPointer<vtkLookupTable>::New();
 		hueLut->SetTableRange(0, 1);
-		hueLut->SetHueRange(0, 1);
-		hueLut->SetSaturationRange(1, 1);
-		hueLut->SetValueRange(1, 1);
 		hueLut->Build();
 
+		mapper->SetScalarRange(0.0, 1.0);
+		mapper->ScalarVisibilityOn();
+		mapper->SetScalarModeToUsePointData();
+		mapper->SetColorModeToMapScalars();
 		mapper->SetLookupTable(hueLut);
-		scalarBar->SetLookupTable(hueLut);
+
+		//scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+		//scalarBar->SetLookupTable(mapper->GetLookupTable());
+		//scalarBar->SetTitle("Data");
+		//scalarBar->SetNumberOfLabels(6);
+
+		//scalarBar->GetPositionCoordinate()->SetCoordinateSystemToDisplay();
+		//scalarBar->GetPosition2Coordinate()->SetCoordinateSystemToDisplay();
+		//scalarBar->SetPosition(10, 10);
+		//scalarBar->SetPosition2(50, 300);
+		//
+		//scalarBar->SetLookupTable(hueLut);
 	}
 };
 

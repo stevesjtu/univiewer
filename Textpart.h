@@ -148,6 +148,7 @@ public:
 		textRepresentation->GetPositionCoordinate()->SetValue(leftbuttomX, leftbuttomY); // absolute value
 		std::string str = textRepresentation->GetText();
 		textRepresentation->GetPosition2Coordinate()->SetValue(str.length() * height / 2 , height); //relative value
+		
 	}
 
 	void setTextCallback(vtkSmartPointer<releaseTextCallback> releasetext)

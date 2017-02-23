@@ -21,7 +21,8 @@
 
 void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
 											  vector<string> &dispFiles,
-											  vector<string> &contFiles)
+											  vector<string> &contFiles,
+											  vector<string> &nodeDatafiles)
 {
 	if (argc == 1) {
 		cout << "Type 'Univiewer /h' for more help." << endl;
@@ -41,6 +42,9 @@ void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
 				break;
 			case 'o':
 				ptr_vector_name = &dispFiles;
+				break;
+			case 'n':
+				ptr_vector_name = &nodeDatafiles;
 				break;
 			case 'c':
 				ptr_vector_name = &contFiles;
@@ -130,7 +134,7 @@ protected:
 
 	vector<string> dispFiles;
 	vector<string> contFiles;
-	
+	vector<string> nodeDataFiles;
 	//int nextButtonState, prevButtonState;
 
 public:
@@ -163,7 +167,7 @@ public:
 	virtual int inputModelfiles(const int& argc,  char* argv[]) 
 	{
 		vector<string> modelFiles;
-		argParser(argc, argv, modelFiles, dispFiles, contFiles);
+		argParser(argc, argv, modelFiles, dispFiles, contFiles, nodeDataFiles);
 		
 		pModels.resize(modelFiles.size());
 		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
@@ -208,6 +212,13 @@ public:
 				renderer->AddActor(pcontact->getNActor());
 			}
 		}
+
+		if (!this->nodeDataFiles.empty()) {
+			readNodeDatafile(nodeDataFiles[0], pModels);
+		}
+
+
+
 		return 0;
 	}
 	
@@ -254,23 +265,6 @@ public:
 
 	virtual void Update() {
 			
-		//if (nextButtonState != sliderbar->getNextButton()->getState()) {
-		//	play = false;
-		//	sliderbar->getPlayButton()->setState(0);
-		//	Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
-		//	playThisStep(Model::step);
-		//	nextButtonState = sliderbar->getNextButton()->getState();
-		//}
-
-		//if (prevButtonState != sliderbar->getPrevButton()->getState()) {
-		//	play = false;
-		//	sliderbar->getPlayButton()->setState(0);
-		//	Model::step = (Model::step == 0) ? 0 : Model::step - 1;
-		//	playThisStep(Model::step);
-		//	prevButtonState = sliderbar->getPrevButton()->getState();
-		//}
-
-		//play = sliderbar->getPlayButton()->getState()? true: false;
 		if (stepPlay) {
 			play = false;
 			sliderbar->getPlayButton()->setState(0);
@@ -336,8 +330,6 @@ public:
 
 	virtual void Display() {
 
-		//nextButtonState = sliderbar->getNextButton()->getState();
-		//prevButtonState = sliderbar->getPrevButton()->getState();
 		// command text
 		cText = CommandText::New();
 		cText->setRenderWindowInteractor(renderWindowInteractor);
@@ -381,8 +373,8 @@ public:
 		}
 		
 		// lookuptable part
-		//lookuptable = LookUpTable::New();
-		//lookuptable->setScalars(mapper, Model::nodeNums);
+		lookuptable = LookUpTable::New();
+		lookuptable->setScalars(mapper, pModels);
 		//renderer->AddActor2D(lookuptable->getScalarBar());
 		
 		// Add the actor to the scene

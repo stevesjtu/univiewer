@@ -16,7 +16,9 @@
 #include "vtkTriangle.h"
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
+#include "vtkPointData.h"
 #include "vtkUnsignedCharArray.h"
+#include "vtkDoubleArray.h"
 // data structure
 #include "vtkXMLUnstructuredGridReader.h"
 #include "vtkUnstructuredGrid.h"
@@ -133,6 +135,9 @@ protected:
 	vtkSmartPointer<vtkActor> actor;
 	shared_ptr<FEMesh> feMesh;
 	shared_ptr<Labelnode> labelnode;
+
+	vector<vtkSmartPointer<vtkDoubleArray>> fintVec;
+	
 public:
 	static unsigned count, nodeNums, elemNums, stepNum, step;
 	static vector<double> stepCollection;
@@ -155,7 +160,9 @@ public:
 	inline vtkSmartPointer<vtkActor2D> &getLabelactor() { return labelnode->getlabelActor(); }
 	inline vtkSmartPointer<vtkActor> &getActor() { return actor; }
 	inline shared_ptr<FEMesh> &getFEMesh() { return feMesh; }
-	
+	inline vector<vtkSmartPointer<vtkDoubleArray>> &getFintVec() { return fintVec; }
+	inline vtkSmartPointer<vtkDoubleArray> &getFintVec(int s) { return fintVec[s]; }
+
 	void setOffset(unsigned index) { offset = index; }
 	void readModel(const string&);
 	void setLabelnode();
@@ -196,6 +203,7 @@ void Model::readModel(const string&file)
 void Model::updateDisp(unsigned s)
 {
 	feMesh->getUGrid()->SetPoints(feMesh->getpvtkPnts(s));
+	feMesh->getUGrid()->GetPointData()->SetScalars(fintVec[s]);
 }
 
 void Model::setLabelnode()
@@ -203,7 +211,6 @@ void Model::setLabelnode()
 	labelnode = Labelnode::New();
 	labelnode->setLabelActor(feMesh->getUGrid());
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -353,9 +360,6 @@ void ContactData::InitializeUGrid()
 	auto &pfeMesh = pModel->getFEMesh();
 	auto &nfeMesh = nModel->getFEMesh();
 
-	//pUGrids.resize(Model::stepNum);
-	//nUGrids.resize(Model::stepNum);
-
 	pMappers.resize(Model::stepNum);
 	nMappers.resize(Model::stepNum);
 
@@ -368,7 +372,7 @@ void ContactData::InitializeUGrid()
 	for (unsigned s = 0; s < Model::stepNum; ++s) {
 		vtkSmartPointer<vtkUnstructuredGrid> pUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 		vtkSmartPointer<vtkUnstructuredGrid> nUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
-
+		
 		pUGrid->SetPoints(pfeMesh->getpvtkPnts(s));
 		nUGrid->SetPoints(nfeMesh->getpvtkPnts(s));
 		
@@ -432,7 +436,7 @@ void ContactData::InitializeUGrid()
 
 		nUGrid->SetCells(nTypes.data(), nCells);
 		nUGrid->GetCellData()->SetScalars(nColors);
-
+		
 		pMappers[s] = vtkSmartPointer<vtkDataSetMapper>::New();
 		pMappers[s]->SetInputData(pUGrid);
 
@@ -587,6 +591,8 @@ void readContfile(const string& contfile, vector<shared_ptr<ContactData>> &pCont
 				readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_NODE, s));
 			} // loop for ContactData
 		} // loop for steps
+
+		infile.close();
 	}
 	else {
 		cout << "Can not open contfile." << endl;
@@ -595,8 +601,52 @@ void readContfile(const string& contfile, vector<shared_ptr<ContactData>> &pCont
 
 }
 
+void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model>> &pModels)
+{
+	fstream infile;
+	infile.open(nodedatafile, ios::in | ios::binary);
+
+	
+	if (infile.is_open()) {
+		vector<vector<double>> dataCollect;
+		vector<double> databuffer(Model::nodeNums * 3);
+		while (!infile.eof()) {
+			infile.read((char*)databuffer.data(), sizeof(double)* Model::nodeNums * 3);
+			dataCollect.push_back(databuffer);
+		}
+		dataCollect.pop_back();
+		infile.close();
+		// make sure the time step
+		if (dataCollect.size() == Model::stepNum) {
+
+			for (auto &pModel : pModels) {
+				pModel->getFintVec().resize(Model::stepNum);
+			}
+
+			for (unsigned s = 0; s < Model::stepNum; ++s) {
+				for (auto &pModel : pModels) {
+					pModel->getFintVec(s) = vtkSmartPointer<vtkDoubleArray>::New();
+					pModel->getFintVec(s)->SetNumberOfComponents(3);
+					for (unsigned n = 0; n < pModel->getNodenum(); ++n) {
+						pModel->getFintVec(s)->InsertNextTupleValue(dataCollect[s].data() + pModel->getOffset() + 3 * n);
+					}
+				}
+			}
+
+			for (auto &pModel : pModels) {
+				pModel->getFEMesh()->getUGrid()->GetPointData()->SetScalars(pModel->getFintVec(0));
+			}
+			
+		}
+		
+	}
+	else {
+		cout << "Can not open NodeDatafile." << endl;
+		exit(0);
+	}
 
 
+}
 
 
 
