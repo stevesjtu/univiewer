@@ -373,8 +373,8 @@ public:
 		}
 		
 		// lookuptable part
-		lookuptable = LookUpTable::New();
-		lookuptable->setScalars(mapper, pModels);
+		//lookuptable = LookUpTable::New();
+		//lookuptable->setScalars(mapper, pModels);
 		//renderer->AddActor2D(lookuptable->getScalarBar());
 		
 		// Add the actor to the scene

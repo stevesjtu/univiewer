@@ -203,7 +203,7 @@ void Model::readModel(const string&file)
 void Model::updateDisp(unsigned s)
 {
 	feMesh->getUGrid()->SetPoints(feMesh->getpvtkPnts(s));
-	feMesh->getUGrid()->GetPointData()->SetScalars(fintVec[s]);
+	//feMesh->getUGrid()->GetPointData()->SetScalars(fintVec[s]);
 }
 
 void Model::setLabelnode()
@@ -581,15 +581,18 @@ void readContfile(const string& contfile, vector<shared_ptr<ContactData>> &pCont
 		}
 		
 		for (unsigned s = 0; s < Model::stepNum; ++s) {
-			for (unsigned c = 0; c < pContacts.size(); ++c) {
-				// primitives
-				readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_TRIANGLE, s));
-				readpairs(infile, pContacts[c]->getPrimitivesPairs(TRIANGLE_NODE, s));
-				readpairs(infile, pContacts[c]->getPrimitivesPairs(EDGE_EDGE, s));
-				readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_EDGE, s));
-				readpairs(infile, pContacts[c]->getPrimitivesPairs(EDGE_NODE, s));
-				readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_NODE, s));
-			} // loop for ContactData
+			//cout << "step: " << s << "\t eof?: " << infile.eof() << endl;
+			if (!infile.eof()) {
+				for (unsigned c = 0; c < pContacts.size(); ++c) {
+					// primitives
+					readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_TRIANGLE, s));
+					readpairs(infile, pContacts[c]->getPrimitivesPairs(TRIANGLE_NODE, s));
+					readpairs(infile, pContacts[c]->getPrimitivesPairs(EDGE_EDGE, s));
+					readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_EDGE, s));
+					readpairs(infile, pContacts[c]->getPrimitivesPairs(EDGE_NODE, s));
+					readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_NODE, s));
+				} // loop for ContactData
+			}
 		} // loop for steps
 
 		infile.close();
