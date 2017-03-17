@@ -43,7 +43,10 @@ void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
 			case 'o':
 				ptr_vector_name = &dispFiles;
 				break;
-			case 'n':
+			//case 'n':
+			//	ptr_vector_name = &nodeDatafiles;
+			//	break;
+			case 's':
 				ptr_vector_name = &nodeDatafiles;
 				break;
 			case 'c':
@@ -116,6 +119,7 @@ protected:
 	shared_ptr<Sliderbar> sliderbar;
 	shared_ptr<CurrentTimer> currenttimer;
 	shared_ptr<LookUpTable> lookuptable;
+
 	shared_ptr<CommandText> cText;
 	vector<shared_ptr<CommandText> > cTextBodies;
 	// for animation and UI
@@ -160,6 +164,7 @@ public:
 	shared_ptr<CurrentTimer> getCurrentTimer() {return currenttimer;}
 	shared_ptr<Axesline> getAxesline() { return axesline; }
 	shared_ptr<Sliderbar> getSliderbar() { return sliderbar; }
+	shared_ptr<LookUpTable> getLookuptable() { return lookuptable; }
 
     vtkSmartPointer<vtkRenderer> getRenderer(){return renderer;}
     vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor(){return renderWindowInteractor;}
@@ -175,11 +180,11 @@ public:
 			pModels[i]->setOffset(Model::nodeNums* 3);
 			pModels[i]->readModel(modelFiles[i]);
 
-			pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
-			pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
+			//pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
+			//pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
 			pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
 			pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
-			//pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
+			pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
 			pModels[i]->getActor()->SetScale(1.0);
 
 			renderer->AddActor(pModels[i]->getActor());
@@ -372,11 +377,13 @@ public:
 			pmodel->getLabelactor()->VisibilityOff();
 		}
 		
-		// lookuptable part
-		//lookuptable = LookUpTable::New();
-		//lookuptable->setScalars(mapper, pModels);
-		//renderer->AddActor2D(lookuptable->getScalarBar());
-		
+		if (!nodeDataFiles.empty()) {
+			// lookuptable part
+			lookuptable = LookUpTable::New();
+			lookuptable->setScalars(pModels);
+			renderer->AddActor2D(lookuptable->getScalarBar());
+		}
+
 		// Add the actor to the scene
 		renderer->AddActor(actor);
 
@@ -420,6 +427,13 @@ void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(even
 	pCtr->getCommandText()->setTextSizePosition(10, windowSize[1] - 30, 20);
 	for (unsigned i = 0; i < pCtr->getModels().size(); ++i) {
 		pCtr->getCommandTextBodies()[i]->setTextSizePosition(10, windowSize[1] - 30 - 15 * (i+1), 15);
+	}
+
+	if (pCtr->getLookuptable()) {
+		double w = windowSize[0] * 70.0 / 800.0;
+		double h = windowSize[1] * 300.0 / 640.0;
+		pCtr->getLookuptable()->getScalarBar()->SetPosition(windowSize[0] - w - 10, 10);
+		pCtr->getLookuptable()->getScalarBar()->SetPosition2(w, h);
 	}
 
 }

@@ -27,30 +27,31 @@ public:
 
 	vtkSmartPointer<vtkScalarBarActor> &getScalarBar() { return scalarBar; }
 
-	void setScalars(vtkSmartPointer<vtkDataSetMapper> &mapper, vector<shared_ptr<Model>> &pModels)
+	void setScalars( vector<shared_ptr<Model>> pModels)
 	{
 
 		hueLut = vtkSmartPointer<vtkLookupTable>::New();
-		hueLut->SetTableRange(0, 1);
+		hueLut->SetHueRange(1.85 / 3.0, 0);
 		hueLut->Build();
 
-		mapper->SetScalarRange(0.0, 1.0);
-		mapper->ScalarVisibilityOn();
-		mapper->SetScalarModeToUsePointData();
-		mapper->SetColorModeToMapScalars();
-		mapper->SetLookupTable(hueLut);
+		for (auto& pmodel : pModels) {
+			pmodel->getMapper()->SetLookupTable(hueLut);
+		}
+		//mapper->SetScalarRange(0.0, 600.0);
+		//mapper->ScalarVisibilityOn();
+		//mapper->SetScalarModeToUsePointData();
+		//mapper->SetColorModeToMapScalars();
+		
+		scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+		scalarBar->SetLookupTable(hueLut);
+		scalarBar->SetTitle("Data");
+		scalarBar->SetNumberOfLabels(8);
 
-		//scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
-		//scalarBar->SetLookupTable(mapper->GetLookupTable());
-		//scalarBar->SetTitle("Data");
-		//scalarBar->SetNumberOfLabels(6);
-
-		//scalarBar->GetPositionCoordinate()->SetCoordinateSystemToDisplay();
-		//scalarBar->GetPosition2Coordinate()->SetCoordinateSystemToDisplay();
-		//scalarBar->SetPosition(10, 10);
-		//scalarBar->SetPosition2(50, 300);
-		//
-		//scalarBar->SetLookupTable(hueLut);
+		scalarBar->GetPositionCoordinate()->SetCoordinateSystemToDisplay();
+		scalarBar->GetPosition2Coordinate()->SetCoordinateSystemToDisplay();
+		
+		scalarBar->SetPosition(800 - 70 - 10, 10);
+		scalarBar->SetPosition2(70, 300);
 	}
 };
 

@@ -133,14 +133,17 @@ protected:
 	unsigned ID, nodeNum, elemNum, offset;
 	
 	vtkSmartPointer<vtkActor> actor;
+	vtkSmartPointer<vtkDataSetMapper> mapper;
+
 	shared_ptr<FEMesh> feMesh;
 	shared_ptr<Labelnode> labelnode;
 
-	vector<vtkSmartPointer<vtkDoubleArray>> fintVec;
+	vector<vtkSmartPointer<vtkDoubleArray>> nodalscalars;
 	
 public:
 	static unsigned count, nodeNums, elemNums, stepNum, step;
 	static vector<double> stepCollection;
+	static vector<pair<double, double>> ranges;
 
 	virtual ~Model() {};
 	Model()
@@ -157,11 +160,13 @@ public:
 
 	inline unsigned getNodenum() { return nodeNum; }
 	inline unsigned getOffset() { return offset; }
-	inline vtkSmartPointer<vtkActor2D> &getLabelactor() { return labelnode->getlabelActor(); }
-	inline vtkSmartPointer<vtkActor> &getActor() { return actor; }
-	inline shared_ptr<FEMesh> &getFEMesh() { return feMesh; }
-	inline vector<vtkSmartPointer<vtkDoubleArray>> &getFintVec() { return fintVec; }
-	inline vtkSmartPointer<vtkDoubleArray> &getFintVec(int s) { return fintVec[s]; }
+	inline vtkSmartPointer<vtkActor2D> getLabelactor() { return labelnode->getlabelActor(); }
+	inline vtkSmartPointer<vtkActor> getActor() { return actor; }
+	inline vtkSmartPointer<vtkDataSetMapper> getMapper() { return mapper; }
+
+	inline shared_ptr<FEMesh> getFEMesh() { return feMesh; }
+	inline vector<vtkSmartPointer<vtkDoubleArray>> &getNodelScalars() { return nodalscalars; }
+	inline vtkSmartPointer<vtkDoubleArray> &getNodelScalars(int s) { return nodalscalars[s]; }
 
 	void setOffset(unsigned index) { offset = index; }
 	void readModel(const string&);
@@ -175,6 +180,8 @@ unsigned Model::elemNums = 0;
 unsigned Model::stepNum = 0;
 unsigned Model::step = 0;
 vector<double> Model::stepCollection = vector<double>(0);
+vector<pair<double, double>> Model::ranges = vector<pair<double, double>>(0);
+
 
 void Model::readModel(const string&file)
 {
@@ -189,7 +196,7 @@ void Model::readModel(const string&file)
 	feMesh->getUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	feMesh->getUGrid() = ugridReader->GetOutput();
 	
-	vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+	mapper = vtkSmartPointer<vtkDataSetMapper>::New();
 	mapper->SetInputData(feMesh->getUGrid());
 	
 	actor = vtkSmartPointer<vtkActor>::New();
@@ -200,16 +207,22 @@ void Model::readModel(const string&file)
 	elemNums += elemNum = feMesh->getUGrid()->GetNumberOfCells();
 }
 
-void Model::updateDisp(unsigned s)
-{
-	feMesh->getUGrid()->SetPoints(feMesh->getpvtkPnts(s));
-	//feMesh->getUGrid()->GetPointData()->SetScalars(fintVec[s]);
-}
 
 void Model::setLabelnode()
 {
 	labelnode = Labelnode::New();
 	labelnode->setLabelActor(feMesh->getUGrid());
+}
+
+void Model::updateDisp(unsigned s)
+{
+	feMesh->getUGrid()->SetPoints(feMesh->getpvtkPnts(s));
+
+	if (!nodalscalars.empty()) {
+		feMesh->getUGrid()->GetPointData()->SetScalars(nodalscalars[s]);
+		mapper->SetScalarRange(ranges[s].first, ranges[s].second);
+	}
+
 }
 
 
@@ -479,14 +492,12 @@ void readDispfile(const vector<string> & filename, vector<shared_ptr<Model>> &pM
 
 		vector<double> datavec(dofs);
 		double steptime;
-		while (!infile.eof()) {
+		while (infile.peek() != EOF) {
 			infile.read((char*)&steptime, sizeof(double));
 			infile.read((char*)datavec.data(), sizeof(double) * (dofs));
 			dispvecCollection.push_back(datavec);
 			Model::stepCollection.push_back(steptime);
 		}
-		dispvecCollection.pop_back();
-		Model::stepCollection.pop_back();
 
 		Model::stepNum = (unsigned)dispvecCollection.size();
 
@@ -608,36 +619,50 @@ void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model>> &pMo
 {
 	fstream infile;
 	infile.open(nodedatafile, ios::in | ios::binary);
-
 	
 	if (infile.is_open()) {
+		double time, min, max;
 		vector<vector<double>> dataCollect;
-		vector<double> databuffer(Model::nodeNums * 3);
-		while (!infile.eof()) {
-			infile.read((char*)databuffer.data(), sizeof(double)* Model::nodeNums * 3);
+		vector<double> databuffer(Model::nodeNums);
+
+		while (infile.peek() != EOF) {
+			infile.read((char*)&time, sizeof(double));
+			infile.read((char*)databuffer.data(), sizeof(double)* Model::nodeNums);
 			dataCollect.push_back(databuffer);
+
+			auto rg = std::minmax_element(databuffer.begin(), databuffer.end());
+
+			min = *rg.first;
+			max = *rg.second;
+
+			Model::ranges.push_back(make_pair(min, max));
+
 		}
-		dataCollect.pop_back();
 		infile.close();
 		// make sure the time step
 		if (dataCollect.size() == Model::stepNum) {
 
 			for (auto &pModel : pModels) {
-				pModel->getFintVec().resize(Model::stepNum);
+				pModel->getNodelScalars().resize(Model::stepNum);
 			}
 
 			for (unsigned s = 0; s < Model::stepNum; ++s) {
+				unsigned nodeoffset = 0;
+
 				for (auto &pModel : pModels) {
-					pModel->getFintVec(s) = vtkSmartPointer<vtkDoubleArray>::New();
-					pModel->getFintVec(s)->SetNumberOfComponents(3);
+					pModel->getNodelScalars(s) = vtkSmartPointer<vtkDoubleArray>::New();
+					pModel->getNodelScalars(s)->SetNumberOfValues(pModel->getNodenum());
+	
 					for (unsigned n = 0; n < pModel->getNodenum(); ++n) {
-						pModel->getFintVec(s)->InsertNextTupleValue(dataCollect[s].data() + pModel->getOffset() + 3 * n);
+						pModel->getNodelScalars(s)->SetValue(n, dataCollect[s][nodeoffset + n]);
 					}
+					
+					nodeoffset += pModel->getNodenum();
 				}
 			}
 
 			for (auto &pModel : pModels) {
-				pModel->getFEMesh()->getUGrid()->GetPointData()->SetScalars(pModel->getFintVec(0));
+				pModel->getFEMesh()->getUGrid()->GetPointData()->SetScalars(pModel->getNodelScalars(0));
 			}
 			
 		}
