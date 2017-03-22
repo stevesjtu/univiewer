@@ -492,9 +492,12 @@ void readDispfile(const vector<string> & filename, vector<shared_ptr<Model>> &pM
 
 		vector<double> datavec(dofs);
 		double steptime;
-		while (infile.peek() != EOF) {
+		while (1) {
 			infile.read((char*)&steptime, sizeof(double));
 			infile.read((char*)datavec.data(), sizeof(double) * (dofs));
+
+			if (infile.fail()) break;
+
 			dispvecCollection.push_back(datavec);
 			Model::stepCollection.push_back(steptime);
 		}
@@ -625,16 +628,16 @@ void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model>> &pMo
 		vector<vector<double>> dataCollect;
 		vector<double> databuffer(Model::nodeNums);
 
-		while (infile.peek() != EOF) {
+		while (1) {
 			infile.read((char*)&time, sizeof(double));
 			infile.read((char*)databuffer.data(), sizeof(double)* Model::nodeNums);
+
+			if (infile.fail()) break;
+
 			dataCollect.push_back(databuffer);
-
 			auto rg = std::minmax_element(databuffer.begin(), databuffer.end());
-
 			min = *rg.first;
 			max = *rg.second;
-
 			Model::ranges.push_back(make_pair(min, max));
 
 		}
