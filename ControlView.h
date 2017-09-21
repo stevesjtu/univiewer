@@ -7,6 +7,7 @@
 #include "Textpart.h"
 #include "Sliderbarpart.h"
 #include "lutpart.h"
+#include "Plotpart.h"
 
 #include "vtkProperty.h"
 // for animation
@@ -386,13 +387,16 @@ public:
 
 		// Add the actor to the scene
 		renderer->AddActor(actor);
-
+		
 		renderer->GradientBackgroundOn();
 		renderer->SetBackground2(13.0 / 255.0, 71.0 / 255.0, 161.0 / 255.0);
 		renderer->SetBackground(144.0 / 255.0, 202.0 / 255.0, 249.0 / 255.0);
 		// Render and interact
 
 		renderWindowInteractor->Start();
+
+		//plotpart p;
+		//p.plot(renderWindow, renderer);
 	}
 
 };
