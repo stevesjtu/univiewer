@@ -185,7 +185,12 @@ public:
 			//pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
 			pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
 			pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
-			pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
+
+			if (pModels[i]->getFEMesh()->getUGrid()->GetCellType(0) == 4)
+				pModels[i]->getActor()->GetProperty()->SetLineWidth(2.5);
+			else
+				pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
+			
 			pModels[i]->getActor()->SetScale(1.0);
 
 			renderer->AddActor(pModels[i]->getActor());

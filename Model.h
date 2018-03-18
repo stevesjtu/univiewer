@@ -195,7 +195,7 @@ void Model::readModel(const string&file)
 	// 
 	feMesh->getUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	feMesh->getUGrid() = ugridReader->GetOutput();
-	
+
 	mapper = vtkSmartPointer<vtkDataSetMapper>::New();
 	mapper->SetInputData(feMesh->getUGrid());
 	
