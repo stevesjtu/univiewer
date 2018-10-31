@@ -88,9 +88,9 @@ public:
 		// Create a vtkUnsignedCharArray container and store the colors in it
 		vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
 		colors->SetNumberOfComponents(3);
-		colors->InsertNextTupleValue(red);
-		colors->InsertNextTupleValue(green);
-		colors->InsertNextTupleValue(blue);
+		colors->InsertNextTypedTuple(red);
+		colors->InsertNextTypedTuple(green);
+		colors->InsertNextTypedTuple(blue);
 		// Color the lines.
 		linesPolyData->GetCellData()->SetScalars(colors);
 		

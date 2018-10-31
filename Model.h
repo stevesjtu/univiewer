@@ -328,7 +328,7 @@ void ContactData::insertNode(
 	node->GetPointIds()->SetId(0, n);
 	// cell color type
 	Cells->InsertNextCell(node);
-	Colors->InsertNextTupleValue(red);
+	Colors->InsertNextTypedTuple(red);
 	Types.push_back(VTK_VERTEX);
 }
 
@@ -343,7 +343,7 @@ void ContactData::insertEdge(
 	line->GetPointIds()->SetId(1, edge[1]);
 	// cell color type
 	Cells->InsertNextCell(line);
-	Colors->InsertNextTupleValue(blue);
+	Colors->InsertNextTypedTuple(blue);
 	Types.push_back(VTK_LINE);
 }
 
@@ -360,7 +360,7 @@ void ContactData::insertTriangle(
 	//nCells->InsertNextCell(nUGrid0->GetCell(t1));
 	// cell color type
 	Cells->InsertNextCell(triangle);
-	Colors->InsertNextTupleValue(green);
+	Colors->InsertNextTypedTuple(green);
 	Types.push_back(VTK_TRIANGLE);
 	
 }
@@ -370,8 +370,8 @@ void ContactData::InitializeUGrid()
 	if (!pModel->getFEMesh()->getIsCalcEdge()) pModel->getFEMesh()->makeEdges();
 	if (!nModel->getFEMesh()->getIsCalcEdge()) nModel->getFEMesh()->makeEdges();
 		
-	auto &pfeMesh = pModel->getFEMesh();
-	auto &nfeMesh = nModel->getFEMesh();
+	const auto &pfeMesh = pModel->getFEMesh();
+	const auto &nfeMesh = nModel->getFEMesh();
 
 	pMappers.resize(Model::stepNum);
 	nMappers.resize(Model::stepNum);
@@ -525,7 +525,7 @@ void readDispfile(const vector<string> & filename, vector<shared_ptr<Model>> &pM
 		// initialize the nodes position of Model feMesh
 		vector<double> node0;
 		for (auto& pmodel : pModels) {
-			auto &feMesh = pmodel->getFEMesh();
+			const auto &feMesh = pmodel->getFEMesh();
 
 			node0.resize(pmodel->getNodenum() * 3);
 			unsigned index = 0;
