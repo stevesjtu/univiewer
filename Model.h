@@ -169,7 +169,9 @@ public:
 	inline vtkSmartPointer<vtkDoubleArray> &getNodelScalars(int s) { return nodalscalars[s]; }
 
 	void setOffset(unsigned index) { offset = index; }
-	void readModel(const string&);
+	void ReadXmlModel(const string&);
+  void ReadTxtModel(const string&);
+
 	void setLabelnode();
 	void updateDisp(unsigned);
 };
@@ -183,7 +185,7 @@ vector<double> Model::stepCollection = vector<double>(0);
 vector<pair<double, double>> Model::ranges = vector<pair<double, double>>(0);
 
 
-void Model::readModel(const string&file)
+void Model::ReadXmlModel(const string&file)
 {
 
 	feMesh = FEMesh::New();
@@ -205,6 +207,32 @@ void Model::readModel(const string&file)
 	// modify the static variables
 	nodeNums += nodeNum = feMesh->getUGrid()->GetNumberOfPoints();
 	elemNums += elemNum = feMesh->getUGrid()->GetNumberOfCells();
+}
+
+void Model::ReadTxtModel(const string& file) {
+  feMesh = FEMesh::New();
+
+  ifstream txtfile(file, ios::in);
+
+  if (txtfile.is_open()) {
+
+
+
+    for(unsigned )
+
+
+
+
+    while (1) {
+      txtfile
+
+      if (txtfile.fail()) break;
+      
+    }
+  }
+
+
+
 }
 
 

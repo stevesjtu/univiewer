@@ -179,7 +179,7 @@ public:
 		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
 			pModels[i] = Model::New();
 			pModels[i]->setOffset(Model::nodeNums* 3);
-			pModels[i]->readModel(modelFiles[i]);
+			pModels[i]->ReadXmlModel(modelFiles[i]);
 
 			//pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
 			//pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
