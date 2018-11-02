@@ -179,8 +179,13 @@ public:
 		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
 			pModels[i] = Model::New();
 			pModels[i]->setOffset(Model::nodeNums* 3);
-			pModels[i]->ReadXmlModel(modelFiles[i]);
 
+			if (modelFiles[i].substr(modelFiles[i].size() - 3).compare(".md") == 0) {
+				pModels[i]->ReadTxtModel(modelFiles[i]);
+			} else if (modelFiles[i].substr(modelFiles[i].size() - 3).compare("xml") == 0) {
+				pModels[i]->ReadXmlModel(modelFiles[i]);
+			}
+			
 			//pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
 			//pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
 			pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);

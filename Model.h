@@ -14,6 +14,8 @@
 #include "vtkLine.h"
 #include "vtkVertex.h"
 #include "vtkTriangle.h"
+#include "vtkHexahedron.h"
+#include "vtkQuadraticHexahedron.h"
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkPointData.h"
@@ -30,8 +32,108 @@
 
 using namespace std;
 
+template<typename T>
+std::ostream & operator<<(std::ostream & s, const std::vector<T> &vec) {
+  if (vec.empty()) return s;
+  s << "(";
+  for(unsigned i=0; i < vec.size()-1; ++i){
+    s << vec[i] << ", ";
+  }
+  s << vec[vec.size()-1] << ")";
+  return s;
+}
+
 typedef vector<pair<unsigned, unsigned>> pairCollect;
 class Model;
+
+// Mdfile means markdown file, 
+// which use # ## ### ... symbol to represent titles
+class Mdfile {
+public:
+  Mdfile() {};
+  Mdfile(const std::string &filename) {
+    this->Open(filename);
+  }
+  virtual~Mdfile() {
+    this->Close();
+  };
+
+  void Open(const std::string &filename ) {
+    infile.open(filename, std::ios::in);
+  }
+  void Close() {
+    infile.close();
+  }
+
+  virtual std::vector<double> GetDoubleArrayFrom(const std::string &title) {
+    JumpTo(title);
+    std::vector<double> double_list;
+    std::string temp_str;
+    while (infile >> temp_str) {
+      if (temp_str[0] == '#') break;
+      double_list.push_back(std::stod(temp_str));
+    }
+    return double_list;
+  }
+
+  virtual std::vector<int> GetIntArrayFrom(const std::string &title) {
+    JumpTo(title);
+    std::vector<int> int_list;
+    std::string temp_str;
+    while (infile >> temp_str) {
+      if (temp_str[0] == '#') break;
+      int_list.push_back(std::stoi(temp_str));
+    }
+    return int_list;
+  }
+
+  virtual std::vector<std::string> GetStringFrom(const std::string &title) {
+    JumpTo(title);
+    std::vector<std::string> str_list;
+    std::string temp_str;
+    while (infile >> temp_str) {
+      if (temp_str[0] == '#') break;
+      str_list.push_back(temp_str);
+    }
+    return str_list;
+  }
+
+  void tryit() {
+    infile.seekg(0, std::ios::beg);
+    std::string str("");
+    infile >> str;
+
+    std::cout<< infile.tellg() <<std::endl;
+    std::cout<< str << std::endl;
+  }
+
+protected:
+  std::ifstream infile;
+  std::streampos pos1;
+
+  void JumpTo(const std::string &title) {
+    infile.seekg(0, std::ios::beg);
+    std::string str("");
+    while(std::getline(infile, str)) { 
+      if (str[0] == '#') {
+        str = str.substr(1);
+        trim(str);
+        if (str.compare(title) == 0) {
+          //pos1 = infile.tellg();
+          break;
+        }
+      }
+    } 
+  }
+
+  void trim(std::string &s) {
+    if (s.empty()) return;
+    s.erase(0,s.find_first_not_of(" "));
+    s.erase(s.find_last_not_of(" ") + 1);
+  }
+
+};
+
 
 ////////////////////////////////////////////////////////////////////////////
 // labelnode
@@ -212,26 +314,63 @@ void Model::ReadXmlModel(const string&file)
 void Model::ReadTxtModel(const string& file) {
   feMesh = FEMesh::New();
 
-  ifstream txtfile(file, ios::in);
+	Mdfile txtfile(file);
+	std::vector<int> modelinfo = txtfile.GetIntArrayFrom("model info");
+	std::vector<int> elemlist = txtfile.GetIntArrayFrom("element list");
+	std::vector<double> nodelist = txtfile.GetDoubleArrayFrom("node list");
+	txtfile.Close();
 
-  if (txtfile.is_open()) {
+	// std::cout<< modelinfo << std::endl;
+	// std::cout<< elemlist << std::endl;
+  // std::cout<< nodelist << std::endl;
 
+	feMesh->getUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	for(unsigned i=0; i< modelinfo[1]; ++i) {
+		double nodes[3] = {nodelist[i*3], nodelist[i*3+1], nodelist[i*3+2]};
+		points->InsertPoint(i, nodes);
+	}
+	feMesh->getUGrid()->SetPoints(points);
+	
+	int vtktype;
+	switch (modelinfo[2])
+	{
+		case 3:
+			vtktype = VTK_TRIANGLE;
+			break;
+		case 8:
+			vtktype = VTK_HEXAHEDRON;
+			break;
+		case 2:
+			vtktype = VTK_LINE;
+			break;
+		case 1:
+			vtktype = VTK_VERTEX;
+			break;
+		default:
+			break;
+	}
 
-    for(unsigned )
+	for(unsigned i=0; i< modelinfo[0]; ++i){
+		std::vector<vtkIdType> element(modelinfo[2]);
+		for(unsigned j=0; j < modelinfo[2]; ++j) {
+			element[j] = (vtkIdType) (*(elemlist.data()+ i*modelinfo[2] + j) - 1);
+		}
+		
+		feMesh->getUGrid()->InsertNextCell(vtktype, (vtkIdType)modelinfo[2], element.data());
+		
+	}
+	
+	mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+	mapper->SetInputData(feMesh->getUGrid());
+	
+	actor = vtkSmartPointer<vtkActor>::New();
+	actor->SetMapper(mapper);
 
-
-
-
-    while (1) {
-      txtfile
-
-      if (txtfile.fail()) break;
-      
-    }
-  }
-
-
+	// modify the static variables
+	nodeNums += nodeNum = feMesh->getUGrid()->GetNumberOfPoints();
+	elemNums += elemNum = feMesh->getUGrid()->GetNumberOfCells();
 
 }
 
