@@ -2,7 +2,7 @@
 #ifndef CONTROLVIEWADDTEXT_H
 #define CONTROLVIEWADDTEXT_H
 
-#include"ControlView.h"
+#include"controlview.h"
 
 class ControlView_addText : public ControlView
 {

@@ -1,7 +1,7 @@
 #pragma once
 #ifndef PLOTPART_H
 #define PLOTPART_H
-#include "ParamDefine.h"
+#include "paramdefine.h"
 
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>

@@ -2,7 +2,7 @@
 #ifndef AXESPART_H
 #define AXESPART_H
 
-#include "ParamDefine.h"
+#include "paramdefine.h"
 
 #include "vtkAxesActor.h"
 #include "vtkOrientationMarkerWidget.h"

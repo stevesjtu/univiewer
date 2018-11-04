@@ -2,7 +2,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include "ParamDefine.h"
+#include "paramdefine.h"
 #include <vector>
 #include <set>
 #include <array>
@@ -60,6 +60,7 @@ public:
 
   void Open(const std::string &filename ) {
     infile.open(filename, std::ios::in);
+    if (!infile.is_open()) std::cout << "Error in open file: " << filename << std::endl;
   }
   void Close() {
     infile.close();
@@ -274,6 +275,9 @@ public:
 	void ReadXmlModel(const string&);
   void ReadTxtModel(const string&);
 
+  void CreateModel(const vector<int> &modelinfo,
+                  const vector<int> &elemlist, const vector<double> &nodelist);
+
 	void setLabelnode();
 	void updateDisp(unsigned);
 };
@@ -314,63 +318,40 @@ void Model::ReadXmlModel(const string&file)
 void Model::ReadTxtModel(const string& file) {
   feMesh = FEMesh::New();
 
-	Mdfile txtfile(file);
-	std::vector<int> modelinfo = txtfile.GetIntArrayFrom("model info");
-	std::vector<int> elemlist = txtfile.GetIntArrayFrom("element list");
-	std::vector<double> nodelist = txtfile.GetDoubleArrayFrom("node list");
-	txtfile.Close();
+  std::vector<int> modelinfo;
+  std::vector<int> elemlist;
+  std::vector<double> nodelist;
 
-	// std::cout<< modelinfo << std::endl;
-	// std::cout<< elemlist << std::endl;
-  // std::cout<< nodelist << std::endl;
+  if (file.substr(file.size() - 3).compare(".md") == 0) {
+	  Mdfile txtfile(file);
+	  modelinfo = txtfile.GetIntArrayFrom("model info");
+	  elemlist = txtfile.GetIntArrayFrom("element list");
+	  nodelist = txtfile.GetDoubleArrayFrom("node list");
+	  txtfile.Close();
+  } else if (file.substr(file.size() - 3).compare("txt") == 0 ){
+    ifstream txtfile(file);
+    if (!txtfile.is_open()) std::cout << "Error in open file: " << file << std::endl;
+    unsigned num_elem, num_node, nofe;
+    txtfile >> num_elem >> num_node >> nofe;
+    modelinfo.push_back(num_elem);
+    modelinfo.push_back(num_node);
+    modelinfo.push_back(nofe);
 
-	feMesh->getUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    elemlist.resize(nofe* num_elem);
+    nodelist.resize(3 * num_node);
 
-	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-	for(unsigned i=0; i< modelinfo[1]; ++i) {
-		double nodes[3] = {nodelist[i*3], nodelist[i*3+1], nodelist[i*3+2]};
-		points->InsertPoint(i, nodes);
-	}
-	feMesh->getUGrid()->SetPoints(points);
-	
-	int vtktype;
-	switch (modelinfo[2])
-	{
-		case 3:
-			vtktype = VTK_TRIANGLE;
-			break;
-		case 8:
-			vtktype = VTK_HEXAHEDRON;
-			break;
-		case 2:
-			vtktype = VTK_LINE;
-			break;
-		case 1:
-			vtktype = VTK_VERTEX;
-			break;
-		default:
-			break;
-	}
+    for (unsigned eln = 0; eln < num_elem* nofe; ++eln) {
+      txtfile >> elemlist[eln];
+      elemlist[eln]--;
+    }
 
-	for(unsigned i=0; i< modelinfo[0]; ++i){
-		std::vector<vtkIdType> element(modelinfo[2]);
-		for(unsigned j=0; j < modelinfo[2]; ++j) {
-			element[j] = (vtkIdType) (*(elemlist.data()+ i*modelinfo[2] + j) - 1);
-		}
-		
-		feMesh->getUGrid()->InsertNextCell(vtktype, (vtkIdType)modelinfo[2], element.data());
-		
-	}
-	
-	mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	mapper->SetInputData(feMesh->getUGrid());
-	
-	actor = vtkSmartPointer<vtkActor>::New();
-	actor->SetMapper(mapper);
+    for (unsigned ndn = 0; ndn < 3 * num_node; ++ndn) {
+      txtfile >> nodelist[ndn];
+    }
+    txtfile.close();
+  }
 
-	// modify the static variables
-	nodeNums += nodeNum = feMesh->getUGrid()->GetNumberOfPoints();
-	elemNums += elemNum = feMesh->getUGrid()->GetNumberOfCells();
+  this->CreateModel(modelinfo, elemlist, nodelist);
 
 }
 
@@ -640,92 +621,10 @@ void ContactData::UpdateUGrid(unsigned s)
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 //
-// read disp files, and read contact files
+// read contact files
 //
 //
 //////////////////////////////////////////////////////////////////////////////////////////////
-void readDispfile(const vector<string> & filename, vector<shared_ptr<Model>> &pModels)
-{
-	ifstream infile;
-	infile.open(filename[0], ios::in | ios::binary);
-	
-	if (infile.is_open()) {
-		vector<vector<double>> dispvecCollection;
-		unsigned nodedeg = 3;
-		if (filename.size() == 2) {
-			nodedeg = atoi(filename[1].c_str());
-		}
-		unsigned dofs = Model::nodeNums * nodedeg;
-
-		vector<double> datavec(dofs);
-		double steptime;
-		while (1) {
-			infile.read((char*)&steptime, sizeof(double));
-			infile.read((char*)datavec.data(), sizeof(double) * (dofs));
-
-			if (infile.fail()) break;
-
-			dispvecCollection.push_back(datavec);
-			Model::stepCollection.push_back(steptime);
-		}
-
-		Model::stepNum = (unsigned)dispvecCollection.size();
-
-		if (filename.size() == 2) {
-			unsigned index;
-			vector<double> dataPosition;
-			for (unsigned s = 0; s < Model::stepNum; ++s) {
-				auto &data = dispvecCollection[s];
-				index = 0;
-				dataPosition.clear();
-				for (unsigned i = 0; i < Model::nodeNums; ++i) {
-					dataPosition.push_back(data[index]);
-					dataPosition.push_back(data[index + 1]);
-					dataPosition.push_back(data[index + 2]);
-					index += nodedeg;
-				}
-				dispvecCollection[s].swap(dataPosition);
-			}
-		}
-		infile.close();
-
-		// initialize the nodes position of Model feMesh
-		vector<double> node0;
-		for (auto& pmodel : pModels) {
-			const auto &feMesh = pmodel->getFEMesh();
-
-			node0.resize(pmodel->getNodenum() * 3);
-			unsigned index = 0;
-			for (unsigned n = 0; n < pmodel->getNodenum(); ++n) {
-				double *xyz = feMesh->getUGrid()->GetPoint(n);
-				node0[index++] = *xyz;
-				node0[index++] = *(xyz + 1);
-				node0[index++] = *(xyz + 2);
-			}
-
-			feMesh->getpvtkPnts().resize(Model::stepNum);
-
-			double position[3];
-			for (unsigned s = 0; s < Model::stepNum; ++s) {
-				feMesh->getpvtkPnts(s) = vtkSmartPointer<vtkPoints>::New();
-				feMesh->getpvtkPnts(s)->SetNumberOfPoints(pmodel->getNodenum());
-				index = pmodel->getOffset();
-				for (unsigned n = 0; n < pmodel->getNodenum(); ++n) {
-					position[0] = node0[n * 3]     + dispvecCollection[s][index];
-					position[1] = node0[n * 3 + 1] + dispvecCollection[s][index + 1];
-					position[2] = node0[n * 3 + 2] + dispvecCollection[s][index + 2];
-					index += 3;
-					feMesh->getpvtkPnts(s)->SetPoint(n, position);
-				}
-			}
-		}
-	} // if file opened
-	else {
-		cout << "Can not open dispfiles." << endl;
-		exit(0);
-	}
-
-}
 
 
 inline void readpairs(ifstream &infile, pairCollect &pc)

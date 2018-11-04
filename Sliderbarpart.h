@@ -2,7 +2,7 @@
 #ifndef SLIDERBARPART_H
 #define SLIDERBARPART_H
 
-#include "ParamDefine.h"
+#include "paramdefine.h"
 
 #include "vtkSliderRepresentation2D.h"
 #include "vtkSliderWidget.h"

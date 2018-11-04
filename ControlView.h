@@ -2,12 +2,12 @@
 #ifndef CONTROLVIEW_H
 #define CONTROLVIEW_H
 
-#include "Model.h"
-#include "Axespart.h"
-#include "Textpart.h"
-#include "Sliderbarpart.h"
+#include "model.h"
+#include "axespart.h"
+#include "textpart.h"
+#include "sliderbarpart.h"
 #include "lutpart.h"
-#include "Plotpart.h"
+#include "plotpart.h"
 
 #include "vtkProperty.h"
 // for animation
@@ -142,6 +142,9 @@ protected:
 	vector<string> nodeDataFiles;
 	//int nextButtonState, prevButtonState;
 
+  void readSimpleOutModel(ifstream &infile, vector<int> &modelinfo,
+    vector<int> &elemlist, vector<double> &nodelist);
+
 public:
 	virtual ~ControlView() {}
 	ControlView(): play(false), stepPlay(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
@@ -169,6 +172,10 @@ public:
 
     vtkSmartPointer<vtkRenderer> getRenderer(){return renderer;}
     vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor(){return renderWindowInteractor;}
+
+  void readDispfile(const vector<string> & filename);
+
+  void readSimpleOutResult(const string& filename);
 
 	virtual int inputModelfiles(const int& argc,  char* argv[]) 
 	{
@@ -202,7 +209,7 @@ public:
 		}
 
 		if (!this->dispFiles.empty()) {
-			readDispfile(dispFiles, pModels);
+			readDispfile(dispFiles);
 
 			sliderbar = Sliderbar::New();
 			sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);

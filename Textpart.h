@@ -2,7 +2,7 @@
 #ifndef TEXTPART_H
 #define TEXTPART_H
 
-#include "ParamDefine.h"
+#include "paramdefine.h"
 // text 
 #include "vtkTextActor.h"
 #include "vtkTextProperty.h"
@@ -14,7 +14,7 @@
 #include "vtkCoordinate.h"
 #include "vtkCommand.h"
 
-#include "Model.h"
+#include "model.h"
 
 using namespace std;
 

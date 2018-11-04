@@ -2,14 +2,14 @@
 #ifndef LUTPART_H
 #define LUTPART_H
 
-#include "ParamDefine.h"
+#include "paramdefine.h"
 
 #include "vtkDoubleArray.h"
 #include "vtkLookupTable.h"
 #include "vtkPointData.h"
 #include "vtkScalarBarActor.h"
 
-#include "Model.h"
+#include "model.h"
 
 class LookUpTable
 {
