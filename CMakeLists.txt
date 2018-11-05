@@ -8,6 +8,8 @@ include(${VTK_USE_FILE})
 
 include_directories("C:/Users/CNJISHI10/Development/VTK/include/vtk-8.1")
 
-add_executable(univiewer univiewer)
+aux_source_directory(./ ALL_SOURCE)
+
+add_executable(univiewer ${ALL_SOURCE})
  
 target_link_libraries(univiewer ${VTK_LIBRARIES})

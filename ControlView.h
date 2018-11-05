@@ -8,6 +8,7 @@
 #include "sliderbarpart.h"
 #include "lutpart.h"
 #include "plotpart.h"
+#include "auxfunc.h"
 
 #include "vtkProperty.h"
 // for animation
@@ -20,61 +21,10 @@
 #include "vtkCamera.h"
 #include "vtkInteractorStyleTrackballCamera.h"
 
-void argParser(const int& argc, char* argv[], vector<string> &modelFiles,
-											  vector<string> &dispFiles,
-											  vector<string> &contFiles,
-											  vector<string> &nodeDatafiles)
-{
-	if (argc == 1) {
-		cout << "Type 'Univiewer /h' for more help." << endl;
-		exit(0);
-	}
-	vector<string> *ptr_vector_name = NULL;
-	for (int i = 1; i<argc; ++i) {
-
-#ifdef __APPLE__
-		if (*argv[i] == '-') {
-#else
-		if ((*argv[i] == '-') || (*argv[i] == '/')) {
-#endif
-			switch (*(argv[i] + 1)) {
-			case 'm':
-				ptr_vector_name = &modelFiles;
-				break;
-			case 'o':
-				ptr_vector_name = &dispFiles;
-				break;
-			//case 'n':
-			//	ptr_vector_name = &nodeDatafiles;
-			//	break;
-			case 's':
-				ptr_vector_name = &nodeDatafiles;
-				break;
-			case 'c':
-				ptr_vector_name = &contFiles;
-				break;
-			case 'h':
-				cout << endl;
-				cout << "Usage: Univiewer /m file1.xml file2.xml ... fileN.xml /o disp.dat" << endl;
-				cout << endl;
-				cout << "The 'fileN.xml' is a model file that is compatible with VTK API, and other programs. It is a text file using *.vtu format, but you can also add your own data." << endl;
-				cout << "The 'disp.dat' is a data file that contains the displacements of nodes for all the models(file1.xml, file2.xml and so on). It is a binary file with all the data as the type of double, the detail data sequence is as follows:" << endl << endl;
-				cout << "#####################################################################################################" << endl;
-				cout << "time1 \n node_1_disp_x node_1_disp_y node_1_disp_z \n node_2_disp_x node_2_disp_y node_2_disp_z \n ... \n node_n_disp_x node_n_disp_y node_n_disp_z" << endl;
-				cout << "time2 \n ......" << endl;
-				cout << "#####################################################################################################" << endl << endl;
-				cout << "NOTE: Binary files are not same as txt files which contains symbols like \\n \\t, and all the data saved as String. A Binary file contains data saved as its own type without any symbols like \\n \\t." << endl;
-				exit(0);
-				break;
-			default:
-				break;
-			}
-			continue;
-		}
-		ptr_vector_name->push_back(argv[i]);
-		}
-}
-
+#define DATA_MODEL 0x0000
+#define DATA_DISPL 0x0001
+#define DATA_NODVL 0x0002
+#define DATA_CONPR 0x0004
 
 // Timer callback subclass
 class CommandSubclass : public vtkCommand
@@ -131,19 +81,15 @@ protected:
 	vector<shared_ptr<ContactData>> pContacts;
 	//////////////////////////////////
 	//////////////////////////////////
-
+	int data_type;
 	bool play, stepPlay;
 	bool ShowMarker;
 	bool ShowMesh;
-    bool ShowLabel;
+  bool ShowLabel;
 
-	vector<string> dispFiles;
-	vector<string> contFiles;
-	vector<string> nodeDataFiles;
 	//int nextButtonState, prevButtonState;
-
-  void readSimpleOutModel(ifstream &infile, vector<int> &modelinfo,
-    vector<int> &elemlist, vector<double> &nodelist);
+  void readSimpleOutModel(ifstream &infile, vector<unsigned int> &modelinfo,
+    vector<unsigned int> &elemlist, vector<double> &nodelist);
 
 public:
 	virtual ~ControlView() {}
@@ -157,7 +103,7 @@ public:
 	inline bool & IsStepPlay() { return stepPlay; }
 	inline bool & IsShowMarker() { return ShowMarker; }
 	inline bool & IsShowMesh() { return ShowMesh; }
-    inline bool & IsShowLabel() { return ShowLabel; }
+  inline bool & IsShowLabel() { return ShowLabel; }
 
 	vector<shared_ptr<Model>> & getModels() { return pModels; }
 	vector<shared_ptr<ContactData>> &getContactData() { return pContacts; }
@@ -170,83 +116,17 @@ public:
 	shared_ptr<Sliderbar> getSliderbar() { return sliderbar; }
 	shared_ptr<LookUpTable> getLookuptable() { return lookuptable; }
 
-    vtkSmartPointer<vtkRenderer> getRenderer(){return renderer;}
-    vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor(){return renderWindowInteractor;}
+	vtkSmartPointer<vtkRenderer> getRenderer(){return renderer;}
+	vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor(){return renderWindowInteractor;}
 
   void readDispfile(const vector<string> & filename);
 
-  void readSimpleOutResult(const string& filename);
+  int readSimpleOutResult(const string& filename);
 
-	virtual int inputModelfiles(const int& argc,  char* argv[]) 
-	{
-		vector<string> modelFiles;
-		argParser(argc, argv, modelFiles, dispFiles, contFiles, nodeDataFiles);
-		
-		pModels.resize(modelFiles.size());
-		for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
-			pModels[i] = Model::New();
-			pModels[i]->setOffset(Model::nodeNums* 3);
+	int inputModelfiles(const int& argc,  char* argv[]);
 
-			if (modelFiles[i].substr(modelFiles[i].size() - 3).compare(".md") == 0) {
-				pModels[i]->ReadTxtModel(modelFiles[i]);
-			} else if (modelFiles[i].substr(modelFiles[i].size() - 3).compare("xml") == 0) {
-				pModels[i]->ReadXmlModel(modelFiles[i]);
-			}
-			
-			//pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
-			//pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
-			pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
-			pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
-
-			if (pModels[i]->getFEMesh()->getUGrid()->GetCellType(0) == 4)
-				pModels[i]->getActor()->GetProperty()->SetLineWidth(2.5);
-			else
-				pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
-			
-			pModels[i]->getActor()->SetScale(1.0);
-
-			renderer->AddActor(pModels[i]->getActor());
-		}
-
-		if (!this->dispFiles.empty()) {
-			readDispfile(dispFiles);
-
-			sliderbar = Sliderbar::New();
-			sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
-
-			currenttimer = CurrentTimer::New();
-			currenttimer->setTextActor(renderWindow);
-			renderer->AddActor2D(currenttimer->getTextActor());
-		}
-
-		if (!this->contFiles.empty()) {
-			readContfile(contFiles[0], pContacts, pModels);
-			for (auto& pcontact : pContacts) {
-				pcontact->InitializeUGrid();
-
-				pcontact->getPActor()->GetProperty()->SetLineWidth(2.0);
-				pcontact->getNActor()->GetProperty()->SetLineWidth(2.0);
-				pcontact->getPActor()->GetProperty()->SetPointSize(6.0);
-				pcontact->getNActor()->GetProperty()->SetPointSize(6.0);
-				pcontact->getPActor()->GetProperty()->EdgeVisibilityOff();
-				pcontact->getNActor()->GetProperty()->EdgeVisibilityOff();
-
-				renderer->AddActor(pcontact->getPActor());
-				renderer->AddActor(pcontact->getNActor());
-			}
-		}
-
-		if (!this->nodeDataFiles.empty()) {
-			readNodeDatafile(nodeDataFiles[0], pModels);
-		}
-
-
-
-		return 0;
-	}
-	
 	virtual void setAnimationMethod( void(*f)(void*)) {
-		if (!dispFiles.empty()) {
+		if (data_type & DATA_DISPL) {
 			programmableFilter->SetExecuteMethod(f, this);
 			renderWindowInteractor->CreateRepeatingTimer(10);
 			vtkSmartPointer<CommandSubclass> timerCallback = vtkSmartPointer<CommandSubclass>::New();
@@ -336,7 +216,7 @@ public:
 		renderWindow->AddRenderer(renderer);
 		renderWindow->SetSize(800, 640);
 		renderWindow->SetWindowName("MLV 2.0");
-        renderWindow->Render();
+    renderWindow->Render();
 		renderWindow->PointSmoothingOn();
 		renderWindow->LineSmoothingOn();
 		renderWindow->PolygonSmoothingOn();
@@ -395,7 +275,7 @@ public:
 			pmodel->getLabelactor()->VisibilityOff();
 		}
 		
-		if (!nodeDataFiles.empty()) {
+		if (data_type & DATA_NODVL) {
 			// lookuptable part
 			lookuptable = LookUpTable::New();
 			lookuptable->setScalars(pModels);
@@ -419,117 +299,4 @@ public:
 };
 
 
-void TimerCallback(void* arguments)
-{
-	ControlView* pCtr = static_cast<ControlView*>(arguments);
-	pCtr->Update();
-}
-
-void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
-{
-	
-	vtkRenderWindow* window = static_cast<vtkRenderWindow*>(caller);
-	int* windowSize = window->GetSize();
-	ControlView* pCtr = static_cast<ControlView*>(clientData);
-	
-	if(Model::stepNum!=0){
-
-		pCtr->getCurrentTimer()->getTextActor()->SetPosition(windowSize[0] - 180, windowSize[1] - 25);
-
-		pCtr->getSliderbar()->getSliderRep()->GetPoint1Coordinate()->SetValue(windowSize[0] - 260 - windowSize[0]/4.0, windowSize[1] - 15);
-		pCtr->getSliderbar()->getSliderRep()->GetPoint2Coordinate()->SetValue(windowSize[0] - 260, windowSize[1] - 15);
-
-		int width = 20, height = 20;
-		pCtr->getSliderbar()->getPlayButton()->setButtonSizePosition(width, height, windowSize[0] - 235 - width, windowSize[1] - 5 - height);
-		pCtr->getSliderbar()->getNextButton()->setButtonSizePosition(width, height, windowSize[0] - 210 - width, windowSize[1] - 5 - height);
-		pCtr->getSliderbar()->getPrevButton()->setButtonSizePosition(width, height, windowSize[0] - 185 - width, windowSize[1] - 5 - height);
-	}
-
-	pCtr->getCommandText()->setTextSizePosition(10, windowSize[1] - 30, 20);
-	for (unsigned i = 0; i < pCtr->getModels().size(); ++i) {
-		pCtr->getCommandTextBodies()[i]->setTextSizePosition(10, windowSize[1] - 30 - 15 * (i+1), 15);
-	}
-
-	if (pCtr->getLookuptable()) {
-		double w = windowSize[0] * 70.0 / 800.0;
-		double h = windowSize[1] * 300.0 / 640.0;
-		pCtr->getLookuptable()->getScalarBar()->SetPosition(windowSize[0] - w - 10, 10);
-		pCtr->getLookuptable()->getScalarBar()->SetPosition2(w, h);
-	}
-
-}
-
-void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))
-{
-
-	vtkRenderWindowInteractor *iren =
-		static_cast<vtkRenderWindowInteractor*>(caller);
-
-	ControlView* pCtr = static_cast<ControlView*>(clientData);
-
-    if(Model::stepNum!=0){
-	    if (strcmp(iren->GetKeySym(), "space") == 0){
-	        pCtr->IsPlay() = !pCtr->IsPlay();
-			if (pCtr->IsPlay()) {
-				pCtr->getSliderbar()->getPlayButton()->setState(1);
-				pCtr->IsStepPlay() = false;
-			}
-			else {
-				pCtr->getSliderbar()->getPlayButton()->setState(0);
-			}
-				
-	    }
-
-		if (strcmp(iren->GetKeySym(), "b") == 0) {
-			pCtr->IsPlay() = false;
-			pCtr->getSliderbar()->getPlayButton()->setState(0);
-			Model::step = (Model::step == Model::stepNum - 1) ? Model::stepNum - 1 : Model::step + 1;
-			pCtr->IsStepPlay() = true;
-		}
-
-		if (strcmp(iren->GetKeySym(), "v") == 0) {
-			pCtr->IsPlay() = false;
-			pCtr->getSliderbar()->getPlayButton()->setState(0);
-			Model::step = (Model::step == 0) ? 0 : Model::step - 1;
-			pCtr->IsStepPlay() = true;
-		}
-    }
-	if (strcmp(iren->GetKeySym(), "i") == 0) {
-		if (pCtr->IsShowMarker())
-            pCtr->getAxesline()->getAxesActor()->VisibilityOff();
-		else
-			pCtr->getAxesline()->getAxesActor()->VisibilityOn();
-
-		pCtr->IsShowMarker() = !pCtr->IsShowMarker();
-	}
-
-	if (strcmp(iren->GetKeySym(), "u") == 0) {
-		if (pCtr->IsShowMesh()) {
-			for(auto &pmodel: pCtr->getModels())
-				pmodel->getActor()->GetProperty()->EdgeVisibilityOff();
-		}
-		else {
-			for (auto &pmodel : pCtr->getModels())
-				pmodel->getActor()->GetProperty()->EdgeVisibilityOn();
-		}
-			
-		pCtr->IsShowMesh() = !pCtr->IsShowMesh();
-	}
-
-	if (strcmp(iren->GetKeySym(), "l") == 0) {
-
-		if (pCtr->IsShowLabel()) {
-			for(auto& pmodel : pCtr->getModels())
-				pmodel->getLabelactor()->VisibilityOff();
-		}
-		else {
-			for (auto& pmodel : pCtr->getModels())
-				pmodel->getLabelactor()->VisibilityOn();
-		}
-
-		pCtr->IsShowLabel() = !pCtr->IsShowLabel();
-	}
-
-	iren->Render();
-}
 #endif //CONTROLVIEW_H
