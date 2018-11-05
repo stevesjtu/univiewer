@@ -56,3 +56,50 @@ void argParser(const int& argc, char* argv[],
 		ptr_vector_name->push_back(argv[i]);
 		}
 }
+
+#ifdef _WIN32
+bool OpenFileDlg(std::string &fpathname, std::string &fname) {
+  HWND hwnd;
+  TCHAR filePathBuffer[MAX_PATH] = { 0 };
+  TCHAR fileTitleBuffer[MAX_PATH] = { 0 };
+  OPENFILENAME ofn = { 0 };
+
+  hwnd = GetForegroundWindow(); //获取前台窗口句柄。本程序中的前台窗口就是控制台窗口。 
+  ofn.lStructSize = sizeof(ofn);
+  ofn.hwndOwner = hwnd;
+  ofn.lpstrFilter = TEXT("数据文件(*.dat)\0*.dat\0所有文件(*.*)\0*.*\0");//要选择的文件后缀
+  ofn.lpstrInitialDir = NULL;//默认的文件路径   
+  ofn.lpstrFile = filePathBuffer;//存放文件的缓冲区
+  ofn.lpstrFileTitle = fileTitleBuffer;
+  ofn.nMaxFile = MAX_PATH;
+  ofn.nMaxFileTitle = MAX_PATH;
+  ofn.nFilterIndex = 0;
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;//标志如果是多选要加上OFN_ALLOWMULTISELECT  
+  GetOpenFileName(&ofn);
+
+#ifdef  UNICODE                     // r_winnt
+  int len, len1;
+  len = WideCharToMultiByte(CP_ACP, 0, filePathBuffer, -1, NULL, 0, NULL, NULL);
+  char * ptr1 = new char[len];
+  len1 = WideCharToMultiByte(CP_ACP, 0, filePathBuffer, -1, ptr1, len, NULL, NULL);
+
+  len = WideCharToMultiByte(CP_ACP, 0, fileTitleBuffer, -1, NULL, 0, NULL, NULL);
+  char * ptr2 = new char[len];
+  len1 = WideCharToMultiByte(CP_ACP, 0, fileTitleBuffer, -1, ptr1, len, NULL, NULL);
+
+  fpathname = ptr1;
+  fname = ptr2;
+
+  delete ptr1[];
+  delete ptr2[];
+
+  return 1;
+#else   /* UNICODE */               // r_winnt
+
+  fpathname = filePathBuffer;
+  fname = fileTitleBuffer;
+  return 1;
+#endif /* !_TCHAR_DEFINED */
+
+}
+#endif

@@ -249,7 +249,7 @@ public:
 			ct->setRenderWindowInteractor(renderWindowInteractor);
 			ss.str("");
 			ss.clear();
-			ss << "* Body_" << i;
+			ss << "|- Body_" << i;
 			ct->setCommandTextContent(ss.str(), 1.0, 1.0, 1.0, 0.5, 1);
 			//ct->setTextSizePosition(18, winSize[1] - 30 - 15* (i+1), 15);
 			vtkSmartPointer<releaseTextCallback> release = vtkSmartPointer<releaseTextCallback>::New();

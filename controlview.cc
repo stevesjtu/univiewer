@@ -102,7 +102,7 @@ void ControlView::readSimpleOutModel(ifstream &infile, vector<unsigned int> &mod
 // read simple output results
 //////////////////////////////////////////////////////////////////////////////
 int ControlView::readSimpleOutResult(const string& filename) {
-  ifstream infile(filename);
+  ifstream infile(filename, ios::binary);
   if (!infile.is_open()) {
     cout << "Error in opening " << filename << endl;
     exit(1);
@@ -140,10 +140,11 @@ int ControlView::readSimpleOutResult(const string& filename) {
 
   vector<vector<double> > dispdata;
   vector<double> disptemp(alldofs);
-  unsigned step = 0;
+  
+  double temp;
   while(true) { // for each step
-    double temp;
-    infile.read((char*)&temp, sizeof(temp));
+    
+    infile.read((char*)&temp, sizeof(double));
     if (infile.fail()) break;
 
     Model::stepCollection.push_back(temp);
@@ -151,7 +152,7 @@ int ControlView::readSimpleOutResult(const string& filename) {
     unsigned start = 0;
     for(unsigned b=0; b< bodynum; ++b) { // for each body
       pModels[b]->setOffset(start);
-      infile.read((char*) disptemp.data() + start, sizeof(double)* pModels[b]->getNodenum()* nodaldofs[b]);
+      infile.read((char*) (disptemp.data() + start), sizeof(double)* pModels[b]->getNodenum()* nodaldofs[b]);
       start += pModels[b]->getNodenum()* nodaldofs[b];
     }
     dispdata.push_back(disptemp);

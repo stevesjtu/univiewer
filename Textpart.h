@@ -15,6 +15,7 @@
 #include "vtkCommand.h"
 
 #include "model.h"
+#include "auxfunc.h"
 
 using namespace std;
 
@@ -78,6 +79,10 @@ public:
 			tw->SetEnabled(!tw->GetEnabled());
 		}
 		renderWindowInteractor->Render();
+
+    string fpathname, fname;
+    OpenFileDlg(fpathname, fname);
+    cout << fpathname << " " << fname << endl;
 	}
 
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
@@ -125,7 +130,15 @@ public:
 		textActor->GetTextProperty()->SetColor(r, g, b);
 		textActor->GetTextProperty()->SetOpacity(a);
 		textActor->GetTextProperty()->SetBold(isbold);
-		textActor->GetTextProperty()->SetFontFamilyToCourier();
+		//textActor->GetTextProperty()->SetFontFamilyToCourier();
+    //textActor->GetTextProperty()->SetFontFamilyToArial();
+    textActor->GetTextProperty()->SetFontFamilyToTimes();
+
+    //textActor->GetTextProperty()->SetFontFamilyAsString("consolas");
+
+    //textActor->GetTextProperty()->SetFontFamilyAsString("ËÎÌו");
+
+
 		textActor->GetTextProperty()->SetJustificationToCentered();
 		textActor->GetTextProperty()->SetVerticalJustificationToCentered();
 
@@ -189,6 +202,8 @@ public:
 		textActor->GetTextProperty()->SetFontSize(16);
 		textActor->GetTextProperty()->SetColor(1.0, 1.0, 1.0);
 		textActor->SetInput("Current Time = 0");
+
+    textActor->GetTextProperty()->SetFontFamilyToTimes();
 
 		int *winsize = renderWindow->GetSize();
 		textActor->SetPosition(winsize[0] - 180, winsize[1] - 25);
