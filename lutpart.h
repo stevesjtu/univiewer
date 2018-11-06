@@ -27,7 +27,7 @@ public:
 
 	vtkSmartPointer<vtkScalarBarActor> &getScalarBar() { return scalarBar; }
 
-	void setScalars( vector<shared_ptr<Model>> pModels)
+	void setScalars( vector<shared_ptr<Model> > pModels)
 	{
 
 		hueLut = vtkSmartPointer<vtkLookupTable>::New();

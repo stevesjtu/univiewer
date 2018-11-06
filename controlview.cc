@@ -8,7 +8,7 @@ void ControlView::readDispfile(const vector<string> & filename) {
   infile.open(filename[0], ios::in | ios::binary);
 
   if (infile.is_open()) {
-    vector<vector<double>> dispvecCollection;
+    vector<vector<double> > dispvecCollection;
     unsigned nodedeg = 3;
     if (filename.size() == 2) {
       nodedeg = atoi(filename[1].c_str());

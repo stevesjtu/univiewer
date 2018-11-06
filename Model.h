@@ -43,7 +43,7 @@ std::ostream & operator<<(std::ostream & s, const std::vector<T> &vec) {
   return s;
 }
 
-typedef vector<pair<unsigned, unsigned>> pairCollect;
+typedef vector<pair<unsigned, unsigned> > pairCollect;
 
 // Mdfile means markdown file, 
 // which use # ## ### ... symbol to represent titles
@@ -179,8 +179,8 @@ private:
 	bool isCalcEdge;
 	vtkSmartPointer<vtkUnstructuredGrid> ugrid;
 	vector<vtkSmartPointer<vtkPoints> > pvtkPnts;
-	vector<array<unsigned, 2>> edges_bynodes;
-	vector<array<unsigned, 3>> elems_bynodes;
+	vector<array<unsigned, 2> > edges_bynodes;
+	vector<array<unsigned, 3> > elems_bynodes;
 public:
 	FEMesh():isCalcEdge(false) {};
 	virtual ~FEMesh() {};
@@ -188,8 +188,8 @@ public:
 	inline vtkSmartPointer<vtkUnstructuredGrid> &getUGrid() { return ugrid; }
 	vector<vtkSmartPointer<vtkPoints> > &getpvtkPnts() { return pvtkPnts; }
 	vtkSmartPointer<vtkPoints> &getpvtkPnts(unsigned i) { return pvtkPnts[i]; }
-	vector<array<unsigned, 2>> &getEdges() { return edges_bynodes; }
-	vector<array<unsigned, 3>> &getElems() { return elems_bynodes; }
+	vector<array<unsigned, 2> > &getEdges() { return edges_bynodes; }
+	vector<array<unsigned, 3> > &getElems() { return elems_bynodes; }
 	array<unsigned, 2> &getEdges(unsigned i) { return edges_bynodes[i]; }
 	array<unsigned, 3> &getElems(unsigned i) { return elems_bynodes[i]; }
 
@@ -212,12 +212,12 @@ protected:
 	shared_ptr<FEMesh> feMesh;
 	shared_ptr<Labelnode> labelnode;
 
-	vector<vtkSmartPointer<vtkDoubleArray>> nodalscalars;
+	vector<vtkSmartPointer<vtkDoubleArray> > nodalscalars;
 	
 public:
 	static unsigned count, nodeNums, elemNums, stepNum, step;
 	static vector<double> stepCollection;
-	static vector<pair<double, double>> ranges;
+	static vector<pair<double, double> > ranges;
 
 	virtual ~Model() {};
 	Model()
@@ -239,7 +239,7 @@ public:
 	inline vtkSmartPointer<vtkDataSetMapper> getMapper() { return mapper; }
 
 	inline shared_ptr<FEMesh> getFEMesh() { return feMesh; }
-	inline vector<vtkSmartPointer<vtkDoubleArray>> &getNodelScalars() { return nodalscalars; }
+	inline vector<vtkSmartPointer<vtkDoubleArray> > &getNodelScalars() { return nodalscalars; }
 	inline vtkSmartPointer<vtkDoubleArray> &getNodelScalars(int s) { return nodalscalars[s]; }
 
 	void setOffset(unsigned index) { offset = index; }
@@ -273,8 +273,8 @@ private:
 	vector<pairCollect> edge_nodes;
 	vector<pairCollect> node_nodes;
 	
-	vector<vtkSmartPointer<vtkDataSetMapper>> pMappers;
-	vector<vtkSmartPointer<vtkDataSetMapper>> nMappers;
+	vector<vtkSmartPointer<vtkDataSetMapper> > pMappers;
+	vector<vtkSmartPointer<vtkDataSetMapper> > nMappers;
 	
 	vtkSmartPointer<vtkActor> pActor;
 	vtkSmartPointer<vtkActor> nActor;
@@ -359,8 +359,8 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////////
 void readpairs(ifstream &infile, pairCollect &pc);
 
-void readContfile(const string& contfile, vector<shared_ptr<ContactData>> &pContacts, vector<shared_ptr<Model>> &pModels);
+void readContfile(const string& contfile, vector<shared_ptr<ContactData> > &pContacts, vector<shared_ptr<Model> > &pModels);
 
-void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model>> &pModels);
+void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model> > &pModels);
 
 #endif //MODEL_H

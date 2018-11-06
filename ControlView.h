@@ -77,8 +77,8 @@ protected:
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
 
 	// main part of visulization
-	vector<shared_ptr<Model>> pModels;
-	vector<shared_ptr<ContactData>> pContacts;
+	vector<shared_ptr<Model> > pModels;
+	vector<shared_ptr<ContactData> > pContacts;
 	//////////////////////////////////
 	//////////////////////////////////
 	int data_type;
@@ -105,12 +105,12 @@ public:
 	inline bool & IsShowMesh() { return ShowMesh; }
   inline bool & IsShowLabel() { return ShowLabel; }
 
-	vector<shared_ptr<Model>> & getModels() { return pModels; }
-	vector<shared_ptr<ContactData>> &getContactData() { return pContacts; }
+	vector<shared_ptr<Model> > & getModels() { return pModels; }
+	vector<shared_ptr<ContactData> > &getContactData() { return pContacts; }
 	vtkSmartPointer<vtkProgrammableFilter> getProgrammableFilter() { return programmableFilter; }
 
 	shared_ptr<CommandText> getCommandText() { return cText; }
-	vector<shared_ptr<CommandText>> &getCommandTextBodies() { return cTextBodies; }
+	vector<shared_ptr<CommandText> > &getCommandTextBodies() { return cTextBodies; }
 	shared_ptr<CurrentTimer> getCurrentTimer() {return currenttimer;}
 	shared_ptr<Axesline> getAxesline() { return axesline; }
 	shared_ptr<Sliderbar> getSliderbar() { return sliderbar; }

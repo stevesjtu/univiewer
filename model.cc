@@ -48,7 +48,7 @@ unsigned Model::elemNums = 0;
 unsigned Model::stepNum = 0;
 unsigned Model::step = 0;
 vector<double> Model::stepCollection = vector<double>(0);
-vector<pair<double, double>> Model::ranges = vector<pair<double, double>>(0);
+vector<pair<double, double> > Model::ranges = vector<pair<double, double> >(0);
 
 void Model::CreateModel(const vector<unsigned int> &modelinfo,
   const vector<unsigned int> &elemlist, const vector<double> &nodelist) {
@@ -360,7 +360,7 @@ void readpairs(ifstream &infile, pairCollect &pc)
 	}
 }
 
-void readContfile(const string& contfile, vector<shared_ptr<ContactData>> &pContacts, vector<shared_ptr<Model>> &pModels)
+void readContfile(const string& contfile, vector<shared_ptr<ContactData> > &pContacts, vector<shared_ptr<Model> > &pModels)
 {
 	ifstream infile;
 	infile.open(contfile, ios::in | ios::binary);
@@ -407,14 +407,14 @@ void readContfile(const string& contfile, vector<shared_ptr<ContactData>> &pCont
 
 }
 
-void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model>> &pModels)
+void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model> > &pModels)
 {
 	fstream infile;
 	infile.open(nodedatafile, ios::in | ios::binary);
 	
 	if (infile.is_open()) {
 		double time, min, max;
-		vector<vector<double>> dataCollect;
+		vector<vector<double> > dataCollect;
 		vector<double> databuffer(Model::nodeNums);
 
 		while (1) {

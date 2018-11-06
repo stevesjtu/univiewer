@@ -57,7 +57,7 @@ public:
 		releaseCommon(caller);
 		// something to do
 	}
-	vector<vtkSmartPointer<vtkTextWidget>> textWidgetLeaf;
+	vector<vtkSmartPointer<vtkTextWidget> > textWidgetLeaf;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -136,7 +136,7 @@ public:
 
     //textActor->GetTextProperty()->SetFontFamilyAsString("consolas");
 
-    //textActor->GetTextProperty()->SetFontFamilyAsString("ËÎÌå");
+    //textActor->GetTextProperty()->SetFontFamilyAsString("ï¿½ï¿½ï¿½ï¿½");
 
 
 		textActor->GetTextProperty()->SetJustificationToCentered();
