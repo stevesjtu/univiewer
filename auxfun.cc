@@ -67,7 +67,7 @@ bool OpenFileDlg(std::string &fpathname, std::string &fname) {
   hwnd = GetForegroundWindow(); //获取前台窗口句柄。本程序中的前台窗口就是控制台窗口。 
   ofn.lStructSize = sizeof(ofn);
   ofn.hwndOwner = hwnd;
-  ofn.lpstrFilter = TEXT("数据文件(*.dat)\0*.dat\0所有文件(*.*)\0*.*\0");//要选择的文件后缀
+  ofn.lpstrFilter = TEXT("simple result(*.dat)\0*.dat\0all type(*.*)\0*.*\0");//要选择的文件后缀
   ofn.lpstrInitialDir = NULL;//默认的文件路径   
   ofn.lpstrFile = filePathBuffer;//存放文件的缓冲区
   ofn.lpstrFileTitle = fileTitleBuffer;

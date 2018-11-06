@@ -139,6 +139,7 @@ void Model::ReadTxtModel(const string& file) {
 	  modelinfo = txtfile.GetUintArrayFrom("model info");
 	  elemlist = txtfile.GetUintArrayFrom("element list");
 	  nodelist = txtfile.GetDoubleArrayFrom("node list");
+		for(unsigned &el : elemlist) el--;
 	  txtfile.Close();
   } else if (file.substr(file.size() - 3).compare("txt") == 0 ){
     ifstream txtfile(file);

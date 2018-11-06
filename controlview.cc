@@ -224,12 +224,14 @@ int ControlView::inputModelfiles(const int& argc,  char* argv[]) {
       renderer->AddActor(pModels[i]->getActor());
     }
 
-    sliderbar = Sliderbar::New();
-    sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
+    if (data_type & DATA_DISPL) {
+      sliderbar = Sliderbar::New();
+      sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
 
-    currenttimer = CurrentTimer::New();
-    currenttimer->setTextActor(renderWindow);
-    renderer->AddActor2D(currenttimer->getTextActor());
+      currenttimer = CurrentTimer::New();
+      currenttimer->setTextActor(renderWindow);
+      renderer->AddActor2D(currenttimer->getTextActor());      
+    }
 
   } else { // using simple output results or old fasion type input.
     pModels.resize(modelFiles.size());
@@ -238,6 +240,8 @@ int ControlView::inputModelfiles(const int& argc,  char* argv[]) {
       pModels[i]->setOffset(Model::nodeNums* 3);
 
       if (modelFiles[i].substr(modelFiles[i].size() - 3).compare(".md") == 0) {
+        pModels[i]->ReadTxtModel(modelFiles[i]);
+      } else if (modelFiles[i].substr(modelFiles[i].size() - 3).compare("txt") == 0) {
         pModels[i]->ReadTxtModel(modelFiles[i]);
       } else if (modelFiles[i].substr(modelFiles[i].size() - 3).compare("xml") == 0) {
         pModels[i]->ReadXmlModel(modelFiles[i]);
