@@ -82,9 +82,11 @@ public:
 		}
 		renderWindowInteractor->Render();
 
+#ifdef WIN32
     string fpathname, fname;
     OpenFileDlg(fpathname, fname);
     cout << fpathname << " " << fname << endl;
+#endif
 	}
 
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;

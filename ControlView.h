@@ -38,8 +38,8 @@ public:
 	{
 		return new CommandSubclass;
 	}
-	void Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId),
-		void *vtkNotUsed(callData))
+	virtual void Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId),
+		void *vtkNotUsed(callData)) override
 	{
 		vtkRenderWindowInteractor *iren =
 			static_cast<vtkRenderWindowInteractor*>(caller);

@@ -15,12 +15,7 @@ void argParser(std::vector<std::string> &argv,
 	}
 	std::vector<std::string> *ptr_vector_name = NULL;
 	for (int i = 0; i<argv.size(); ++i) {
-
-#ifdef __APPLE__
-		if (*argv[i] == '-') {
-#else
 		if ((argv[i][0] == '-') || (argv[i][0] == '/')) {
-#endif
 			switch (argv[i][1]) {
 			case 'm':
 				ptr_vector_name = &modelFiles;
@@ -66,17 +61,17 @@ bool OpenFileDlg(std::string &fpathname, std::string &fname) {
   TCHAR fileTitleBuffer[MAX_PATH] = { 0 };
   OPENFILENAME ofn = { 0 };
 
-  hwnd = GetForegroundWindow(); //»ñÈ¡Ç°Ì¨´°¿Ú¾ä±ú¡£±¾³ÌÐòÖÐµÄÇ°Ì¨´°¿Ú¾ÍÊÇ¿ØÖÆÌ¨´°¿Ú¡£ 
+  hwnd = GetForegroundWindow(); //ï¿½ï¿½È¡Ç°Ì¨ï¿½ï¿½ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½Ç°Ì¨ï¿½ï¿½ï¿½Ú¾ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½Ì¨ï¿½ï¿½ï¿½Ú¡ï¿½ 
   ofn.lStructSize = sizeof(ofn);
   ofn.hwndOwner = hwnd;
-  ofn.lpstrFilter = TEXT("simple result(*.dat)\0*.dat\0all type(*.*)\0*.*\0");//ÒªÑ¡ÔñµÄÎÄ¼þºó×º
-  ofn.lpstrInitialDir = NULL;//Ä¬ÈÏµÄÎÄ¼þÂ·¾¶   
-  ofn.lpstrFile = filePathBuffer;//´æ·ÅÎÄ¼þµÄ»º³åÇø
+  ofn.lpstrFilter = TEXT("simple result(*.dat)\0*.dat\0all type(*.*)\0*.*\0");//ÒªÑ¡ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½×º
+  ofn.lpstrInitialDir = NULL;//Ä¬ï¿½Ïµï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½   
+  ofn.lpstrFile = filePathBuffer;//ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½
   ofn.lpstrFileTitle = fileTitleBuffer;
   ofn.nMaxFile = MAX_PATH;
   ofn.nMaxFileTitle = MAX_PATH;
   ofn.nFilterIndex = 0;
-  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;//±êÖ¾Èç¹ûÊÇ¶àÑ¡Òª¼ÓÉÏOFN_ALLOWMULTISELECT  
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;//ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½Ñ¡Òªï¿½ï¿½ï¿½ï¿½OFN_ALLOWMULTISELECT  
   GetOpenFileName(&ofn);
 
 #ifdef  UNICODE                     // r_winnt
