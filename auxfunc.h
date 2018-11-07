@@ -10,11 +10,12 @@
 #include <windows.h>
 #include <ShlObj.h>
 #include <CommDlg.h>
+#include <stdlib.h>
 #endif
 
 namespace univiewer {
 
-void argParser(const int& argc, char* argv[], 
+void argParser(std::vector<std::string> &,
                         std::vector<std::string> &simple_output_result,
                         std::vector<std::string> &modelFiles,
 											  std::vector<std::string> &dispFiles,

@@ -2,26 +2,26 @@
 
 namespace univiewer {
 
-void argParser(const int& argc, char* argv[], 
+void argParser(std::vector<std::string> &argv,
                         std::vector<std::string> &simple_output_result,
                         std::vector<std::string> &modelFiles,
 											  std::vector<std::string> &dispFiles,
 											  std::vector<std::string> &contFiles,
 											  std::vector<std::string> &nodeDatafiles)
 {
-	if (argc == 1) {
+	if (argv.empty()) {
 		std::cout << "Type 'Univiewer /h' for more help." << std::endl;
 		exit(0);
 	}
 	std::vector<std::string> *ptr_vector_name = NULL;
-	for (int i = 1; i<argc; ++i) {
+	for (int i = 0; i<argv.size(); ++i) {
 
 #ifdef __APPLE__
 		if (*argv[i] == '-') {
 #else
-		if ((*argv[i] == '-') || (*argv[i] == '/')) {
+		if ((argv[i][0] == '-') || (argv[i][0] == '/')) {
 #endif
-			switch (*(argv[i] + 1)) {
+			switch (argv[i][1]) {
 			case 'm':
 				ptr_vector_name = &modelFiles;
 				break;

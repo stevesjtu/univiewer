@@ -21,10 +21,11 @@
 #include "vtkCamera.h"
 #include "vtkInteractorStyleTrackballCamera.h"
 
-#define DATA_MODEL 0x0000
-#define DATA_DISPL 0x0001
-#define DATA_NODVL 0x0002
-#define DATA_CONPR 0x0004
+#define DATA_RESET 0x0000
+#define DATA_MODEL 0x0001
+#define DATA_DISPL 0x0002
+#define DATA_NODVL 0x0004
+#define DATA_CONPR 0x0008
 
 namespace univiewer {
 
@@ -125,7 +126,7 @@ public:
 
   int readSimpleOutResult(const string& filename);
 
-	int inputModelfiles(const int& argc,  char* argv[]);
+	int inputModelfiles(std::vector<std::string> &argv);
 
 	virtual void setAnimationMethod( void(*f)(void*)) {
 		if (data_type & DATA_DISPL) {

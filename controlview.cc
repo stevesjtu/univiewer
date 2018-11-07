@@ -201,15 +201,15 @@ int ControlView::readSimpleOutResult(const string& filename) {
 
 }
 
-int ControlView::inputModelfiles(const int& argc,  char* argv[]) {
+int ControlView::inputModelfiles(std::vector<std::string> &argv) {
   vector<string> simple_out_result;
   vector<string> modelFiles;
   vector<string> dispFiles;
   vector<string> contFiles;
   vector<string> nodeDataFiles;
-  argParser(argc, argv, simple_out_result, modelFiles, dispFiles, contFiles, nodeDataFiles);
+  argParser(argv, simple_out_result, modelFiles, dispFiles, contFiles, nodeDataFiles);
   
-  data_type = DATA_MODEL;
+  data_type = DATA_RESET;
   if (!simple_out_result.empty()) {
     data_type = this->readSimpleOutResult(simple_out_result[0]);
 

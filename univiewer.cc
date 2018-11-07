@@ -2,26 +2,42 @@
 
 using namespace univiewer;
 
-int main(int argc, char *argv[])
-{
+#if defined(WIN32) && !defined(_DEBUG) 
+int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
-	shared_ptr<ControlView> pControlView = ControlView::New();
-	pControlView->setRender();
+  std::vector<std::string> argv_str;
+  int argc;
+  LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+  if (argc) {
+    for (int i = 1; i < argc; ++i) {
+      char str[1024];
+      size_t retval;
+      wcstombs_s(&retval, str, sizeof(str), argv[i], sizeof(str));
+      argv_str.push_back(str);
+    }
+    LocalFree(argv);
+  }
+#else
+int main(int argc, char *argv[]) {
+  std::vector<std::string> argv_str;
 
-	string arg1 = "/r";
-	string arg2 = "C:/Users/CNJISHI10/WorkSpace/repository/msdtk/build/bin/long_block.dat";
-	argv[1] = (char*)arg1.c_str();
-	argv[2] = (char*)arg2.c_str();
-	argc = 3;
+  for (int i = 1; i < argc; ++i) {
+    argv_str.push_back(argv[i]);
+  }
 
-	pControlView->inputModelfiles(argc, argv);
+#endif
 
-	pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK);
-	pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
-	pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
-	pControlView->Display();
-	
-	return EXIT_SUCCESS;
+  shared_ptr<ControlView> pControlView = ControlView::New();
+  pControlView->setRender();
+
+  if (!argv_str.empty())
+    pControlView->inputModelfiles(argv_str);
+
+  pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK);
+  pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
+  pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
+  pControlView->Display();
+
+  return EXIT_SUCCESS;
 }
-
 
