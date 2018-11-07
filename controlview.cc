@@ -1,5 +1,7 @@
 #include"controlview.h"
 
+namespace univiewer {
+
 ////////////////////////////////////////////////////////////////////////////
 // old reader for dispfile
 ////////////////////////////////////////////////////////////////////////////
@@ -415,3 +417,6 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 
 	iren->Render();
 }  
+
+}
+

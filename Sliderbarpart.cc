@@ -1,5 +1,7 @@
 #include "sliderbarpart.h"
 
+namespace univiewer {
+
 void CreateImagePause(vtkSmartPointer<vtkImageData> image)
 {
 	// Specify the size of the image data
@@ -145,4 +147,6 @@ void CreateImagePrevStep(vtkSmartPointer<vtkImageData> image)
 			pixel[3] = 50;
 		}
 	}
+}
+
 }

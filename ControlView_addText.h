@@ -4,6 +4,8 @@
 
 #include"controlview.h"
 
+namespace univiewer {
+
 class ControlView_addText : public ControlView
 {
 protected:
@@ -53,6 +55,6 @@ public:
 
 
 
-
+}
 
 #endif //CONTROLVIEWADDTEXT_H

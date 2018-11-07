@@ -1,6 +1,8 @@
 
 #include"model.h"
 
+namespace univiewer {
+
 void FEMesh::makeEdges()
 {
 	// edgeSet should be a set of edges without duplicated edges.
@@ -171,8 +173,14 @@ void Model::ReadTxtModel(const string& file) {
 
 void Model::setLabelnode()
 {
-	labelnode = Labelnode::New();
-	labelnode->setLabelActor(feMesh->getUGrid());
+	// labelnode = Labelnode::New();
+	// labelnode->setLabelActor(feMesh->getUGrid());
+	
+	vtkSmartPointer<vtkLabeledDataMapper> labelMapper = vtkSmartPointer<vtkLabeledDataMapper>::New();
+	labelMapper->SetInputData(feMesh->getUGrid());
+	labelActor = vtkSmartPointer<vtkActor2D>::New();
+	labelActor->SetMapper(labelMapper);
+
 }
 
 void Model::updateDisp(unsigned s)
@@ -468,4 +476,4 @@ void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model> > &pM
 
 }
 
-
+}

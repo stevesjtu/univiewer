@@ -26,6 +26,8 @@
 #define DATA_NODVL 0x0002
 #define DATA_CONPR 0x0004
 
+namespace univiewer {
+
 // Timer callback subclass
 class CommandSubclass : public vtkCommand
 {
@@ -298,5 +300,6 @@ public:
 
 };
 
+}
 
 #endif //CONTROLVIEW_H

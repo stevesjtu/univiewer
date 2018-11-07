@@ -15,6 +15,9 @@
 #include <vtkContextScene.h>
 #include <vtkPen.h>
 
+
+namespace univiewer {
+
 class plotpart
 {
 public:
@@ -97,6 +100,7 @@ public:
 
 };
 
+}
 
 #endif
 

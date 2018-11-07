@@ -1,5 +1,7 @@
 #include "auxfunc.h"
 
+namespace univiewer {
+
 void argParser(const int& argc, char* argv[], 
                         std::vector<std::string> &simple_output_result,
                         std::vector<std::string> &modelFiles,
@@ -103,3 +105,77 @@ bool OpenFileDlg(std::string &fpathname, std::string &fname) {
 
 }
 #endif
+
+
+Mdfile::Mdfile() {};
+Mdfile::Mdfile(const std::string &filename) {
+	this->Open(filename);
+}
+Mdfile::~Mdfile() {
+	if (infile.is_open())
+		this->Close();
+};
+
+
+void Mdfile::Open(const std::string &filename ) {
+	infile.open(filename, std::ios::in);
+	if (!infile.is_open()) std::cout << "Error in open file: " << filename << std::endl;
+}
+void Mdfile::Close() {
+	infile.close();
+}
+
+std::vector<double> Mdfile::GetDoubleArrayFrom(const std::string &title) {
+	JumpTo(title);
+	std::vector<double> double_list;
+	std::string temp_str;
+	while (infile >> temp_str) {
+		if (temp_str[0] == '#') break;
+		double_list.push_back(std::stod(temp_str));
+	}
+	return double_list;
+}
+
+std::vector<int> Mdfile::GetIntArrayFrom(const std::string &title) {
+	JumpTo(title);
+	std::vector<int> int_list;
+	std::string temp_str;
+	while (infile >> temp_str) {
+		if (temp_str[0] == '#') break;
+		int_list.push_back(std::stoi(temp_str));
+	}
+	return int_list;
+}
+
+std::vector<unsigned int> Mdfile::GetUintArrayFrom(const std::string &title) {
+	JumpTo(title);
+	std::vector<unsigned int> int_list;
+	std::string temp_str;
+	while (infile >> temp_str) {
+		if (temp_str[0] == '#') break;
+		int_list.push_back((unsigned int)std::stoi(temp_str));
+	}
+	return int_list;
+}
+
+std::vector<std::string> Mdfile::GetStringFrom(const std::string &title) {
+	JumpTo(title);
+	std::vector<std::string> str_list;
+	std::string temp_str;
+	while (infile >> temp_str) {
+		if (temp_str[0] == '#') break;
+		str_list.push_back(temp_str);
+	}
+	return str_list;
+}
+
+void Mdfile::tryit() {
+	infile.seekg(0, std::ios::beg);
+	std::string str("");
+	infile >> str;
+
+	std::cout<< infile.tellg() <<std::endl;
+	std::cout<< str << std::endl;
+}
+
+}

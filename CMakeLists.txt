@@ -12,6 +12,7 @@ ELSEIF (UNIX)
 ENDIF ()
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -m64 -mavx2")
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
@@ -20,6 +21,15 @@ include_directories("C:/Users/CNJISHI10/Development/VTK/include/vtk-8.1")
 
 aux_source_directory(./ ALL_SOURCE)
 
-add_executable(univiewer ${ALL_SOURCE})
- 
+MESSAGE(STATUS "Build type is ${CMAKE_BUILD_TYPE}.")
+MESSAGE(STATUS "##########################################")
+
+if( ${CMAKE_BUILD_TYPE} MATCHES Release )
+  add_executable(univiewer WIN32 ${ALL_SOURCE})
+elseif (${CMAKE_BUILD_TYPE} MATCHES Debug)
+  add_executable(univiewer ${ALL_SOURCE})
+endif()
+
+#add_executable(univiewer WIN32 ${ALL_SOURCE})
+
 target_link_libraries(univiewer ${VTK_LIBRARIES})

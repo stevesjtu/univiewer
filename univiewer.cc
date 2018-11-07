@@ -1,15 +1,18 @@
 #include "controlview.h"
+
+using namespace univiewer;
+
 int main(int argc, char *argv[])
 {
 
 	shared_ptr<ControlView> pControlView = ControlView::New();
 	pControlView->setRender();
 
-	// string arg1 = "/m";
-	// string arg2 = "C:/Users/CNJISHI10/WorkSpace/repository/msdtk/fem_matlab/long_block.md";
-	// argv[1] = (char*)arg1.c_str();
-	// argv[2] = (char*)arg2.c_str();
-	// argc = 3;
+	string arg1 = "/r";
+	string arg2 = "C:/Users/CNJISHI10/WorkSpace/repository/msdtk/build/bin/long_block.dat";
+	argv[1] = (char*)arg1.c_str();
+	argv[2] = (char*)arg2.c_str();
+	argc = 3;
 
 	pControlView->inputModelfiles(argc, argv);
 

@@ -11,6 +11,8 @@
 
 #include "model.h"
 
+namespace univiewer {
+
 class LookUpTable
 {
 private:
@@ -56,7 +58,7 @@ public:
 };
 
 
-
+}
 
 
 

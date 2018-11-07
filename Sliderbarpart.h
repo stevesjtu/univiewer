@@ -22,6 +22,8 @@
 #include "vtkRenderWindowInteractor.h"
 using namespace std;
 
+namespace univiewer {
+
 void CreateImagePause(vtkSmartPointer<vtkImageData> image);
 
 void CreateImagePlay(vtkSmartPointer<vtkImageData> image);
@@ -296,6 +298,6 @@ public:
 	}
 };
 
-
+}
 
 #endif

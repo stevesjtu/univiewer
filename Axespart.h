@@ -14,6 +14,8 @@
 
 using namespace std;
 
+namespace univiewer {
+
 class Axesline
 {
 private:
@@ -131,5 +133,7 @@ public:
 		widget->InteractiveOff();
 	}
 };
+
+}
 
 #endif

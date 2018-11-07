@@ -19,6 +19,8 @@
 
 using namespace std;
 
+namespace univiewer {
+
 // base press
 class pressTextCallback : public vtkCommand
 {
@@ -211,7 +213,7 @@ public:
 	}
 };
 
-
+}
 
 
 #endif

@@ -11,6 +11,8 @@
 // VTK //////////////////////////////////////////
 #include "vtkSmartPointer.h"
 
+namespace univiewer {
+
 #define STEP_SEPARATOR 0xffffffff // the largest unsigned int in 32bit machine
 #define CONTACT_SEPARATOR 0xfffffffe
 
@@ -25,9 +27,15 @@
 #define DEFAULT_KEYPRESSCALLBACK KeypressCallback
 #define DEFAULT_WINDOWCALLBACK WindowModifiedCallback
 
+#define CreateOneOf std::make_shared
+
 const unsigned char red[3] = { 255, 0, 0 };
 const unsigned char green[3] = { 0, 255, 0 };
 const unsigned char blue[3] = { 0, 0, 255 };
 const unsigned char cyan[3] = { 0, 255, 255 };
+
+}
+
+
 
 #endif

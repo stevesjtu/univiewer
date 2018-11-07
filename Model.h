@@ -3,12 +3,14 @@
 #define MODEL_H
 
 #include "paramdefine.h"
+#include "auxfunc.h"
 #include <vector>
 #include <set>
 #include <array>
 #include <string>
 #include <fstream>
 #include <sstream>
+
 // primitives
 #include "vtkPoints.h"
 #include "vtkLine.h"
@@ -25,150 +27,41 @@
 #include "vtkXMLUnstructuredGridReader.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkDataSetMapper.h"
+
+// label
 #include "vtkLabeledDataMapper.h"
+
 // actor hold by model
 #include "vtkActor.h"
 #include "vtkActor2D.h"
 
 using namespace std;
 
-template<typename T>
-std::ostream & operator<<(std::ostream & s, const std::vector<T> &vec) {
-  if (vec.empty()) return s;
-  s << "(";
-  for(unsigned i=0; i < vec.size()-1; ++i){
-    s << vec[i] << ", ";
-  }
-  s << vec[vec.size()-1] << ")";
-  return s;
-}
-
-typedef vector<pair<unsigned, unsigned> > pairCollect;
-
-// Mdfile means markdown file, 
-// which use # ## ### ... symbol to represent titles
-class Mdfile {
-public:
-  Mdfile() {};
-  Mdfile(const std::string &filename) {
-    this->Open(filename);
-  }
-  virtual~Mdfile() {
-    this->Close();
-  };
-
-  void Open(const std::string &filename ) {
-    infile.open(filename, std::ios::in);
-    if (!infile.is_open()) std::cout << "Error in open file: " << filename << std::endl;
-  }
-  void Close() {
-    infile.close();
-  }
-
-  virtual std::vector<double> GetDoubleArrayFrom(const std::string &title) {
-    JumpTo(title);
-    std::vector<double> double_list;
-    std::string temp_str;
-    while (infile >> temp_str) {
-      if (temp_str[0] == '#') break;
-      double_list.push_back(std::stod(temp_str));
-    }
-    return double_list;
-  }
-
-  virtual std::vector<int> GetIntArrayFrom(const std::string &title) {
-    JumpTo(title);
-    std::vector<int> int_list;
-    std::string temp_str;
-    while (infile >> temp_str) {
-      if (temp_str[0] == '#') break;
-      int_list.push_back(std::stoi(temp_str));
-    }
-    return int_list;
-  }
-
-  virtual std::vector<unsigned int> GetUintArrayFrom(const std::string &title) {
-    JumpTo(title);
-    std::vector<unsigned int> int_list;
-    std::string temp_str;
-    while (infile >> temp_str) {
-      if (temp_str[0] == '#') break;
-      int_list.push_back((unsigned int)std::stoi(temp_str));
-    }
-    return int_list;
-  }
-
-  virtual std::vector<std::string> GetStringFrom(const std::string &title) {
-    JumpTo(title);
-    std::vector<std::string> str_list;
-    std::string temp_str;
-    while (infile >> temp_str) {
-      if (temp_str[0] == '#') break;
-      str_list.push_back(temp_str);
-    }
-    return str_list;
-  }
-
-  void tryit() {
-    infile.seekg(0, std::ios::beg);
-    std::string str("");
-    infile >> str;
-
-    std::cout<< infile.tellg() <<std::endl;
-    std::cout<< str << std::endl;
-  }
-
-protected:
-  std::ifstream infile;
-  std::streampos pos1;
-
-  void JumpTo(const std::string &title) {
-    infile.seekg(0, std::ios::beg);
-    std::string str("");
-    while(std::getline(infile, str)) { 
-      if (str[0] == '#') {
-        str = str.substr(1);
-        trim(str);
-        if (str.compare(title) == 0) {
-          //pos1 = infile.tellg();
-          break;
-        }
-      }
-    } 
-  }
-
-  void trim(std::string &s) {
-    if (s.empty()) return;
-    s.erase(0,s.find_first_not_of(" "));
-    s.erase(s.find_last_not_of(" ") + 1);
-  }
-
-};
-
+namespace univiewer {
 
 ////////////////////////////////////////////////////////////////////////////
 // labelnode
-class Labelnode
-{
-private:
-	vtkSmartPointer<vtkActor2D> labelActor;
-public:
-	Labelnode() {};
-	virtual ~Labelnode() {};
+// class Labelnode
+// {
+// private:
+// 	vtkSmartPointer<vtkActor2D> labelActor;
+// public:
+// 	Labelnode() {};
+// 	virtual ~Labelnode() {};
 
-	static shared_ptr<Labelnode> New()
-	{
-		return make_shared<Labelnode>();
-	}
+// 	static shared_ptr<Labelnode> New()
+// 	{
+// 		return make_shared<Labelnode>();
+// 	}
 
-	vtkSmartPointer<vtkActor2D> &getlabelActor() { return labelActor; }
-	void setLabelActor(vtkSmartPointer<vtkUnstructuredGrid>&ugrid) {
-		vtkSmartPointer<vtkLabeledDataMapper> labelMapper = vtkSmartPointer<vtkLabeledDataMapper>::New();
-		labelMapper->SetInputData(ugrid);
-		labelActor = vtkSmartPointer<vtkActor2D>::New();
-		labelActor->SetMapper(labelMapper);
-	}
-};
+// 	vtkSmartPointer<vtkActor2D> &getlabelActor() { return labelActor; }
+// 	void setLabelActor(vtkSmartPointer<vtkUnstructuredGrid>&ugrid) {
+// 		vtkSmartPointer<vtkLabeledDataMapper> labelMapper = vtkSmartPointer<vtkLabeledDataMapper>::New();
+// 		labelMapper->SetInputData(ugrid);
+// 		labelActor = vtkSmartPointer<vtkActor2D>::New();
+// 		labelActor->SetMapper(labelMapper);
+// 	}
+// };
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -207,10 +100,12 @@ protected:
 	unsigned ID, nodeNum, elemNum, offset;
 	
 	vtkSmartPointer<vtkActor> actor;
+	vtkSmartPointer<vtkActor2D> labelActor;
+
 	vtkSmartPointer<vtkDataSetMapper> mapper;
 
 	shared_ptr<FEMesh> feMesh;
-	shared_ptr<Labelnode> labelnode;
+	//shared_ptr<Labelnode> labelnode;
 
 	vector<vtkSmartPointer<vtkDoubleArray> > nodalscalars;
 	
@@ -234,10 +129,10 @@ public:
 
 	inline unsigned getNodenum() { return nodeNum; }
 	inline unsigned getOffset() { return offset; }
-	inline vtkSmartPointer<vtkActor2D> getLabelactor() { return labelnode->getlabelActor(); }
+	inline vtkSmartPointer<vtkActor2D> getLabelactor() { return labelActor; }
 	inline vtkSmartPointer<vtkActor> getActor() { return actor; }
 	inline vtkSmartPointer<vtkDataSetMapper> getMapper() { return mapper; }
-
+	
 	inline shared_ptr<FEMesh> getFEMesh() { return feMesh; }
 	inline vector<vtkSmartPointer<vtkDoubleArray> > &getNodelScalars() { return nodalscalars; }
 	inline vtkSmartPointer<vtkDoubleArray> &getNodelScalars(int s) { return nodalscalars[s]; }
@@ -250,6 +145,7 @@ public:
                   const vector<unsigned int> &elemlist, const vector<double> &nodelist);
 
 	void setLabelnode();
+	
 	void updateDisp(unsigned);
 };
 
@@ -260,6 +156,8 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////
+
+typedef vector<pair<unsigned, unsigned> > pairCollect;
 // ConstactInfo
 class ContactData
 {
@@ -362,5 +260,7 @@ void readpairs(ifstream &infile, pairCollect &pc);
 void readContfile(const string& contfile, vector<shared_ptr<ContactData> > &pContacts, vector<shared_ptr<Model> > &pModels);
 
 void readNodeDatafile(const string& nodedatafile, vector<shared_ptr<Model> > &pModels);
+
+}
 
 #endif //MODEL_H
