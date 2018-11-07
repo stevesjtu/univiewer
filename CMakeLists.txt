@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
  
 PROJECT(univiewer)
+
+cmake_host_system_information(RESULT _host_name QUERY HOSTNAME)
+message("-- _host_name variable is set to: " ${_host_name})
+
+
 IF (WIN32)
   MESSAGE(STATUS "Configure on Microsoft Windows.")
   set(VTK_DIR "C:/Users/CNJISHI10/Development/VTK/lib/cmake/vtk-8.1")
