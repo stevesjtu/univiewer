@@ -33,11 +33,8 @@ namespace univiewer {
 class CommandSubclass : public vtkCommand
 {
 public:
-	vtkTypeMacro(CommandSubclass, vtkCommand);
-	static vtkSmartPointer<CommandSubclass> New()
-	{
-		return new CommandSubclass;
-	}
+	VTKSubClass(CommandSubclass)
+
 	virtual void Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId),
 		void *vtkNotUsed(callData)) override
 	{
@@ -68,20 +65,20 @@ protected:
 	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style;
 
 	// for some part of graphics
-	shared_ptr<Axesline> axesline;
-	shared_ptr<Axesframe> axesframe;
-	shared_ptr<Sliderbar> sliderbar;
-	shared_ptr<CurrentTimer> currenttimer;
-	shared_ptr<LookUpTable> lookuptable;
+	sptr<Axesline> axesline;
+	sptr<Axesframe> axesframe;
+	sptr<Sliderbar> sliderbar;
+	sptr<CurrentTimer> currenttimer;
+	sptr<LookUpTable> lookuptable;
 
-	shared_ptr<CommandText> cText;
-	vector<shared_ptr<CommandText> > cTextBodies;
+	sptr<CommandText> cText;
+	std::vector<sptr<CommandText> > cTextBodies;
 	// for animation and UI
 	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
 
 	// main part of visulization
-	vector<shared_ptr<Model> > pModels;
-	vector<shared_ptr<ContactData> > pContacts;
+	std::vector<sptr<Model> > pModels;
+	std::vector<sptr<ContactData> > pContacts;
 	//////////////////////////////////
 	//////////////////////////////////
 	int data_type;
@@ -91,16 +88,12 @@ protected:
   bool ShowLabel;
 
 	//int nextButtonState, prevButtonState;
-  void readSimpleOutModel(ifstream &infile, vector<unsigned int> &modelinfo,
-    vector<unsigned int> &elemlist, vector<double> &nodelist);
+  void readSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo,
+    std::vector<unsigned int> &elemlist, std::vector<double> &nodelist);
 
 public:
 	virtual ~ControlView() {}
 	ControlView(): play(false), stepPlay(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
-	static shared_ptr<ControlView> New()
-	{
-		return make_shared<ControlView>();
-	}
 	
 	inline bool & IsPlay() { return play; }
 	inline bool & IsStepPlay() { return stepPlay; }
@@ -108,23 +101,23 @@ public:
 	inline bool & IsShowMesh() { return ShowMesh; }
   inline bool & IsShowLabel() { return ShowLabel; }
 
-	vector<shared_ptr<Model> > & getModels() { return pModels; }
-	vector<shared_ptr<ContactData> > &getContactData() { return pContacts; }
+	std::vector<sptr<Model> > & getModels() { return pModels; }
+	std::vector<sptr<ContactData> > &getContactData() { return pContacts; }
 	vtkSmartPointer<vtkProgrammableFilter> getProgrammableFilter() { return programmableFilter; }
 
-	shared_ptr<CommandText> getCommandText() { return cText; }
-	vector<shared_ptr<CommandText> > &getCommandTextBodies() { return cTextBodies; }
-	shared_ptr<CurrentTimer> getCurrentTimer() {return currenttimer;}
-	shared_ptr<Axesline> getAxesline() { return axesline; }
-	shared_ptr<Sliderbar> getSliderbar() { return sliderbar; }
-	shared_ptr<LookUpTable> getLookuptable() { return lookuptable; }
+	sptr<CommandText> getCommandText() { return cText; }
+	std::vector<sptr<CommandText> > &getCommandTextBodies() { return cTextBodies; }
+	sptr<CurrentTimer> getCurrentTimer() {return currenttimer;}
+	sptr<Axesline> getAxesline() { return axesline; }
+	sptr<Sliderbar> getSliderbar() { return sliderbar; }
+	sptr<LookUpTable> getLookuptable() { return lookuptable; }
 
 	vtkSmartPointer<vtkRenderer> getRenderer(){return renderer;}
 	vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor(){return renderWindowInteractor;}
 
-  void readDispfile(const vector<string> & filename);
+  void readDispfile(const std::vector<std::string> & filename);
 
-  int readSimpleOutResult(const string& filename);
+  int readSimpleOutResult(const std::string& filename);
 
 	int inputModelfiles(std::vector<std::string> &argv);
 
@@ -154,7 +147,7 @@ public:
 
 	void playThisStep(unsigned &step)
 	{
-		stringstream ss("");
+		std::stringstream ss("");
 		ss << "Current Time = " << Model::stepCollection[step];
 		currenttimer->getTextActor()->SetInput(ss.str().c_str());
 
@@ -237,7 +230,7 @@ public:
 	virtual void Display() {
 
 		// command text
-		cText = CommandText::New();
+		cText = CreateOneOf<CommandText>();
 		cText->setRenderWindowInteractor(renderWindowInteractor);
 		int *winSize = renderWindowInteractor->GetRenderWindow()->GetSize();
 		cText->setCommandTextContent("System View", 1.0, 1.0, 1.0, 0.5, 1);
@@ -248,7 +241,7 @@ public:
 
 		std::stringstream ss("");
 		for (unsigned i = 0; i < pModels.size(); ++i) {
-			shared_ptr<CommandText> ct = CommandText::New();
+			sptr<CommandText> ct = CreateOneOf<CommandText>();
 			ct->setRenderWindowInteractor(renderWindowInteractor);
 			ss.str("");
 			ss.clear();
@@ -263,12 +256,12 @@ public:
 
 
 		// axesline part
-		axesline = Axesline::New();
+		axesline = CreateOneOf<Axesline>();
 		axesline->setAxesActor();
 		renderer->AddActor(axesline->getAxesActor());
 
 		// axesframe part
-		axesframe = Axesframe::New();
+		axesframe = CreateOneOf<Axesframe>();
 		axesframe->setAxesWidget(renderWindowInteractor);
 
 		// labelnodes part
@@ -280,7 +273,7 @@ public:
 		
 		if (data_type & DATA_NODVL) {
 			// lookuptable part
-			lookuptable = LookUpTable::New();
+			lookuptable = CreateOneOf<LookUpTable>();
 			lookuptable->setScalars(pModels);
 			renderer->AddActor2D(lookuptable->getScalarBar());
 		}

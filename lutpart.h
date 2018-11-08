@@ -22,14 +22,10 @@ private:
 public:
 	LookUpTable() {};
 	virtual ~LookUpTable() {};
-	static shared_ptr<LookUpTable> New()
-	{
-		return make_shared<LookUpTable>();
-	}
 
 	vtkSmartPointer<vtkScalarBarActor> &getScalarBar() { return scalarBar; }
 
-	void setScalars( vector<shared_ptr<Model> > pModels)
+	void setScalars( std::vector<sptr<Model> > pModels)
 	{
 
 		hueLut = vtkSmartPointer<vtkLookupTable>::New();

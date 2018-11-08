@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-  shared_ptr<ControlView> pControlView = ControlView::New();
+  sptr<ControlView> pControlView = CreateOneOf<ControlView>();
   pControlView->setRender();
 
   if (!argv_str.empty())

@@ -12,7 +12,6 @@
 #include "vtkCellData.h"
 #include "vtkUnsignedCharArray.h"
 
-using namespace std;
 
 namespace univiewer {
 
@@ -26,10 +25,6 @@ private:
 public:
 	Axesline() {};
 	virtual ~Axesline() {};
-	static shared_ptr<Axesline> New()
-	{
-		return make_shared<Axesline>();
-	}
 
 	vtkSmartPointer<vtkActor> &getAxesActor() { return axesActor; }
 
@@ -116,10 +111,7 @@ private:
 public:
 	Axesframe() {};
 	virtual ~Axesframe() {};
-	static shared_ptr<Axesframe> New()
-	{
-		return make_shared<Axesframe>();
-	}
+	
 	void setAxesWidget(vtkSmartPointer<vtkRenderWindowInteractor> &renderWindowInteractor)
 	{
 

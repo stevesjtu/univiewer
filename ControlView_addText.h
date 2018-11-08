@@ -17,10 +17,6 @@ protected:
 public:
 	virtual ~ControlView_addText() {};
 	ControlView_addText() {};
-	static shared_ptr<ControlView_addText> New() {
-		shared_ptr<ControlView_addText> nw = make_shared<ControlView_addText>();
-		return nw;
-	}
 
 	vtkSmartPointer<vtkTextActor> & getAddTextActor() { return addTextActor; }
     void setfileName(vector<string> *model, vector<string> *disp){
@@ -31,7 +27,7 @@ public:
 	void AddText() {
 		addTextActor = vtkSmartPointer<vtkTextActor>::New();
         
-        stringstream ss("");
+        std::stringstream ss("");
         ss << "Model from: ";
         for(unsigned i=0;i< modelfiles->size()-1; ++i)
             ss << modelfiles->at(i)<<", ";

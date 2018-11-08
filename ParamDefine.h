@@ -29,6 +29,12 @@ namespace univiewer {
 
 #define CreateOneOf std::make_shared
 
+template<class T>
+using sptr = std::shared_ptr<T>;
+
+#define VTKSubClass(derived) \
+static derived *New(){ return new derived;}
+
 const unsigned char red[3] = { 255, 0, 0 };
 const unsigned char green[3] = { 0, 255, 0 };
 const unsigned char blue[3] = { 0, 0, 255 };

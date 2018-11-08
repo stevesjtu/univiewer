@@ -20,7 +20,6 @@
 
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
-using namespace std;
 
 namespace univiewer {
 
@@ -39,7 +38,8 @@ protected:
 
 public:
 
-	static vtkSliderCallback *New(){return new vtkSliderCallback;}
+	VTKSubClass(vtkSliderCallback)
+
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
 		vtkSliderWidget *sliderWidget = reinterpret_cast<vtkSliderWidget*>(caller);
@@ -54,7 +54,7 @@ public:
 class NextPressedCallback : public vtkCommand
 {
 public:
-	static NextPressedCallback *New(){return new NextPressedCallback;}
+	VTKSubClass(NextPressedCallback)
 	NextPressedCallback() {}
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
@@ -70,7 +70,7 @@ public:
 class PrevPressedCallback : public vtkCommand
 {
 public:
-	static PrevPressedCallback *New() { return new PrevPressedCallback; }
+	VTKSubClass(PrevPressedCallback)
 	PrevPressedCallback() {}
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
@@ -84,7 +84,7 @@ public:
 class playCallback : public vtkCommand
 {
 public:
-	static playCallback *New() { return new playCallback; }
+	VTKSubClass(playCallback)
 	playCallback() {}
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
@@ -112,7 +112,7 @@ private:
 public:
 	CommandButton() {};
 	virtual ~CommandButton() {};
-	static shared_ptr<CommandButton> New() { return make_shared<CommandButton>(); }
+
 	void setOneStatesButtonContent(vtkSmartPointer<vtkImageData> image0,
 				vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor)
 	{
@@ -181,9 +181,9 @@ private:
 	vtkSmartPointer<vtkSliderCallback> SliderCallback;
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
 
-	shared_ptr<CommandButton> playButton;
-	shared_ptr<CommandButton> prevButton;
-	shared_ptr<CommandButton> nextButton;
+	sptr<CommandButton> playButton;
+	sptr<CommandButton> prevButton;
+	sptr<CommandButton> nextButton;
 
 
 public:
@@ -191,15 +191,10 @@ public:
 	Sliderbar() {};
 	virtual ~Sliderbar() {};
 
-	static shared_ptr<Sliderbar> New()
-	{
-		return make_shared<Sliderbar>();
-	}
-
 	vtkSmartPointer<vtkSliderRepresentation2D> &getSliderRep() { return sliderRep; }
-	shared_ptr<CommandButton> &getPlayButton() { return playButton; }
-	shared_ptr<CommandButton> &getNextButton() { return nextButton; }
-	shared_ptr<CommandButton> &getPrevButton() { return prevButton; }
+	sptr<CommandButton> &getPlayButton() { return playButton; }
+	sptr<CommandButton> &getNextButton() { return nextButton; }
+	sptr<CommandButton> &getPrevButton() { return prevButton; }
 	
 	void setSliderBar(vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor, 
 					  unsigned &step,
@@ -261,7 +256,7 @@ public:
 		vtkSmartPointer<vtkImageData> imagePause = vtkSmartPointer<vtkImageData>::New();
 		CreateImagePlay(imagePlay);
 		CreateImagePause(imagePause);
-		playButton = CommandButton::New();
+		playButton = CreateOneOf<CommandButton>();
 		playButton->setTwoStatesButtonContent(imagePlay, imagePause, renderWindowInteractor);
 		//int width = 20, height = 20;
 		//playButton->setButtonSizePosition(width, height, winsize[0] - 235 - width, winsize[1] - 5 - height);
@@ -275,8 +270,8 @@ public:
 		vtkSmartPointer<vtkImageData> imagePrev = vtkSmartPointer<vtkImageData>::New();
 		CreateImageNextStep(imageNext);
 		CreateImagePrevStep(imagePrev);
-		nextButton = CommandButton::New();
-		prevButton = CommandButton::New();
+		nextButton = CreateOneOf<CommandButton>();
+		prevButton = CreateOneOf<CommandButton>();
 		nextButton->setOneStatesButtonContent(imageNext, renderWindowInteractor);
 		prevButton->setOneStatesButtonContent(imagePrev, renderWindowInteractor);
 	

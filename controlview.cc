@@ -5,19 +5,19 @@ namespace univiewer {
 ////////////////////////////////////////////////////////////////////////////
 // old reader for dispfile
 ////////////////////////////////////////////////////////////////////////////
-void ControlView::readDispfile(const vector<string> & filename) {
-  ifstream infile;
-  infile.open(filename[0], ios::in | ios::binary);
+void ControlView::readDispfile(const std::vector<std::string> & filename) {
+  std::ifstream infile;
+  infile.open(filename[0], std::ios::in | std::ios::binary);
 
   if (infile.is_open()) {
-    vector<vector<double> > dispvecCollection;
+    std::vector<std::vector<double> > dispvecCollection;
     unsigned nodedeg = 3;
     if (filename.size() == 2) {
       nodedeg = atoi(filename[1].c_str());
     }
     unsigned dofs = Model::nodeNums * nodedeg;
 
-    vector<double> datavec(dofs);
+    std::vector<double> datavec(dofs);
     double steptime;
     while (1) {
       infile.read((char*)&steptime, sizeof(double));
@@ -33,7 +33,7 @@ void ControlView::readDispfile(const vector<string> & filename) {
 
     if (filename.size() == 2) {
       unsigned index;
-      vector<double> dataPosition;
+      std::vector<double> dataPosition;
       for (unsigned s = 0; s < Model::stepNum; ++s) {
         auto &data = dispvecCollection[s];
         index = 0;
@@ -50,7 +50,7 @@ void ControlView::readDispfile(const vector<string> & filename) {
     infile.close();
 
     // initialize the nodes position of Model feMesh
-    vector<double> node0;
+    std::vector<double> node0;
     for (auto& pmodel : pModels) {
       const auto &feMesh = pmodel->getFEMesh();
 
@@ -90,7 +90,7 @@ void ControlView::readDispfile(const vector<string> & filename) {
 ////////////////////////////////////////////////////////////////////////
 // read model mesh
 ////////////////////////////////////////////////////////////////////////
-void ControlView::readSimpleOutModel(ifstream &infile, vector<unsigned int> &modelinfo, vector<unsigned int> &elemlist, vector<double> &nodelist) {
+void ControlView::readSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo, std::vector<unsigned int> &elemlist, std::vector<double> &nodelist) {
   infile.read((char*)modelinfo.data(), sizeof(unsigned int) * 3);
 
   elemlist.resize(modelinfo[0] * modelinfo[2]);
@@ -103,28 +103,28 @@ void ControlView::readSimpleOutModel(ifstream &infile, vector<unsigned int> &mod
 //////////////////////////////////////////////////////////////////////////////
 // read simple output results
 //////////////////////////////////////////////////////////////////////////////
-int ControlView::readSimpleOutResult(const string& filename) {
-  ifstream infile(filename, ios::binary);
+int ControlView::readSimpleOutResult(const std::string& filename) {
+  std::ifstream infile(filename, std::ios::binary);
   if (!infile.is_open()) {
-    cout << "Error in opening " << filename << endl;
+    std::cout << "Error in opening " << filename << std::endl;
     exit(1);
   }
 
   unsigned bodynum;
   infile.read((char*)&bodynum, sizeof(unsigned));
 
-  vector<unsigned int> modelinfo(3);
-  vector<unsigned int> elemlist;
-  vector<double> nodelist;
+  std::vector<unsigned int> modelinfo(3);
+  std::vector<unsigned int> elemlist;
+  std::vector<double> nodelist;
 
   pModels.resize(bodynum);
   for (unsigned i = 0; i < bodynum; ++i) {
     this->readSimpleOutModel(infile, modelinfo, elemlist, nodelist);
-    pModels[i] = Model::New();
+    pModels[i] = CreateOneOf<Model>();
     pModels[i]->CreateModel(modelinfo, elemlist, nodelist);
   }
 
-  vector<unsigned> nodaldofs(bodynum);
+  std::vector<unsigned> nodaldofs(bodynum);
   infile.read((char*)nodaldofs.data(), sizeof(unsigned)* nodaldofs.size());
 
   if (infile.fail()) {
@@ -140,8 +140,8 @@ int ControlView::readSimpleOutResult(const string& filename) {
     alldofs += pModels[b]->getNodenum()* nodaldofs[b];
   }
 
-  vector<vector<double> > dispdata;
-  vector<double> disptemp(alldofs);
+  std::vector<std::vector<double> > dispdata;
+  std::vector<double> disptemp(alldofs);
   
   double temp;
   while(true) { // for each step
@@ -167,7 +167,7 @@ int ControlView::readSimpleOutResult(const string& filename) {
   //////////////////////////////////////////////////////////////
   // initialize data base
   //////////////////////////////////////////////////////////////
-  vector<double> node0;
+  std::vector<double> node0;
   
   for (unsigned b=0; b< bodynum; ++b) {
     const auto &feMesh = pModels[b]->getFEMesh();
@@ -202,11 +202,11 @@ int ControlView::readSimpleOutResult(const string& filename) {
 }
 
 int ControlView::inputModelfiles(std::vector<std::string> &argv) {
-  vector<string> simple_out_result;
-  vector<string> modelFiles;
-  vector<string> dispFiles;
-  vector<string> contFiles;
-  vector<string> nodeDataFiles;
+  std::vector<std::string> simple_out_result;
+  std::vector<std::string> modelFiles;
+  std::vector<std::string> dispFiles;
+  std::vector<std::string> contFiles;
+  std::vector<std::string> nodeDataFiles;
   argParser(argv, simple_out_result, modelFiles, dispFiles, contFiles, nodeDataFiles);
   
   data_type = DATA_RESET;
@@ -227,10 +227,10 @@ int ControlView::inputModelfiles(std::vector<std::string> &argv) {
     }
 
     if (data_type & DATA_DISPL) {
-      sliderbar = Sliderbar::New();
+      sliderbar = CreateOneOf<Sliderbar>();
       sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
 
-      currenttimer = CurrentTimer::New();
+      currenttimer = CreateOneOf<CurrentTimer>();
       currenttimer->setTextActor(renderWindow);
       renderer->AddActor2D(currenttimer->getTextActor());      
     }
@@ -238,7 +238,7 @@ int ControlView::inputModelfiles(std::vector<std::string> &argv) {
   } else { // using simple output results or old fasion type input.
     pModels.resize(modelFiles.size());
     for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
-      pModels[i] = Model::New();
+      pModels[i] = CreateOneOf<Model>();
       pModels[i]->setOffset(Model::nodeNums* 3);
 
       if (modelFiles[i].substr(modelFiles[i].size() - 3).compare(".md") == 0) {
@@ -269,10 +269,10 @@ int ControlView::inputModelfiles(std::vector<std::string> &argv) {
 
       this->readDispfile(dispFiles);
 
-      sliderbar = Sliderbar::New();
+      sliderbar = CreateOneOf<Sliderbar>();
       sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
 
-      currenttimer = CurrentTimer::New();
+      currenttimer = CreateOneOf<CurrentTimer>();
       currenttimer->setTextActor(renderWindow);
       renderer->AddActor2D(currenttimer->getTextActor());
     }

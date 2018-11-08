@@ -17,7 +17,6 @@
 #include "model.h"
 #include "auxfunc.h"
 
-using namespace std;
 
 namespace univiewer {
 
@@ -25,10 +24,7 @@ namespace univiewer {
 class pressTextCallback : public vtkCommand
 {
 public:
-	static pressTextCallback *New()
-	{
-		return new pressTextCallback;
-	}
+	VTKSubClass(pressTextCallback)
 	pressTextCallback() {}
 
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
@@ -48,10 +44,7 @@ protected:
 		textWidget->GetTextActor()->GetTextProperty()->SetOpacity(0.5);
 	}
 public:
-	static releaseTextCallback *New()
-	{
-		return new releaseTextCallback;
-	}
+	VTKSubClass(releaseTextCallback)
 	releaseTextCallback() {}
 
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
@@ -59,7 +52,7 @@ public:
 		releaseCommon(caller);
 		// something to do
 	}
-	vector<vtkSmartPointer<vtkTextWidget> > textWidgetLeaf;
+	std::vector<vtkSmartPointer<vtkTextWidget> > textWidgetLeaf;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -67,10 +60,7 @@ public:
 class systemReleaseTextCallback : public releaseTextCallback
 {
 public:
-	static systemReleaseTextCallback *New()
-	{
-		return new systemReleaseTextCallback;
-	}
+	VTKSubClass(systemReleaseTextCallback)
 	systemReleaseTextCallback() {}
 
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
@@ -83,9 +73,9 @@ public:
 		renderWindowInteractor->Render();
 
 #ifdef WIN32
-    string fpathname, fname;
+    std::string fpathname, fname;
     OpenFileDlg(fpathname, fname);
-    cout << fpathname << " " << fname << endl;
+    std::cout << fpathname << " " << fname << std::endl;
 #endif
 	}
 
@@ -107,7 +97,6 @@ private:
 public:
 	CommandText() {}
 	virtual ~CommandText(){}
-	static shared_ptr<CommandText> New() { return make_shared<CommandText>(); }
 
 	vtkSmartPointer<vtkTextWidget> getTextWidget() { return textWidget; }
 	vtkSmartPointer<vtkTextRepresentation> getTextRepresentation() { return textRepresentation; }
@@ -126,7 +115,7 @@ public:
 		renderWindowInteractor = iren;
 	}
 
-	void setCommandTextContent(const string &str, const double r, const double g, const double b, const double a, const int isbold)
+	void setCommandTextContent(const std::string &str, const double r, const double g, const double b, const double a, const int isbold)
 	{
 		// Create the widget
 		textActor = vtkSmartPointer<vtkTextActor>::New();
@@ -189,10 +178,6 @@ private:
 public:
 	CurrentTimer() {};
 	virtual ~CurrentTimer() {};
-	static shared_ptr<CurrentTimer> New()
-	{
-		return make_shared<CurrentTimer>();
-	}
 
 	vtkSmartPointer<vtkTextActor> &getTextActor() { return textActor; }
 	void setTextActor(vtkSmartPointer<vtkRenderWindow> &renderWindow) {
