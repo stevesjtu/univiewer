@@ -42,13 +42,13 @@ public:
 
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
-		vtkSliderWidget *sliderWidget = reinterpret_cast<vtkSliderWidget*>(caller);
-		*step = (unsigned)static_cast<vtkSliderRepresentation *>(sliderWidget->GetRepresentation())->GetValue();
-		if (!(*play))
-			*stepPlay = true;
+		vtkSliderWidget *slider_widget_ = reinterpret_cast<vtkSliderWidget*>(caller);
+		*step_ = (unsigned)static_cast<vtkSliderRepresentation *>(slider_widget_->GetRepresentation())->GetValue();
+		if (!(*play_))
+			*step_play_ = true;
 	}
-	unsigned *step;
-	bool *play, *stepPlay;
+	unsigned *step_;
+	bool *play_, *step_play_;
 };
 
 class NextPressedCallback : public vtkCommand
@@ -58,11 +58,11 @@ public:
 	NextPressedCallback() {}
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
-		*step = (*step == *stepNum - 1) ? *stepNum - 1 : *step + 1;
-		*stepPlay = true;
+		*step_ = (*step_ == *num_step_ - 1) ? *num_step_ - 1 : *step_ + 1;
+		*step_play_ = true;
 	}
-	unsigned *step, *stepNum;
-	bool *stepPlay;
+	unsigned *step_, *num_step_;
+	bool *step_play_;
 
 };
 
@@ -74,18 +74,18 @@ public:
 	PrevPressedCallback() {}
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
-		*step = (*step == 0) ? 0 : *step - 1;
-		*stepPlay = true;
+		*step_ = (*step_ == 0) ? 0 : *step_ - 1;
+		*step_play_ = true;
 	}
-	unsigned *step;
-	bool *stepPlay;
+	unsigned *step_;
+	bool *step_play_;
 };
 
-class playCallback : public vtkCommand
+class PlayCallback : public vtkCommand
 {
 public:
-	VTKSubClass(playCallback)
-	playCallback() {}
+	VTKSubClass(PlayCallback)
+	PlayCallback() {}
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
 		vtkButtonWidget *thisButton = reinterpret_cast<vtkButtonWidget*>(caller);
@@ -93,56 +93,56 @@ public:
 			reinterpret_cast<vtkTexturedButtonRepresentation2D*>(thisButton->GetRepresentation());
 		
 		if (thisButtonRep->GetState()==0)
-			*play = false;
+			*play_ = false;
 		if (thisButtonRep->GetState() == 1)
-			*play = true;
+			*play_ = true;
 
-		*stepPlay = false;
+		*step_play_ = false;
 	}
-	bool *play, *stepPlay;
+	bool *play_, *step_play_;
 };
 
 
 class CommandButton
 {
 private:
-	vtkSmartPointer<vtkTexturedButtonRepresentation2D> buttonRepresentation;
-	vtkSmartPointer<vtkButtonWidget> buttonWidget;
+	vtkSmartPointer<vtkTexturedButtonRepresentation2D> button_representation_;
+	vtkSmartPointer<vtkButtonWidget> button_widget_;
 
 public:
 	CommandButton() {};
 	virtual ~CommandButton() {};
 
-	void setOneStatesButtonContent(vtkSmartPointer<vtkImageData> image0,
-				vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor)
+	void SetOneStatesButtonContent(vtkSmartPointer<vtkImageData> image0,
+				vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor_)
 	{
-		buttonRepresentation = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
-		buttonRepresentation->SetNumberOfStates(1);
-		buttonRepresentation->SetButtonTexture(0, image0);
+		button_representation_ = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
+		button_representation_->SetNumberOfStates(1);
+		button_representation_->SetButtonTexture(0, image0);
 
-		buttonWidget = vtkSmartPointer<vtkButtonWidget>::New();
-		buttonWidget->SetInteractor(renderWindowInteractor);
-		buttonWidget->SetRepresentation(buttonRepresentation);
+		button_widget_ = vtkSmartPointer<vtkButtonWidget>::New();
+		button_widget_->SetInteractor(render_window_interactor_);
+		button_widget_->SetRepresentation(button_representation_);
 
-		buttonWidget->On();
+		button_widget_->On();
 	}
 	
-	void setTwoStatesButtonContent(vtkSmartPointer<vtkImageData> image0, vtkSmartPointer<vtkImageData> image1,
-						  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor)
+	void SetTwoStatesButtonContent(vtkSmartPointer<vtkImageData> image0, vtkSmartPointer<vtkImageData> image1,
+						  vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor_)
 	{
-		buttonRepresentation = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
-		buttonRepresentation->SetNumberOfStates(2);
-		buttonRepresentation->SetButtonTexture(0, image0);
-		buttonRepresentation->SetButtonTexture(1, image1);
+		button_representation_ = vtkSmartPointer<vtkTexturedButtonRepresentation2D>::New();
+		button_representation_->SetNumberOfStates(2);
+		button_representation_->SetButtonTexture(0, image0);
+		button_representation_->SetButtonTexture(1, image1);
 
-		buttonWidget = vtkSmartPointer<vtkButtonWidget>::New();
-		buttonWidget->SetInteractor(renderWindowInteractor);
-		buttonWidget->SetRepresentation(buttonRepresentation);
+		button_widget_ = vtkSmartPointer<vtkButtonWidget>::New();
+		button_widget_->SetInteractor(render_window_interactor_);
+		button_widget_->SetRepresentation(button_representation_);
 
-		buttonWidget->On();
+		button_widget_->On();
 	}
 
-	void setButtonSizePosition(int width, int height, int bottomLeftX, int bottomLeftY)
+	void SetButtonSizePosition(int width, int height, int bottomLeftX, int bottomLeftY)
 	{
 		double bds[6];
 		bds[0] = bottomLeftX;
@@ -152,144 +152,144 @@ public:
 		bds[4] = bds[5] = 0.0;
 
 		// Scale to 1, default is .5
-		buttonRepresentation->SetPlaceFactor(1.0);
-		buttonRepresentation->PlaceWidget(bds);
+		button_representation_->SetPlaceFactor(1.0);
+		button_representation_->PlaceWidget(bds);
 	}
 	
-	void setButtonPressCallBack(vtkSmartPointer<vtkCommand> callback)
+	void SetButtonPressCallBack(vtkSmartPointer<vtkCommand> callback)
 	{
-		buttonWidget->AddObserver(vtkCommand::StateChangedEvent, callback);
+		button_widget_->AddObserver(vtkCommand::StateChangedEvent, callback);
 	}
 
 	//void setButtonReleaseCallBack(vtkSmartPointer<vtkCommand> callback)
 	//{
-	//	buttonWidget->AddObserver(vtkCommand::EndInteractionEvent, callback);
+	//	button_widget_->AddObserver(vtkCommand::EndInteractionEvent, callback);
 	//}
-	int getState() { return buttonRepresentation->GetState(); }
-	void setState(int input) { buttonRepresentation->SetState(input); }
+	int GetState() { return button_representation_->GetState(); }
+	void SetState(int input) { button_representation_->SetState(input); }
 
 };
 
 
-class Sliderbar
+class SliderBar
 {
 private:
 
-	vtkSmartPointer<vtkSliderRepresentation2D> sliderRep;
-	vtkSmartPointer<vtkSliderWidget> sliderWidget;
+	vtkSmartPointer<vtkSliderRepresentation2D> slider_rep_;
+	vtkSmartPointer<vtkSliderWidget> slider_widget_;
 
-	vtkSmartPointer<vtkSliderCallback> SliderCallback;
-	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
+	vtkSmartPointer<vtkSliderCallback> slider_callback_;
+	vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor_;
 
-	sptr<CommandButton> playButton;
-	sptr<CommandButton> prevButton;
-	sptr<CommandButton> nextButton;
+	sptr<CommandButton> play_button_;
+	sptr<CommandButton> prev_button_;
+	sptr<CommandButton> next_button_;
 
 
 public:
 
-	Sliderbar() {};
-	virtual ~Sliderbar() {};
+	SliderBar() {};
+	virtual ~SliderBar() {};
 
-	vtkSmartPointer<vtkSliderRepresentation2D> &getSliderRep() { return sliderRep; }
-	sptr<CommandButton> &getPlayButton() { return playButton; }
-	sptr<CommandButton> &getNextButton() { return nextButton; }
-	sptr<CommandButton> &getPrevButton() { return prevButton; }
+	vtkSmartPointer<vtkSliderRepresentation2D> &GetSliderRep() { return slider_rep_; }
+	sptr<CommandButton> &GetPlayButton() { return play_button_; }
+	sptr<CommandButton> &GetNextButton() { return next_button_; }
+	sptr<CommandButton> &GetPrevButton() { return prev_button_; }
 	
-	void setSliderBar(vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor, 
-					  unsigned &step,
-					  unsigned &stepNum,
-					  bool &play, bool &stepPlay)
+	void SetSliderBar(vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor_, 
+					  unsigned &step_,
+					  unsigned &num_step_,
+					  bool &play_, bool &step_play_)
 	{
 		
-		sliderRep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
+		slider_rep_ = vtkSmartPointer<vtkSliderRepresentation2D>::New();
 
-		sliderRep->SetMinimumValue(0);
-		sliderRep->SetMaximumValue(stepNum - 1);
-		sliderRep->SetValue(0);
+		slider_rep_->SetMinimumValue(0);
+		slider_rep_->SetMaximumValue(num_step_ - 1);
+		slider_rep_->SetValue(0);
 
-		//sliderRep->SetTitleText("");
-		sliderRep->SetShowSliderLabel(0);
+		//slider_rep_->SetTitleText("");
+		slider_rep_->SetShowSliderLabel(0);
 
 		// Set color properties:
 		// Change the color of the knob that slides
-		sliderRep->GetSliderProperty()->SetColor(1.0, 1.0, 1.0);//red
-		sliderRep->GetSliderProperty()->SetOpacity(0.8);
+		slider_rep_->GetSliderProperty()->SetColor(1.0, 1.0, 1.0);//red
+		slider_rep_->GetSliderProperty()->SetOpacity(0.8);
 		// Change the color of the bar
-		sliderRep->GetTubeProperty()->SetColor(1.0, 1.0, 1.0);
-		sliderRep->GetTubeProperty()->SetOpacity(0.2);
+		slider_rep_->GetTubeProperty()->SetColor(1.0, 1.0, 1.0);
+		slider_rep_->GetTubeProperty()->SetOpacity(0.2);
 		// Change the color of the text indicating what the slider controls
-		//sliderRep->GetTitleProperty()->SetColor(1,0,0);//red
-		//        sliderRep->GetTitleProperty()->SetBold(0);
-		//        sliderRep->GetTitleProperty()->SetShadow(0);
+		//slider_rep_->GetTitleProperty()->SetColor(1,0,0);//red
+		//        slider_rep_->GetTitleProperty()->SetBold(0);
+		//        slider_rep_->GetTitleProperty()->SetShadow(0);
 		// Change the color of the text displaying the value
-		//sliderRep->GetLabelProperty()->SetColor(1,0,0);//red
+		//slider_rep_->GetLabelProperty()->SetColor(1,0,0);//red
 		// Change the color of the knob when the mouse is held on it
-		sliderRep->GetSelectedProperty()->SetColor(0.0, 0.0, 0.0);
-		sliderRep->GetSelectedProperty()->SetOpacity(0.9);
+		slider_rep_->GetSelectedProperty()->SetColor(0.0, 0.0, 0.0);
+		slider_rep_->GetSelectedProperty()->SetOpacity(0.9);
 		// Change the color of the ends of the bar
-		//sliderRep->GetCapProperty()->SetColor(1,1,0);//yellow
-		int *winsize = renderWindowInteractor->GetRenderWindow()->GetSize();
-		sliderRep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
-		sliderRep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
+		//slider_rep_->GetCapProperty()->SetColor(1,1,0);//yellow
+		int *winsize = render_window_interactor_->GetRenderWindow()->GetSize();
+		slider_rep_->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
+		slider_rep_->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
 
-		//sliderRep->GetPoint1Coordinate()->SetValue(winsize[0] - 260 - winsize[0] / 4.0, winsize[1] - 15);
-		//sliderRep->GetPoint2Coordinate()->SetValue(winsize[0] - 260, winsize[1] - 15);
+		//slider_rep_->GetPoint1Coordinate()->SetValue(winsize[0] - 260 - winsize[0] / 4.0, winsize[1] - 15);
+		//slider_rep_->GetPoint2Coordinate()->SetValue(winsize[0] - 260, winsize[1] - 15);
 
-		sliderRep->SetEndCapLength(0);
+		slider_rep_->SetEndCapLength(0);
 
-		sliderWidget = vtkSmartPointer<vtkSliderWidget>::New();
-		sliderWidget->SetInteractor(renderWindowInteractor);
-		sliderWidget->SetRepresentation(sliderRep);
-		sliderWidget->SetAnimationModeToAnimate();
-		sliderWidget->EnabledOn();
+		slider_widget_ = vtkSmartPointer<vtkSliderWidget>::New();
+		slider_widget_->SetInteractor(render_window_interactor_);
+		slider_widget_->SetRepresentation(slider_rep_);
+		slider_widget_->SetAnimationModeToAnimate();
+		slider_widget_->EnabledOn();
 
-		SliderCallback = vtkSmartPointer<vtkSliderCallback>::New();
-		SliderCallback->step = &step;
-		SliderCallback->play = &play;
-		SliderCallback->stepPlay = &stepPlay;
-		sliderWidget->AddObserver(vtkCommand::InteractionEvent, SliderCallback);
+		slider_callback_ = vtkSmartPointer<vtkSliderCallback>::New();
+		slider_callback_->step_ = &step_;
+		slider_callback_->play_ = &play_;
+		slider_callback_->step_play_ = &step_play_;
+		slider_widget_->AddObserver(vtkCommand::InteractionEvent, slider_callback_);
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
-		// play button widget ////////////////////////////////////////////////////////////////////////
+		// play_ button widget_ ////////////////////////////////////////////////////////////////////////
 		vtkSmartPointer<vtkImageData> imagePlay = vtkSmartPointer<vtkImageData>::New();
 		vtkSmartPointer<vtkImageData> imagePause = vtkSmartPointer<vtkImageData>::New();
 		CreateImagePlay(imagePlay);
 		CreateImagePause(imagePause);
-		playButton = CreateOneOf<CommandButton>();
-		playButton->setTwoStatesButtonContent(imagePlay, imagePause, renderWindowInteractor);
+		play_button_ = CreateOneOf<CommandButton>();
+		play_button_->SetTwoStatesButtonContent(imagePlay, imagePause, render_window_interactor_);
 		//int width = 20, height = 20;
-		//playButton->setButtonSizePosition(width, height, winsize[0] - 235 - width, winsize[1] - 5 - height);
-		vtkSmartPointer<playCallback> playButtonCallback = vtkSmartPointer<playCallback>::New();
-		playButtonCallback->play = &play;
-		playButtonCallback->stepPlay = &stepPlay;
-		playButton->setButtonPressCallBack(playButtonCallback);
+		//play_button_->SetButtonSizePosition(width, height, winsize[0] - 235 - width, winsize[1] - 5 - height);
+		vtkSmartPointer<PlayCallback> playButtonCallback = vtkSmartPointer<PlayCallback>::New();
+		playButtonCallback->play_ = &play_;
+		playButtonCallback->step_play_ = &step_play_;
+		play_button_->SetButtonPressCallBack(playButtonCallback);
 		//////////////////////////////////////////////////////////////////////////////////////////////
-		// Single Step button widget /////////////////////////////////////////////////////////////////
+		// Single Step button widget_ /////////////////////////////////////////////////////////////////
 		vtkSmartPointer<vtkImageData> imageNext = vtkSmartPointer<vtkImageData>::New();
 		vtkSmartPointer<vtkImageData> imagePrev = vtkSmartPointer<vtkImageData>::New();
 		CreateImageNextStep(imageNext);
 		CreateImagePrevStep(imagePrev);
-		nextButton = CreateOneOf<CommandButton>();
-		prevButton = CreateOneOf<CommandButton>();
-		nextButton->setOneStatesButtonContent(imageNext, renderWindowInteractor);
-		prevButton->setOneStatesButtonContent(imagePrev, renderWindowInteractor);
+		next_button_ = CreateOneOf<CommandButton>();
+		prev_button_ = CreateOneOf<CommandButton>();
+		next_button_->SetOneStatesButtonContent(imageNext, render_window_interactor_);
+		prev_button_->SetOneStatesButtonContent(imagePrev, render_window_interactor_);
 	
-		//nextButton->setButtonSizePosition(width, height, winsize[0] - 210 - width, winsize[1] - 5 - height);
-		//prevButton->setButtonSizePosition(width, height, winsize[0] - 185 - width, winsize[1] - 5 - height);
+		//next_button_->SetButtonSizePosition(width, height, winsize[0] - 210 - width, winsize[1] - 5 - height);
+		//prev_button_->SetButtonSizePosition(width, height, winsize[0] - 185 - width, winsize[1] - 5 - height);
 		// call back
 		vtkSmartPointer<NextPressedCallback> nextPressedCallback = vtkSmartPointer<NextPressedCallback>::New();
-		nextPressedCallback->step = &step;
-		nextPressedCallback->stepNum = &stepNum;
-		nextPressedCallback->stepPlay = &stepPlay;
+		nextPressedCallback->step_ = &step_;
+		nextPressedCallback->num_step_ = &num_step_;
+		nextPressedCallback->step_play_ = &step_play_;
 
-		nextButton->setButtonPressCallBack(nextPressedCallback);
+		next_button_->SetButtonPressCallBack(nextPressedCallback);
 
 		vtkSmartPointer<PrevPressedCallback> prevPressedCallback = vtkSmartPointer<PrevPressedCallback>::New();
-		prevPressedCallback->step = &step;
-		prevPressedCallback->stepPlay = &stepPlay;
+		prevPressedCallback->step_ = &step_;
+		prevPressedCallback->step_play_ = &step_play_;
 
-		prevButton->setButtonPressCallBack(prevPressedCallback);
+		prev_button_->SetButtonPressCallBack(prevPressedCallback);
 	}
 };
 

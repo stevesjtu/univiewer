@@ -3,17 +3,17 @@
 
 namespace univiewer {
 
-void FEMesh::makeEdges()
+void FEMesh::MakeEdges()
 {
 	// edgeSet should be a set of edges without duplicated edges.
-	unsigned elem_num = ugrid->GetNumberOfCells();
-	elems_bynodes.resize(elem_num);
+	unsigned elem_num = ugrid_->GetNumberOfCells();
+	elems_bynodes_.resize(elem_num);
 
-	vtkSmartPointer<vtkCellArray> cellarray = ugrid->GetCells();
+	vtkSmartPointer<vtkCellArray> cellarray = ugrid_->GetCells();
 	vtkSmartPointer<vtkIdList> idlist = vtkSmartPointer<vtkIdList>::New();
 	for (unsigned e = 0; e < elem_num; ++e) {
 		cellarray->GetNextCell(idlist);
-		elems_bynodes[e] = { (unsigned)idlist->GetId(0), (unsigned)idlist->GetId(1), (unsigned)idlist->GetId(2) };
+		elems_bynodes_[e] = { (unsigned)idlist->GetId(0), (unsigned)idlist->GetId(1), (unsigned)idlist->GetId(2) };
 	}
 	
 	typedef std::set<unsigned> edge;
@@ -23,47 +23,47 @@ void FEMesh::makeEdges()
 	for (unsigned e = 0; e < elem_num; ++e) {
 		for (unsigned ind = 0; ind < 3; ++ind) {
 			ind == 3 - 1 ? ind1 = 0 : ind1 = ind + 1;
-			oneEdge.insert(elems_bynodes[e][ind]);
-			oneEdge.insert(elems_bynodes[e][ind1]);
+			oneEdge.insert(elems_bynodes_[e][ind]);
+			oneEdge.insert(elems_bynodes_[e][ind1]);
 			edgeSet.insert(oneEdge);
 			oneEdge.clear();
 		}
 	}
 
-	//// fill the edges_bynodes
+	//// fill the edges_bynodes_
 	unsigned edge_num = static_cast<unsigned>(edgeSet.size());
-	edges_bynodes.resize(edge_num);
+	edges_bynodes_.resize(edge_num);
 	unsigned index = 0;
 	for (std::set<edge>::iterator it = edgeSet.begin(); it != edgeSet.end(); it++) {
 		edge::iterator nodeit = it->begin();
-		edges_bynodes[index][0] = *nodeit++;
-		edges_bynodes[index++][1] = *nodeit;
+		edges_bynodes_[index][0] = *nodeit++;
+		edges_bynodes_[index++][1] = *nodeit;
 	}
 
-	isCalcEdge = true;
+	is_calc_edge = true;
 }
 
 
-unsigned Model::count = 0;
-unsigned Model::nodeNums = 0;
-unsigned Model::elemNums = 0;
-unsigned Model::stepNum = 0;
-unsigned Model::step = 0;
-std::vector<double> Model::stepCollection = std::vector<double>(0);
-std::vector<std::pair<double, double> > Model::ranges = std::vector<std::pair<double, double> >(0);
+unsigned Model::count_ = 0;
+unsigned Model::num_nodes_ = 0;
+unsigned Model::num_elems_ = 0;
+unsigned Model::num_step_ = 0;
+unsigned Model::step_ = 0;
+std::vector<double> Model::step_collection_ = std::vector<double>(0);
+std::vector<std::pair<double, double> > Model::ranges_ = std::vector<std::pair<double, double> >(0);
 
 void Model::CreateModel(const std::vector<unsigned int> &modelinfo,
   const std::vector<unsigned int> &elemlist, const std::vector<double> &nodelist) {
   
-  feMesh = CreateOneOf<FEMesh>();
-  feMesh->getUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
+  fe_mesh_ = CreateOneOf<FEMesh>();
+  fe_mesh_->GetUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   for (unsigned i = 0; i < modelinfo[1]; ++i) {
     double nodes[3] = { nodelist[i * 3], nodelist[i * 3 + 1], nodelist[i * 3 + 2] };
     points->InsertPoint(i, nodes);
   }
-  feMesh->getUGrid()->SetPoints(points);
+  fe_mesh_->GetUGrid()->SetPoints(points);
 
   int vtktype;
   switch (modelinfo[2]) {
@@ -89,48 +89,48 @@ void Model::CreateModel(const std::vector<unsigned int> &modelinfo,
       element[j] = (vtkIdType)(*(elemlist.data() + i * modelinfo[2] + j) );
     }
 
-    feMesh->getUGrid()->InsertNextCell(vtktype, (vtkIdType)modelinfo[2], element.data());
+    fe_mesh_->GetUGrid()->InsertNextCell(vtktype, (vtkIdType)modelinfo[2], element.data());
 
   }
 
-  mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-  mapper->SetInputData(feMesh->getUGrid());
+  mapper_ = vtkSmartPointer<vtkDataSetMapper>::New();
+  mapper_->SetInputData(fe_mesh_->GetUGrid());
 
-  actor = vtkSmartPointer<vtkActor>::New();
-  actor->SetMapper(mapper);
+  actor_ = vtkSmartPointer<vtkActor>::New();
+  actor_->SetMapper(mapper_);
 
   // modify the static variables
-  nodeNums += nodeNum = feMesh->getUGrid()->GetNumberOfPoints();
-  elemNums += elemNum = feMesh->getUGrid()->GetNumberOfCells();
+  num_nodes_ += num_node_ = fe_mesh_->GetUGrid()->GetNumberOfPoints();
+  num_elems_ += num_elem_ = fe_mesh_->GetUGrid()->GetNumberOfCells();
   
 }
 
 void Model::ReadXmlModel(const std::string&file)
 {
 
-	feMesh = CreateOneOf<FEMesh>();
+	fe_mesh_ = CreateOneOf<FEMesh>();
 
 	// read from xml
 	vtkSmartPointer<vtkXMLUnstructuredGridReader> ugridReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
 	ugridReader->SetFileName(file.c_str());
 	ugridReader->Update();
 	// 
-	feMesh->getUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
-	feMesh->getUGrid() = ugridReader->GetOutput();
+	fe_mesh_->GetUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
+	fe_mesh_->GetUGrid() = ugridReader->GetOutput();
 
-	mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	mapper->SetInputData(feMesh->getUGrid());
+	mapper_ = vtkSmartPointer<vtkDataSetMapper>::New();
+	mapper_->SetInputData(fe_mesh_->GetUGrid());
 	
-	actor = vtkSmartPointer<vtkActor>::New();
-	actor->SetMapper(mapper);
+	actor_ = vtkSmartPointer<vtkActor>::New();
+	actor_->SetMapper(mapper_);
 
 	// modify the static variables
-	nodeNums += nodeNum = feMesh->getUGrid()->GetNumberOfPoints();
-	elemNums += elemNum = feMesh->getUGrid()->GetNumberOfCells();
+	num_nodes_ += num_node_ = fe_mesh_->GetUGrid()->GetNumberOfPoints();
+	num_elems_ += num_elem_ = fe_mesh_->GetUGrid()->GetNumberOfCells();
 }
 
 void Model::ReadTxtModel(const std::string& file) {
-  feMesh = CreateOneOf<FEMesh>();
+  fe_mesh_ = CreateOneOf<FEMesh>();
 
   std::vector<unsigned int> modelinfo;
   std::vector<unsigned int> elemlist;
@@ -171,32 +171,32 @@ void Model::ReadTxtModel(const std::string& file) {
 }
 
 
-void Model::setLabelnode()
+void Model::SetLabelnode()
 {
 	// labelnode = Labelnode::New();
-	// labelnode->setLabelActor(feMesh->getUGrid());
+	// labelnode->setLabelActor(fe_mesh_->GetUGrid());
 	
 	vtkSmartPointer<vtkLabeledDataMapper> labelMapper = vtkSmartPointer<vtkLabeledDataMapper>::New();
-	labelMapper->SetInputData(feMesh->getUGrid());
-	labelActor = vtkSmartPointer<vtkActor2D>::New();
-	labelActor->SetMapper(labelMapper);
+	labelMapper->SetInputData(fe_mesh_->GetUGrid());
+	label_actor_ = vtkSmartPointer<vtkActor2D>::New();
+	label_actor_->SetMapper(labelMapper);
 
 }
 
-void Model::updateDisp(unsigned s)
+void Model::UpdateDisp(unsigned s)
 {
-	feMesh->getUGrid()->SetPoints(feMesh->getpvtkPnts(s));
+	fe_mesh_->GetUGrid()->SetPoints(fe_mesh_->GetPvtkpnts(s));
 
-	if (!nodalscalars.empty()) {
-		feMesh->getUGrid()->GetPointData()->SetScalars(nodalscalars[s]);
-		mapper->SetScalarRange(ranges[s].first, ranges[s].second);
+	if (!nodal_scalars_.empty()) {
+		fe_mesh_->GetUGrid()->GetPointData()->SetScalars(nodal_scalars_[s]);
+		mapper_->SetScalarRange(ranges_[s].first, ranges_[s].second);
 	}
 
 }
 
 
 
-void ContactData::insertNode(
+void ContactData::InsertNode(
 	unsigned n,
 	vtkSmartPointer<vtkCellArray> &Cells,
 	vtkSmartPointer<vtkUnsignedCharArray> &Colors,
@@ -210,7 +210,7 @@ void ContactData::insertNode(
 	Types.push_back(VTK_VERTEX);
 }
 
-void ContactData::insertEdge(
+void ContactData::InsertEdge(
 	std::array<unsigned, 2> edge,
 	vtkSmartPointer<vtkCellArray> &Cells,
 	vtkSmartPointer<vtkUnsignedCharArray> &Colors,
@@ -225,7 +225,7 @@ void ContactData::insertEdge(
 	Types.push_back(VTK_LINE);
 }
 
-void ContactData::insertTriangle(
+void ContactData::InsertTriangle(
 	std::array<unsigned, 3> elem,
 	vtkSmartPointer<vtkCellArray> &Cells,
 	vtkSmartPointer<vtkUnsignedCharArray> &Colors,
@@ -245,14 +245,14 @@ void ContactData::insertTriangle(
 
 void ContactData::InitializeUGrid()
 {
-	if (!pModel->getFEMesh()->getIsCalcEdge()) pModel->getFEMesh()->makeEdges();
-	if (!nModel->getFEMesh()->getIsCalcEdge()) nModel->getFEMesh()->makeEdges();
+	if (!prev_model_->GetFEMesh()->getIsCalcEdge()) prev_model_->GetFEMesh()->MakeEdges();
+	if (!next_model_->GetFEMesh()->getIsCalcEdge()) next_model_->GetFEMesh()->MakeEdges();
 		
-	const auto &pfeMesh = pModel->getFEMesh();
-	const auto &nfeMesh = nModel->getFEMesh();
+	const auto &pfeMesh = prev_model_->GetFEMesh();
+	const auto &nfeMesh = next_model_->GetFEMesh();
 
-	pMappers.resize(Model::stepNum);
-	nMappers.resize(Model::stepNum);
+	prev_mappers_.resize(Model::num_step_);
+	next_mappers_.resize(Model::num_step_);
 
 	vtkSmartPointer<vtkCellArray> pCells;
 	vtkSmartPointer<vtkCellArray> nCells;
@@ -260,12 +260,12 @@ void ContactData::InitializeUGrid()
 	vtkSmartPointer<vtkUnsignedCharArray> nColors;
 	std::vector<int> pTypes, nTypes;
 
-	for (unsigned s = 0; s < Model::stepNum; ++s) {
+	for (unsigned s = 0; s < Model::num_step_; ++s) {
 		vtkSmartPointer<vtkUnstructuredGrid> pUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 		vtkSmartPointer<vtkUnstructuredGrid> nUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 		
-		pUGrid->SetPoints(pfeMesh->getpvtkPnts(s));
-		nUGrid->SetPoints(nfeMesh->getpvtkPnts(s));
+		pUGrid->SetPoints(pfeMesh->GetPvtkpnts(s));
+		nUGrid->SetPoints(nfeMesh->GetPvtkpnts(s));
 		
 		// some media variables/ cell, color, type
 		pCells = vtkSmartPointer<vtkCellArray>::New();
@@ -279,46 +279,46 @@ void ContactData::InitializeUGrid()
 		nTypes.clear();
 		// add the primitives to UnstructuredGurd
 		unsigned n0, n1, e0, e1, t0, t1;
-		for (unsigned i = 0; i < node_triangles[s].size(); ++i) {
-			n0 = node_triangles[s][i].first;
-			t1 = node_triangles[s][i].second;
-			insertNode(n0, pCells, pColors, pTypes);
-			insertTriangle(nfeMesh->getElems(t1), nCells, nColors, nTypes);
+		for (unsigned i = 0; i < node_triangles_[s].size(); ++i) {
+			n0 = node_triangles_[s][i].first;
+			t1 = node_triangles_[s][i].second;
+			InsertNode(n0, pCells, pColors, pTypes);
+			InsertTriangle(nfeMesh->GetElems(t1), nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < triangle_nodes[s].size(); ++i) {
-			t0 = triangle_nodes[s][i].first;
-			n1 = triangle_nodes[s][i].second;
-			insertTriangle(pfeMesh->getElems(t0), pCells, pColors, pTypes);
-			insertNode(n1, nCells, nColors, nTypes);
+		for (unsigned i = 0; i < triangle_nodes_[s].size(); ++i) {
+			t0 = triangle_nodes_[s][i].first;
+			n1 = triangle_nodes_[s][i].second;
+			InsertTriangle(pfeMesh->GetElems(t0), pCells, pColors, pTypes);
+			InsertNode(n1, nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < edge_edges[s].size(); ++i) {
-			e0 = edge_edges[s][i].first;
-			e1 = edge_edges[s][i].second;
-			insertEdge(pfeMesh->getEdges(e0), pCells, pColors, pTypes);
-			insertEdge(nfeMesh->getEdges(e1), nCells, nColors, nTypes);
+		for (unsigned i = 0; i < edge_edges_[s].size(); ++i) {
+			e0 = edge_edges_[s][i].first;
+			e1 = edge_edges_[s][i].second;
+			InsertEdge(pfeMesh->GetEdges(e0), pCells, pColors, pTypes);
+			InsertEdge(nfeMesh->GetEdges(e1), nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < node_edges[s].size(); ++i) {
-			n0 = node_edges[s][i].first;
-			e1 = node_edges[s][i].second;
-			insertNode(n0, pCells, pColors, pTypes);
-			insertEdge(nfeMesh->getEdges(e1), nCells, nColors, nTypes);
+		for (unsigned i = 0; i < node_edges_[s].size(); ++i) {
+			n0 = node_edges_[s][i].first;
+			e1 = node_edges_[s][i].second;
+			InsertNode(n0, pCells, pColors, pTypes);
+			InsertEdge(nfeMesh->GetEdges(e1), nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < edge_nodes[s].size(); ++i) {
-			e0 = edge_nodes[s][i].first;
-			n1 = edge_nodes[s][i].second;
-			insertEdge(pfeMesh->getEdges(e0), pCells, pColors, pTypes);
-			insertNode(n1, nCells, nColors, nTypes);
+		for (unsigned i = 0; i < edge_nodes_[s].size(); ++i) {
+			e0 = edge_nodes_[s][i].first;
+			n1 = edge_nodes_[s][i].second;
+			InsertEdge(pfeMesh->GetEdges(e0), pCells, pColors, pTypes);
+			InsertNode(n1, nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < node_nodes[s].size(); ++i) {
-			n0 = node_nodes[s][i].first;
-			n1 = node_nodes[s][i].second;
-			insertNode(n0, pCells, pColors, pTypes);
-			insertNode(n1, nCells, nColors, nTypes);
+		for (unsigned i = 0; i < node_nodes_[s].size(); ++i) {
+			n0 = node_nodes_[s][i].first;
+			n1 = node_nodes_[s][i].second;
+			InsertNode(n0, pCells, pColors, pTypes);
+			InsertNode(n1, nCells, nColors, nTypes);
 		}
 
 		// set the UnstructuredGrid
@@ -328,26 +328,26 @@ void ContactData::InitializeUGrid()
 		nUGrid->SetCells(nTypes.data(), nCells);
 		nUGrid->GetCellData()->SetScalars(nColors);
 		
-		pMappers[s] = vtkSmartPointer<vtkDataSetMapper>::New();
-		pMappers[s]->SetInputData(pUGrid);
+		prev_mappers_[s] = vtkSmartPointer<vtkDataSetMapper>::New();
+		prev_mappers_[s]->SetInputData(pUGrid);
 
-		nMappers[s] = vtkSmartPointer<vtkDataSetMapper>::New();
-		nMappers[s]->SetInputData(nUGrid);
+		next_mappers_[s] = vtkSmartPointer<vtkDataSetMapper>::New();
+		next_mappers_[s]->SetInputData(nUGrid);
 	}
 
 	// add them to pipeline
-	pActor = vtkSmartPointer<vtkActor>::New();
-	pActor->SetMapper(pMappers[0]);
+	prev_actor_ = vtkSmartPointer<vtkActor>::New();
+	prev_actor_->SetMapper(prev_mappers_[0]);
 	
-	nActor = vtkSmartPointer<vtkActor>::New();
-	nActor->SetMapper(nMappers[0]);
+	next_actor_ = vtkSmartPointer<vtkActor>::New();
+	next_actor_->SetMapper(next_mappers_[0]);
 
 }
 
 void ContactData::UpdateUGrid(unsigned s)
 {
-	pActor->SetMapper(pMappers[s]);
-	nActor->SetMapper(nMappers[s]);
+	prev_actor_->SetMapper(prev_mappers_[s]);
+	next_actor_->SetMapper(next_mappers_[s]);
 }
 
 
@@ -358,7 +358,7 @@ void ContactData::UpdateUGrid(unsigned s)
 //
 //
 //////////////////////////////////////////////////////////////////////////////////////////////
-void readpairs(std::ifstream &infile, pairCollect &pc)
+void ReadPairs(std::ifstream &infile, PairCollect &pc)
 {
 	unsigned num, pairs[2];
 	infile.read((char*)&num, sizeof(unsigned int));
@@ -368,40 +368,40 @@ void readpairs(std::ifstream &infile, pairCollect &pc)
 	}
 }
 
-void readContfile(const std::string& contfile, std::vector<sptr<ContactData> > &pContacts, std::vector<sptr<Model> > &pModels)
+void ReadContactFile(const std::string& contfile, std::vector<sptr<ContactData> > &contacts_, std::vector<sptr<Model> > &models_)
 {
 	std::ifstream infile;
 	infile.open(contfile, std::ios::in | std::ios::binary);
 	if (infile.is_open()) {
-		pContacts.resize(Model::stepNum);
+		contacts_.resize(Model::num_step_);
 		unsigned bodyid1, bodyid2, mark;
 
 		infile.read((char*)&mark, sizeof(unsigned int));
-		pContacts.resize(mark);
+		contacts_.resize(mark);
 		for (unsigned c = 0; c < mark; ++c) {
-			pContacts[c] = CreateOneOf<ContactData>();
+			contacts_[c] = CreateOneOf<ContactData>();
 			infile.read((char*)&bodyid1, sizeof(unsigned int));
 			infile.read((char*)&bodyid2, sizeof(unsigned int));
-			pContacts[c]->setModels(pModels[bodyid1], pModels[bodyid2]);
-			pContacts[c]->getPrimitivesPairs(NODE_TRIANGLE).resize(Model::stepNum);
-			pContacts[c]->getPrimitivesPairs(TRIANGLE_NODE).resize(Model::stepNum);
-			pContacts[c]->getPrimitivesPairs(EDGE_EDGE).resize(Model::stepNum);
-			pContacts[c]->getPrimitivesPairs(NODE_EDGE).resize(Model::stepNum);
-			pContacts[c]->getPrimitivesPairs(EDGE_NODE).resize(Model::stepNum);
-			pContacts[c]->getPrimitivesPairs(NODE_NODE).resize(Model::stepNum);
+			contacts_[c]->SetModels(models_[bodyid1], models_[bodyid2]);
+			contacts_[c]->GetPrimitivesPairs(NODE_TRIANGLE).resize(Model::num_step_);
+			contacts_[c]->GetPrimitivesPairs(TRIANGLE_NODE).resize(Model::num_step_);
+			contacts_[c]->GetPrimitivesPairs(EDGE_EDGE).resize(Model::num_step_);
+			contacts_[c]->GetPrimitivesPairs(NODE_EDGE).resize(Model::num_step_);
+			contacts_[c]->GetPrimitivesPairs(EDGE_NODE).resize(Model::num_step_);
+			contacts_[c]->GetPrimitivesPairs(NODE_NODE).resize(Model::num_step_);
 		}
 		
-		for (unsigned s = 0; s < Model::stepNum; ++s) {
-			//cout << "step: " << s << "\t eof?: " << infile.eof() << endl;
+		for (unsigned s = 0; s < Model::num_step_; ++s) {
+			//cout << "step_: " << s << "\t eof?: " << infile.eof() << endl;
 			if (!infile.eof()) {
-				for (unsigned c = 0; c < pContacts.size(); ++c) {
+				for (unsigned c = 0; c < contacts_.size(); ++c) {
 					// primitives
-					readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_TRIANGLE, s));
-					readpairs(infile, pContacts[c]->getPrimitivesPairs(TRIANGLE_NODE, s));
-					readpairs(infile, pContacts[c]->getPrimitivesPairs(EDGE_EDGE, s));
-					readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_EDGE, s));
-					readpairs(infile, pContacts[c]->getPrimitivesPairs(EDGE_NODE, s));
-					readpairs(infile, pContacts[c]->getPrimitivesPairs(NODE_NODE, s));
+					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(NODE_TRIANGLE, s));
+					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(TRIANGLE_NODE, s));
+					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(EDGE_EDGE, s));
+					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(NODE_EDGE, s));
+					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(EDGE_NODE, s));
+					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(NODE_NODE, s));
 				} // loop for ContactData
 			}
 		} // loop for steps
@@ -415,7 +415,7 @@ void readContfile(const std::string& contfile, std::vector<sptr<ContactData> > &
 
 }
 
-void readNodeDatafile(const std::string& nodedatafile, std::vector<sptr<Model> > &pModels)
+void ReadNodalDataFile(const std::string& nodedatafile, std::vector<sptr<Model> > &models_)
 {
 	std::fstream infile;
 	infile.open(nodedatafile, ios::in | ios::binary);
@@ -423,11 +423,11 @@ void readNodeDatafile(const std::string& nodedatafile, std::vector<sptr<Model> >
 	if (infile.is_open()) {
 		double time, min, max;
 		std::vector<std::vector<double> > dataCollect;
-		std::vector<double> databuffer(Model::nodeNums);
+		std::vector<double> databuffer(Model::num_nodes_);
 
 		while (1) {
 			infile.read((char*)&time, sizeof(double));
-			infile.read((char*)databuffer.data(), sizeof(double)* Model::nodeNums);
+			infile.read((char*)databuffer.data(), sizeof(double)* Model::num_nodes_);
 
 			if (infile.fail()) break;
 
@@ -435,34 +435,34 @@ void readNodeDatafile(const std::string& nodedatafile, std::vector<sptr<Model> >
 			auto rg = std::minmax_element(databuffer.begin(), databuffer.end());
 			min = *rg.first;
 			max = *rg.second;
-			Model::ranges.push_back(std::make_pair(min, max));
+			Model::ranges_.push_back(std::make_pair(min, max));
 
 		}
 		infile.close();
-		// make sure the time step
-		if (dataCollect.size() == Model::stepNum) {
+		// make sure the time step_
+		if (dataCollect.size() == Model::num_step_) {
 
-			for (auto &pModel : pModels) {
-				pModel->getNodelScalars().resize(Model::stepNum);
+			for (auto &prev_model_ : models_) {
+				prev_model_->GetNodelScalars().resize(Model::num_step_);
 			}
 
-			for (unsigned s = 0; s < Model::stepNum; ++s) {
+			for (unsigned s = 0; s < Model::num_step_; ++s) {
 				unsigned nodeoffset = 0;
 
-				for (auto &pModel : pModels) {
-					pModel->getNodelScalars(s) = vtkSmartPointer<vtkDoubleArray>::New();
-					pModel->getNodelScalars(s)->SetNumberOfValues(pModel->getNodenum());
+				for (auto &prev_model_ : models_) {
+					prev_model_->GetNodelScalars(s) = vtkSmartPointer<vtkDoubleArray>::New();
+					prev_model_->GetNodelScalars(s)->SetNumberOfValues(prev_model_->GetNumOfNode());
 	
-					for (unsigned n = 0; n < pModel->getNodenum(); ++n) {
-						pModel->getNodelScalars(s)->SetValue(n, dataCollect[s][nodeoffset + n]);
+					for (unsigned n = 0; n < prev_model_->GetNumOfNode(); ++n) {
+						prev_model_->GetNodelScalars(s)->SetValue(n, dataCollect[s][nodeoffset + n]);
 					}
 					
-					nodeoffset += pModel->getNodenum();
+					nodeoffset += prev_model_->GetNumOfNode();
 				}
 			}
 
-			for (auto &pModel : pModels) {
-				pModel->getFEMesh()->getUGrid()->GetPointData()->SetScalars(pModel->getNodelScalars(0));
+			for (auto &prev_model_ : models_) {
+				prev_model_->GetFEMesh()->GetUGrid()->GetPointData()->SetScalars(prev_model_->GetNodelScalars(0));
 			}
 			
 		}

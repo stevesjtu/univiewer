@@ -18,10 +18,10 @@
 
 namespace univiewer {
 
-class plotpart
+class PlotPart
 {
 public:
-	void plot(vtkSmartPointer<vtkRenderWindow> renderWindow, vtkSmartPointer<vtkRenderer> render, vtkSmartPointer<vtkActor> actor) {
+	void plot(vtkSmartPointer<vtkRenderWindow> render_window_, vtkSmartPointer<vtkRenderer> render, vtkSmartPointer<vtkActor> actor_) {
 		vtkSmartPointer<vtkTable> table =
 			vtkSmartPointer<vtkTable>::New();
 
@@ -89,7 +89,7 @@ public:
 		// (ifdef-ed out on Windows because DASH_LINE does not work on Windows
 		//  machines with built-in Intel HD graphics card...)
 
-		view->SetRenderWindow(renderWindow);
+		view->SetRenderWindow(render_window_);
 		view->GetRenderWindow()->SetMultiSamples(0);
 
 

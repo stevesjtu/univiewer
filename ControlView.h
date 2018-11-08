@@ -40,10 +40,10 @@ public:
 	{
 		vtkRenderWindowInteractor *iren =
 			static_cast<vtkRenderWindowInteractor*>(caller);
-		this->ProgrammableFilter->Modified();
+		this->programmable_filter_->Modified();
 		iren->Render();
 	}
-	vtkSmartPointer<vtkProgrammableFilter> ProgrammableFilter;
+	vtkSmartPointer<vtkProgrammableFilter> programmable_filter_;
 };
 
 // real callback function
@@ -55,129 +55,135 @@ class ControlView
 {
 protected:
 	// for the centering point
-	vtkSmartPointer<vtkActor> actor;
-	vtkSmartPointer<vtkDataSetMapper> mapper;
+	vtkSmartPointer<vtkActor> actor_;
+	vtkSmartPointer<vtkDataSetMapper> mapper_;
 
 	// for windows control
-	vtkSmartPointer<vtkRenderWindow> renderWindow;
-	vtkSmartPointer<vtkRenderer> renderer;
-	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor;
-	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style;
+	vtkSmartPointer<vtkRenderWindow> render_window_;
+	vtkSmartPointer<vtkRenderer> renderer_;
+	vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor_;
+	vtkSmartPointer<vtkInteractorStyleTrackballCamera> interactor_style_;
 
 	// for some part of graphics
-	sptr<Axesline> axesline;
-	sptr<Axesframe> axesframe;
-	sptr<Sliderbar> sliderbar;
-	sptr<CurrentTimer> currenttimer;
-	sptr<LookUpTable> lookuptable;
+	sptr<Axesline> axesline_;
+	sptr<Axesframe> axesframe_;
+	sptr<SliderBar> sliderbar_;
+	sptr<CurrentTimer> currenttimer_;
+	sptr<LookUpTable> lookuptable_;
 
-	sptr<CommandText> cText;
-	std::vector<sptr<CommandText> > cTextBodies;
+	sptr<CommandText> ctext_;
+	std::vector<sptr<CommandText> > ctext_bodies_;
 	// for animation and UI
-	vtkSmartPointer<vtkProgrammableFilter> programmableFilter;
+	vtkSmartPointer<vtkProgrammableFilter> programmable_filter_;
 
 	// main part of visulization
-	std::vector<sptr<Model> > pModels;
-	std::vector<sptr<ContactData> > pContacts;
+	std::vector<sptr<Model> > models_;
+	std::vector<sptr<ContactData> > contacts_;
 	//////////////////////////////////
 	//////////////////////////////////
-	int data_type;
-	bool play, stepPlay;
-	bool ShowMarker;
-	bool ShowMesh;
-  bool ShowLabel;
+	int data_type_;
+	bool play_, step_play_;
+	bool show_marker_;
+	bool show_mesh_;
+  bool show_label_;
 
 	//int nextButtonState, prevButtonState;
-  void readSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo,
+  void ReadSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo,
     std::vector<unsigned int> &elemlist, std::vector<double> &nodelist);
 
 public:
 	virtual ~ControlView() {}
-	ControlView(): play(false), stepPlay(false), ShowMarker(true), ShowMesh(true), ShowLabel(false) {};
+	ControlView(): 
+    play_(false), 
+    step_play_(false), 
+    show_marker_(true), 
+    show_mesh_(true), 
+    show_label_(false),
+    data_type_(DATA_RESET) {};
 	
-	inline bool & IsPlay() { return play; }
-	inline bool & IsStepPlay() { return stepPlay; }
-	inline bool & IsShowMarker() { return ShowMarker; }
-	inline bool & IsShowMesh() { return ShowMesh; }
-  inline bool & IsShowLabel() { return ShowLabel; }
+	inline bool & IsPlay() { return play_; }
+	inline bool & IsStepPlay() { return step_play_; }
+	inline bool & IsShowMarker() { return show_marker_; }
+	inline bool & IsShowMesh() { return show_mesh_; }
+  inline bool & IsShowLabel() { return show_label_; }
 
-	std::vector<sptr<Model> > & getModels() { return pModels; }
-	std::vector<sptr<ContactData> > &getContactData() { return pContacts; }
-	vtkSmartPointer<vtkProgrammableFilter> getProgrammableFilter() { return programmableFilter; }
+	std::vector<sptr<Model> > & GetModels() { return models_; }
+	std::vector<sptr<ContactData> > &GetContactData() { return contacts_; }
+	vtkSmartPointer<vtkProgrammableFilter> GetProgrammableFilter() { return programmable_filter_; }
 
-	sptr<CommandText> getCommandText() { return cText; }
-	std::vector<sptr<CommandText> > &getCommandTextBodies() { return cTextBodies; }
-	sptr<CurrentTimer> getCurrentTimer() {return currenttimer;}
-	sptr<Axesline> getAxesline() { return axesline; }
-	sptr<Sliderbar> getSliderbar() { return sliderbar; }
-	sptr<LookUpTable> getLookuptable() { return lookuptable; }
+	sptr<CommandText> GetCommandText() { return ctext_; }
+	std::vector<sptr<CommandText> > &GetCommandTextBodies() { return ctext_bodies_; }
+	sptr<CurrentTimer> GetCurrentTimer() {return currenttimer_;}
+	sptr<Axesline> GetAxesline() { return axesline_; }
+	sptr<SliderBar> GetSliderbar() { return sliderbar_; }
+	sptr<LookUpTable> GetLookuptable() { return lookuptable_; }
 
-	vtkSmartPointer<vtkRenderer> getRenderer(){return renderer;}
-	vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor(){return renderWindowInteractor;}
+	vtkSmartPointer<vtkRenderer> GetRenderer(){return renderer_;}
+	vtkSmartPointer<vtkRenderWindowInteractor> GetRenderWindowInteractor(){return render_window_interactor_;}
 
-  void readDispfile(const std::vector<std::string> & filename);
+  void ReadDispFile(const std::vector<std::string> & filename);
 
-  int readSimpleOutResult(const std::string& filename);
+  int ReadSimpleOutResult(const std::string& filename);
 
-	int inputModelfiles(std::vector<std::string> &argv);
+	int InputModelfiles(std::vector<std::string> &argv);
 
-	virtual void setAnimationMethod( void(*f)(void*)) {
-		if (data_type & DATA_DISPL) {
-			programmableFilter->SetExecuteMethod(f, this);
-			renderWindowInteractor->CreateRepeatingTimer(10);
+	virtual void SetAnimationMethod( void(*f)(void*)) {
+		if (data_type_ & DATA_DISPL) {
+			programmable_filter_->SetExecuteMethod(f, this);
+			render_window_interactor_->CreateRepeatingTimer(10);
 			vtkSmartPointer<CommandSubclass> timerCallback = vtkSmartPointer<CommandSubclass>::New();
-			timerCallback->ProgrammableFilter = programmableFilter;
-			renderWindowInteractor->AddObserver(vtkCommand::TimerEvent, timerCallback);
+			timerCallback->programmable_filter_ = programmable_filter_;
+			render_window_interactor_->AddObserver(vtkCommand::TimerEvent, timerCallback);
 		}
 	}
 
-	virtual void setKeyboardMethod(void (*f)(vtkObject* , long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
+	virtual void SetKeyboardMethod(void (*f)(vtkObject* , long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
 		vtkSmartPointer<vtkCallbackCommand> keypressCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 		keypressCallback->SetCallback(f);
 		keypressCallback->SetClientData(this);
-		renderWindowInteractor->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
+		render_window_interactor_->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
 	}
 
-	virtual void setWindowMethod(void (*f)(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
+	virtual void SetWindowMethod(void (*f)(vtkObject* caller, long unsigned int vtkNotUsed(eventId), void* clientData, void* vtkNotUsed(callData))){
 		vtkSmartPointer<vtkCallbackCommand> windowCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 		windowCallback->SetCallback(f);
 		windowCallback->SetClientData(this);
-		renderWindow->AddObserver(vtkCommand::ModifiedEvent, windowCallback);
+		render_window_->AddObserver(vtkCommand::ModifiedEvent, windowCallback);
 	}
 
-	void playThisStep(unsigned &step)
+	void PlayThisStep(unsigned &step_)
 	{
 		std::stringstream ss("");
-		ss << "Current Time = " << Model::stepCollection[step];
-		currenttimer->getTextActor()->SetInput(ss.str().c_str());
+		ss << "Current Time = " << Model::step_collection_[step_];
+		currenttimer_->GetTextActor()->SetInput(ss.str().c_str());
 
-		sliderbar->getSliderRep()->SetValue(step);
+		sliderbar_->GetSliderRep()->SetValue(step_);
 
-		for (auto &pmodel : pModels) {
-			pmodel->updateDisp(step);
+		for (auto &pmodel : models_) {
+			pmodel->UpdateDisp(step_);
 		}
 
-		for (auto &pcontact : pContacts) {
-			pcontact->UpdateUGrid(step);
+		for (auto &pcontact : contacts_) {
+			pcontact->UpdateUGrid(step_);
 		}
 	}
 
 	virtual void Update() {
 			
-		if (stepPlay) {
-			play = false;
-			sliderbar->getPlayButton()->setState(0);
-			playThisStep(Model::step);
+		if (step_play_) {
+			play_ = false;
+			sliderbar_->GetPlayButton()->SetState(0);
+			PlayThisStep(Model::step_);
 		}
 		
-		if (play) {
-			Model::step = (Model::step == Model::stepNum - 1) ? 0 : Model::step + 1;
-			playThisStep(Model::step);
+		if (play_) {
+			Model::step_ = (Model::step_ == Model::num_step_ - 1) ? 0 : Model::step_ + 1;
+			PlayThisStep(Model::step_);
 		}
 	}
 
-	virtual void setRender() {
-		// create an environment actor (center point)
+	virtual void SetRender() {
+		// create an environment actor_ (center point)
 		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 		const double p[3] = { 0.0, 0.0, 0.0 };
 		// Create the topology of the point (a vertex)
@@ -191,105 +197,105 @@ public:
 		point->SetPoints(points);
 		point->SetVerts(vertices);
 		
-		programmableFilter = vtkSmartPointer<vtkProgrammableFilter>::New();
-		programmableFilter->SetInputData(point);
+		programmable_filter_ = vtkSmartPointer<vtkProgrammableFilter>::New();
+		programmable_filter_->SetInputData(point);
 		
-		mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-		mapper->SetInputConnection(programmableFilter->GetOutputPort());
-		actor = vtkSmartPointer<vtkActor>::New();
-		actor->SetMapper(mapper);
-		actor->GetProperty()->SetColor(0.0, 0.0, 0.0);
-		actor->GetProperty()->SetPointSize(1.0);
+		mapper_ = vtkSmartPointer<vtkDataSetMapper>::New();
+		mapper_->SetInputConnection(programmable_filter_->GetOutputPort());
+		actor_ = vtkSmartPointer<vtkActor>::New();
+		actor_->SetMapper(mapper_);
+		actor_->GetProperty()->SetColor(0.0, 0.0, 0.0);
+		actor_->GetProperty()->SetPointSize(1.0);
 
-		// Create a renderer, render window, and interactor
-		renderer = vtkSmartPointer<vtkRenderer>::New();
-		renderer->SetNearClippingPlaneTolerance(1e-4);
-		renderer->GetActiveCamera()->SetClippingRange(1e-4, 1000);
-		renderer->SetAmbient(1.0, 1.0, 1.0);
-		renderer->SetLightFollowCamera(1);
+		// Create a renderer_, render window, and interactor
+		renderer_ = vtkSmartPointer<vtkRenderer>::New();
+		renderer_->SetNearClippingPlaneTolerance(1e-4);
+		renderer_->GetActiveCamera()->SetClippingRange(1e-4, 1000);
+		renderer_->SetAmbient(1.0, 1.0, 1.0);
+		renderer_->SetLightFollowCamera(1);
 
-		renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-		renderWindow->AddRenderer(renderer);
-		renderWindow->SetSize(800, 640);
-		renderWindow->SetWindowName("MLV 2.0");
-    renderWindow->Render();
-		renderWindow->PointSmoothingOn();
-		renderWindow->LineSmoothingOn();
-		renderWindow->PolygonSmoothingOn();
+		render_window_ = vtkSmartPointer<vtkRenderWindow>::New();
+		render_window_->AddRenderer(renderer_);
+		render_window_->SetSize(800, 640);
+		render_window_->SetWindowName("MLV 2.0");
+    render_window_->Render();
+		render_window_->PointSmoothingOn();
+		render_window_->LineSmoothingOn();
+		render_window_->PolygonSmoothingOn();
 
-		renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-		renderWindowInteractor->SetRenderWindow(renderWindow);
-		style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
-		renderWindowInteractor->SetInteractorStyle(style);
+		render_window_interactor_ = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+		render_window_interactor_->SetRenderWindow(render_window_);
+		interactor_style_ = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+		render_window_interactor_->SetInteractorStyle(interactor_style_);
 
 		// Initialize must be called prior to creating timer events.
-		renderWindowInteractor->Initialize();
+		render_window_interactor_->Initialize();
 
 	}
 
 	virtual void Display() {
 
 		// command text
-		cText = CreateOneOf<CommandText>();
-		cText->setRenderWindowInteractor(renderWindowInteractor);
-		int *winSize = renderWindowInteractor->GetRenderWindow()->GetSize();
-		cText->setCommandTextContent("System View", 1.0, 1.0, 1.0, 0.5, 1);
-		//cText->setTextSizePosition(10, winSize[1] - 30, 20);
-		vtkSmartPointer<systemReleaseTextCallback> systemRelease = vtkSmartPointer<systemReleaseTextCallback>::New();
-		systemRelease->renderWindowInteractor = renderWindowInteractor;
-		cText->setTextCallback(systemRelease);
+		ctext_ = CreateOneOf<CommandText>();
+		ctext_->SetRenderWindowInteractor(render_window_interactor_);
+		int *winSize = render_window_interactor_->GetRenderWindow()->GetSize();
+		ctext_->SetCommandTextContent("System View", 1.0, 1.0, 1.0, 0.5, 1);
+		//ctext_->SetTextSizePosition(10, winSize[1] - 30, 20);
+		vtkSmartPointer<SystemReleaseTextCallback> systemRelease = vtkSmartPointer<SystemReleaseTextCallback>::New();
+		systemRelease->render_window_interactor_ = render_window_interactor_;
+		ctext_->SetTextCallback(systemRelease);
 
 		std::stringstream ss("");
-		for (unsigned i = 0; i < pModels.size(); ++i) {
+		for (unsigned i = 0; i < models_.size(); ++i) {
 			sptr<CommandText> ct = CreateOneOf<CommandText>();
-			ct->setRenderWindowInteractor(renderWindowInteractor);
+			ct->SetRenderWindowInteractor(render_window_interactor_);
 			ss.str("");
 			ss.clear();
 			ss << "|- Body_" << i;
-			ct->setCommandTextContent(ss.str(), 1.0, 1.0, 1.0, 0.5, 1);
-			//ct->setTextSizePosition(18, winSize[1] - 30 - 15* (i+1), 15);
-			vtkSmartPointer<releaseTextCallback> release = vtkSmartPointer<releaseTextCallback>::New();
-			ct->setTextCallback(release);
-			cTextBodies.push_back(ct);
-			cText->addLeafNode(ct->getTextWidget());
+			ct->SetCommandTextContent(ss.str(), 1.0, 1.0, 1.0, 0.5, 1);
+			//ct->SetTextSizePosition(18, winSize[1] - 30 - 15* (i+1), 15);
+			vtkSmartPointer<ReleaseTextCallback> release = vtkSmartPointer<ReleaseTextCallback>::New();
+			ct->SetTextCallback(release);
+			ctext_bodies_.push_back(ct);
+			ctext_->AddLeafNode(ct->GetTextWidget());
 		}
 
 
-		// axesline part
-		axesline = CreateOneOf<Axesline>();
-		axesline->setAxesActor();
-		renderer->AddActor(axesline->getAxesActor());
+		// axesline_ part
+		axesline_ = CreateOneOf<Axesline>();
+		axesline_->SetAxesActor();
+		renderer_->AddActor(axesline_->GetAxesActor());
 
-		// axesframe part
-		axesframe = CreateOneOf<Axesframe>();
-		axesframe->setAxesWidget(renderWindowInteractor);
+		// axesframe_ part
+		axesframe_ = CreateOneOf<Axesframe>();
+		axesframe_->SetAxesWidget(render_window_interactor_);
 
 		// labelnodes part
-		for (auto& pmodel : pModels) {
-			pmodel->setLabelnode();
-			renderer->AddActor2D(pmodel->getLabelactor());
-			pmodel->getLabelactor()->VisibilityOff();
+		for (auto& pmodel : models_) {
+			pmodel->SetLabelnode();
+			renderer_->AddActor2D(pmodel->GetLabelActor());
+			pmodel->GetLabelActor()->VisibilityOff();
 		}
 		
-		if (data_type & DATA_NODVL) {
-			// lookuptable part
-			lookuptable = CreateOneOf<LookUpTable>();
-			lookuptable->setScalars(pModels);
-			renderer->AddActor2D(lookuptable->getScalarBar());
+		if (data_type_ & DATA_NODVL) {
+			// lookuptable_ part
+			lookuptable_ = CreateOneOf<LookUpTable>();
+			lookuptable_->SetScalars(models_);
+			renderer_->AddActor2D(lookuptable_->GetScalarBar());
 		}
 
-		// Add the actor to the scene
-		renderer->AddActor(actor);
+		// Add the actor_ to the scene
+		renderer_->AddActor(actor_);
 		
-		renderer->GradientBackgroundOn();
-		renderer->SetBackground2(13.0 / 255.0, 71.0 / 255.0, 161.0 / 255.0);
-		renderer->SetBackground(144.0 / 255.0, 202.0 / 255.0, 249.0 / 255.0);
+		renderer_->GradientBackgroundOn();
+		renderer_->SetBackground2(13.0 / 255.0, 71.0 / 255.0, 161.0 / 255.0);
+		renderer_->SetBackground(144.0 / 255.0, 202.0 / 255.0, 249.0 / 255.0);
 		// Render and interact
 
-		renderWindowInteractor->Start();
+		render_window_interactor_->Start();
 
-		//plotpart p;
-		//p.plot(renderWindow, renderer);
+		//PlotPart p;
+		//p.plot(render_window_, renderer_);
 	}
 
 };

@@ -19,16 +19,16 @@ class Axesline
 {
 private:
 
-	// actor
-	vtkSmartPointer<vtkActor> axesActor;
+	// actor_
+	vtkSmartPointer<vtkActor> axes_actor_;
 
 public:
 	Axesline() {};
 	virtual ~Axesline() {};
 
-	vtkSmartPointer<vtkActor> &getAxesActor() { return axesActor; }
+	vtkSmartPointer<vtkActor> &GetAxesActor() { return axes_actor_; }
 
-	void setAxesActor()
+	void SetAxesActor()
 	{
 		vtkSmartPointer<vtkPolyData> linesPolyData = vtkSmartPointer<vtkPolyData>::New();
 
@@ -94,8 +94,8 @@ public:
 		// Setup the visualization pipeline
 		vtkSmartPointer<vtkPolyDataMapper> axesMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		axesMapper->SetInputData(linesPolyData);
-		axesActor = vtkSmartPointer<vtkActor>::New();
-		axesActor->SetMapper(axesMapper);
+		axes_actor_ = vtkSmartPointer<vtkActor>::New();
+		axes_actor_->SetMapper(axesMapper);
 
 	}
 
@@ -105,24 +105,24 @@ public:
 class Axesframe
 {
 private:
-	// widget
-	vtkSmartPointer<vtkOrientationMarkerWidget> widget;
+	// widget_
+	vtkSmartPointer<vtkOrientationMarkerWidget> widget_;
 
 public:
 	Axesframe() {};
 	virtual ~Axesframe() {};
 	
-	void setAxesWidget(vtkSmartPointer<vtkRenderWindowInteractor> &renderWindowInteractor)
+	void SetAxesWidget(vtkSmartPointer<vtkRenderWindowInteractor> &render_window_interactor_)
 	{
 
 		vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
-		widget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
-		widget->SetOutlineColor(0.9300, 0.5700, 0.1300);
-		widget->SetOrientationMarker(axes);
-		widget->SetInteractor(renderWindowInteractor);
-		widget->SetViewport(0.0, 0.0, 0.2, 0.2);
-		widget->EnabledOn();
-		widget->InteractiveOff();
+		widget_ = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+		widget_->SetOutlineColor(0.9300, 0.5700, 0.1300);
+		widget_->SetOrientationMarker(axes);
+		widget_->SetInteractor(render_window_interactor_);
+		widget_->SetViewport(0.0, 0.0, 0.2, 0.2);
+		widget_->EnabledOn();
+		widget_->InteractiveOff();
 	}
 };
 

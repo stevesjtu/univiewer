@@ -17,39 +17,39 @@ class LookUpTable
 {
 private:
 
-	vtkSmartPointer<vtkScalarBarActor> scalarBar;
-	vtkSmartPointer<vtkLookupTable> hueLut;
+	vtkSmartPointer<vtkScalarBarActor> scalar_bar_;
+	vtkSmartPointer<vtkLookupTable> hue_lut_;
 public:
 	LookUpTable() {};
 	virtual ~LookUpTable() {};
 
-	vtkSmartPointer<vtkScalarBarActor> &getScalarBar() { return scalarBar; }
+	vtkSmartPointer<vtkScalarBarActor> &GetScalarBar() { return scalar_bar_; }
 
-	void setScalars( std::vector<sptr<Model> > pModels)
+	void SetScalars( std::vector<sptr<Model> > models_)
 	{
 
-		hueLut = vtkSmartPointer<vtkLookupTable>::New();
-		hueLut->SetHueRange(1.85 / 3.0, 0);
-		hueLut->Build();
+		hue_lut_ = vtkSmartPointer<vtkLookupTable>::New();
+		hue_lut_->SetHueRange(1.85 / 3.0, 0);
+		hue_lut_->Build();
 
-		for (auto& pmodel : pModels) {
-			pmodel->getMapper()->SetLookupTable(hueLut);
+		for (auto& pmodel : models_) {
+			pmodel->GetMapper()->SetLookupTable(hue_lut_);
 		}
-		//mapper->SetScalarRange(0.0, 600.0);
-		//mapper->ScalarVisibilityOn();
-		//mapper->SetScalarModeToUsePointData();
-		//mapper->SetColorModeToMapScalars();
+		//mapper_->SetScalarRange(0.0, 600.0);
+		//mapper_->ScalarVisibilityOn();
+		//mapper_->SetScalarModeToUsePointData();
+		//mapper_->SetColorModeToMapScalars();
 		
-		scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
-		scalarBar->SetLookupTable(hueLut);
-		scalarBar->SetTitle("Data");
-		scalarBar->SetNumberOfLabels(8);
+		scalar_bar_ = vtkSmartPointer<vtkScalarBarActor>::New();
+		scalar_bar_->SetLookupTable(hue_lut_);
+		scalar_bar_->SetTitle("Data");
+		scalar_bar_->SetNumberOfLabels(8);
 
-		scalarBar->GetPositionCoordinate()->SetCoordinateSystemToDisplay();
-		scalarBar->GetPosition2Coordinate()->SetCoordinateSystemToDisplay();
+		scalar_bar_->GetPositionCoordinate()->SetCoordinateSystemToDisplay();
+		scalar_bar_->GetPosition2Coordinate()->SetCoordinateSystemToDisplay();
 		
-		scalarBar->SetPosition(800 - 70 - 10, 10);
-		scalarBar->SetPosition2(70, 300);
+		scalar_bar_->SetPosition(800 - 70 - 10, 10);
+		scalar_bar_->SetPosition2(70, 300);
 	}
 };
 

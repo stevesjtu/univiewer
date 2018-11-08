@@ -5,7 +5,7 @@ namespace univiewer {
 ////////////////////////////////////////////////////////////////////////////
 // old reader for dispfile
 ////////////////////////////////////////////////////////////////////////////
-void ControlView::readDispfile(const std::vector<std::string> & filename) {
+void ControlView::ReadDispFile(const std::vector<std::string> & filename) {
   std::ifstream infile;
   infile.open(filename[0], std::ios::in | std::ios::binary);
 
@@ -15,7 +15,7 @@ void ControlView::readDispfile(const std::vector<std::string> & filename) {
     if (filename.size() == 2) {
       nodedeg = atoi(filename[1].c_str());
     }
-    unsigned dofs = Model::nodeNums * nodedeg;
+    unsigned dofs = Model::num_nodes_ * nodedeg;
 
     std::vector<double> datavec(dofs);
     double steptime;
@@ -26,19 +26,19 @@ void ControlView::readDispfile(const std::vector<std::string> & filename) {
       if (infile.fail()) break;
 
       dispvecCollection.push_back(datavec);
-      Model::stepCollection.push_back(steptime);
+      Model::step_collection_.push_back(steptime);
     }
 
-    Model::stepNum = (unsigned)dispvecCollection.size();
+    Model::num_step_ = (unsigned)dispvecCollection.size();
 
     if (filename.size() == 2) {
       unsigned index;
       std::vector<double> dataPosition;
-      for (unsigned s = 0; s < Model::stepNum; ++s) {
+      for (unsigned s = 0; s < Model::num_step_; ++s) {
         auto &data = dispvecCollection[s];
         index = 0;
         dataPosition.clear();
-        for (unsigned i = 0; i < Model::nodeNums; ++i) {
+        for (unsigned i = 0; i < Model::num_nodes_; ++i) {
           dataPosition.push_back(data[index]);
           dataPosition.push_back(data[index + 1]);
           dataPosition.push_back(data[index + 2]);
@@ -49,33 +49,33 @@ void ControlView::readDispfile(const std::vector<std::string> & filename) {
     }
     infile.close();
 
-    // initialize the nodes position of Model feMesh
+    // initialize the nodes position of Model fe_mesh_
     std::vector<double> node0;
-    for (auto& pmodel : pModels) {
-      const auto &feMesh = pmodel->getFEMesh();
+    for (auto& pmodel : models_) {
+      const auto &fe_mesh_ = pmodel->GetFEMesh();
 
-      node0.resize(pmodel->getNodenum() * 3);
+      node0.resize(pmodel->GetNumOfNode() * 3);
       unsigned index = 0;
-      for (unsigned n = 0; n < pmodel->getNodenum(); ++n) {
-        double *xyz = feMesh->getUGrid()->GetPoint(n);
+      for (unsigned n = 0; n < pmodel->GetNumOfNode(); ++n) {
+        double *xyz = fe_mesh_->GetUGrid()->GetPoint(n);
         node0[index++] = *xyz;
         node0[index++] = *(xyz + 1);
         node0[index++] = *(xyz + 2);
       }
 
-      feMesh->getpvtkPnts().resize(Model::stepNum);
+      fe_mesh_->GetPvtkpnts().resize(Model::num_step_);
 
       double position[3];
-      for (unsigned s = 0; s < Model::stepNum; ++s) {
-        feMesh->getpvtkPnts(s) = vtkSmartPointer<vtkPoints>::New();
-        feMesh->getpvtkPnts(s)->SetNumberOfPoints(pmodel->getNodenum());
-        index = pmodel->getOffset();
-        for (unsigned n = 0; n < pmodel->getNodenum(); ++n) {
+      for (unsigned s = 0; s < Model::num_step_; ++s) {
+        fe_mesh_->GetPvtkpnts(s) = vtkSmartPointer<vtkPoints>::New();
+        fe_mesh_->GetPvtkpnts(s)->SetNumberOfPoints(pmodel->GetNumOfNode());
+        index = pmodel->GetOffset();
+        for (unsigned n = 0; n < pmodel->GetNumOfNode(); ++n) {
           position[0] = node0[n * 3] + dispvecCollection[s][index];
           position[1] = node0[n * 3 + 1] + dispvecCollection[s][index + 1];
           position[2] = node0[n * 3 + 2] + dispvecCollection[s][index + 2];
           index += 3;
-          feMesh->getpvtkPnts(s)->SetPoint(n, position);
+          fe_mesh_->GetPvtkpnts(s)->SetPoint(n, position);
         }
       }
     }
@@ -90,7 +90,7 @@ void ControlView::readDispfile(const std::vector<std::string> & filename) {
 ////////////////////////////////////////////////////////////////////////
 // read model mesh
 ////////////////////////////////////////////////////////////////////////
-void ControlView::readSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo, std::vector<unsigned int> &elemlist, std::vector<double> &nodelist) {
+void ControlView::ReadSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo, std::vector<unsigned int> &elemlist, std::vector<double> &nodelist) {
   infile.read((char*)modelinfo.data(), sizeof(unsigned int) * 3);
 
   elemlist.resize(modelinfo[0] * modelinfo[2]);
@@ -103,7 +103,7 @@ void ControlView::readSimpleOutModel(std::ifstream &infile, std::vector<unsigned
 //////////////////////////////////////////////////////////////////////////////
 // read simple output results
 //////////////////////////////////////////////////////////////////////////////
-int ControlView::readSimpleOutResult(const std::string& filename) {
+int ControlView::ReadSimpleOutResult(const std::string& filename) {
   std::ifstream infile(filename, std::ios::binary);
   if (!infile.is_open()) {
     std::cout << "Error in opening " << filename << std::endl;
@@ -117,11 +117,11 @@ int ControlView::readSimpleOutResult(const std::string& filename) {
   std::vector<unsigned int> elemlist;
   std::vector<double> nodelist;
 
-  pModels.resize(bodynum);
+  models_.resize(bodynum);
   for (unsigned i = 0; i < bodynum; ++i) {
-    this->readSimpleOutModel(infile, modelinfo, elemlist, nodelist);
-    pModels[i] = CreateOneOf<Model>();
-    pModels[i]->CreateModel(modelinfo, elemlist, nodelist);
+    this->ReadSimpleOutModel(infile, modelinfo, elemlist, nodelist);
+    models_[i] = CreateOneOf<Model>();
+    models_[i]->CreateModel(modelinfo, elemlist, nodelist);
   }
 
   std::vector<unsigned> nodaldofs(bodynum);
@@ -137,30 +137,30 @@ int ControlView::readSimpleOutResult(const std::string& filename) {
   //////////////////////////////////////////////////////////////
   unsigned alldofs = 0;
   for(unsigned b=0; b< bodynum; ++b) { 
-    alldofs += pModels[b]->getNodenum()* nodaldofs[b];
+    alldofs += models_[b]->GetNumOfNode()* nodaldofs[b];
   }
 
   std::vector<std::vector<double> > dispdata;
   std::vector<double> disptemp(alldofs);
   
   double temp;
-  while(true) { // for each step
+  while(true) { // for each step_
     
     infile.read((char*)&temp, sizeof(double));
     if (infile.fail()) break;
 
-    Model::stepCollection.push_back(temp);
+    Model::step_collection_.push_back(temp);
     
     unsigned start = 0;
     for(unsigned b=0; b< bodynum; ++b) { // for each body
-      pModels[b]->setOffset(start);
-      infile.read((char*) (disptemp.data() + start), sizeof(double)* pModels[b]->getNodenum()* nodaldofs[b]);
-      start += pModels[b]->getNodenum()* nodaldofs[b];
+      models_[b]->SetOffset(start);
+      infile.read((char*) (disptemp.data() + start), sizeof(double)* models_[b]->GetNumOfNode()* nodaldofs[b]);
+      start += models_[b]->GetNumOfNode()* nodaldofs[b];
     }
     dispdata.push_back(disptemp);
   } 
 
-  Model::stepNum = Model::stepCollection.size();
+  Model::num_step_ = (unsigned)Model::step_collection_.size();
   infile.close();
   // finish reading disp data
 
@@ -170,29 +170,29 @@ int ControlView::readSimpleOutResult(const std::string& filename) {
   std::vector<double> node0;
   
   for (unsigned b=0; b< bodynum; ++b) {
-    const auto &feMesh = pModels[b]->getFEMesh();
+    const auto &fe_mesh_ = models_[b]->GetFEMesh();
 
-    node0.resize(pModels[b]->getNodenum() * 3);
+    node0.resize(models_[b]->GetNumOfNode() * 3);
     unsigned index = 0;
-    for (unsigned n = 0; n < pModels[b]->getNodenum(); ++n) {
-      double *xyz = feMesh->getUGrid()->GetPoint(n);
+    for (unsigned n = 0; n < models_[b]->GetNumOfNode(); ++n) {
+      double *xyz = fe_mesh_->GetUGrid()->GetPoint(n);
       node0[index++] = *xyz;
       node0[index++] = *(xyz + 1);
       node0[index++] = *(xyz + 2);
     }
 
-    feMesh->getpvtkPnts().resize(Model::stepNum);
+    fe_mesh_->GetPvtkpnts().resize(Model::num_step_);
     double position[3];
-    for (unsigned s = 0; s < Model::stepNum; ++s) {
-      feMesh->getpvtkPnts(s) = vtkSmartPointer<vtkPoints>::New();
-      feMesh->getpvtkPnts(s)->SetNumberOfPoints(pModels[b]->getNodenum());
-      index = pModels[b]->getOffset();
-      for (unsigned n = 0; n < pModels[b]->getNodenum(); ++n) {
+    for (unsigned s = 0; s < Model::num_step_; ++s) {
+      fe_mesh_->GetPvtkpnts(s) = vtkSmartPointer<vtkPoints>::New();
+      fe_mesh_->GetPvtkpnts(s)->SetNumberOfPoints(models_[b]->GetNumOfNode());
+      index = models_[b]->GetOffset();
+      for (unsigned n = 0; n < models_[b]->GetNumOfNode(); ++n) {
         position[0] = node0[n * 3] + dispdata[s][index];
         position[1] = node0[n * 3 + 1] + dispdata[s][index + 1];
         position[2] = node0[n * 3 + 2] + dispdata[s][index + 2];
         index += nodaldofs[b];
-        feMesh->getpvtkPnts(s)->SetPoint(n, position);
+        fe_mesh_->GetPvtkpnts(s)->SetPoint(n, position);
       }
     }
   }
@@ -201,104 +201,104 @@ int ControlView::readSimpleOutResult(const std::string& filename) {
 
 }
 
-int ControlView::inputModelfiles(std::vector<std::string> &argv) {
+int ControlView::InputModelfiles(std::vector<std::string> &argv) {
   std::vector<std::string> simple_out_result;
   std::vector<std::string> modelFiles;
   std::vector<std::string> dispFiles;
   std::vector<std::string> contFiles;
   std::vector<std::string> nodeDataFiles;
-  argParser(argv, simple_out_result, modelFiles, dispFiles, contFiles, nodeDataFiles);
+  ArgParser(argv, simple_out_result, modelFiles, dispFiles, contFiles, nodeDataFiles);
   
-  data_type = DATA_RESET;
+  data_type_ = DATA_RESET;
   if (!simple_out_result.empty()) {
-    data_type = this->readSimpleOutResult(simple_out_result[0]);
+    data_type_ = this->ReadSimpleOutResult(simple_out_result[0]);
 
-    for(unsigned i=0; i < pModels.size(); ++i) {
-      pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
-      pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
+    for(unsigned i=0; i < models_.size(); ++i) {
+      models_[i]->GetActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
+      models_[i]->GetActor()->GetProperty()->EdgeVisibilityOn();
 
-      if (pModels[i]->getFEMesh()->getUGrid()->GetCellType(0) == 4)
-        pModels[i]->getActor()->GetProperty()->SetLineWidth(2.5);
+      if (models_[i]->GetFEMesh()->GetUGrid()->GetCellType(0) == 4)
+        models_[i]->GetActor()->GetProperty()->SetLineWidth(2.5);
       else
-        pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
+        models_[i]->GetActor()->GetProperty()->SetLineWidth(1.0);
       
-      pModels[i]->getActor()->SetScale(1.0);
-      renderer->AddActor(pModels[i]->getActor());
+      models_[i]->GetActor()->SetScale(1.0);
+      renderer_->AddActor(models_[i]->GetActor());
     }
 
-    if (data_type & DATA_DISPL) {
-      sliderbar = CreateOneOf<Sliderbar>();
-      sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
+    if (data_type_ & DATA_DISPL) {
+      sliderbar_ = CreateOneOf<SliderBar>();
+      sliderbar_->SetSliderBar(render_window_interactor_, Model::step_, Model::num_step_, this->play_, this->step_play_);
 
-      currenttimer = CreateOneOf<CurrentTimer>();
-      currenttimer->setTextActor(renderWindow);
-      renderer->AddActor2D(currenttimer->getTextActor());      
+      currenttimer_ = CreateOneOf<CurrentTimer>();
+      currenttimer_->SetTextActor(render_window_);
+      renderer_->AddActor2D(currenttimer_->GetTextActor());      
     }
 
   } else { // using simple output results or old fasion type input.
-    pModels.resize(modelFiles.size());
+    models_.resize(modelFiles.size());
     for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
-      pModels[i] = CreateOneOf<Model>();
-      pModels[i]->setOffset(Model::nodeNums* 3);
+      models_[i] = CreateOneOf<Model>();
+      models_[i]->SetOffset(Model::num_nodes_* 3);
 
       if (modelFiles[i].substr(modelFiles[i].size() - 3).compare(".md") == 0) {
-        pModels[i]->ReadTxtModel(modelFiles[i]);
+        models_[i]->ReadTxtModel(modelFiles[i]);
       } else if (modelFiles[i].substr(modelFiles[i].size() - 3).compare("txt") == 0) {
-        pModels[i]->ReadTxtModel(modelFiles[i]);
+        models_[i]->ReadTxtModel(modelFiles[i]);
       } else if (modelFiles[i].substr(modelFiles[i].size() - 3).compare("xml") == 0) {
-        pModels[i]->ReadXmlModel(modelFiles[i]);
+        models_[i]->ReadXmlModel(modelFiles[i]);
       }
       
-      //pModels[i]->getActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
-      //pModels[i]->getActor()->GetProperty()->SetOpacity(1.0);
-      pModels[i]->getActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
-      pModels[i]->getActor()->GetProperty()->EdgeVisibilityOn();
+      //models_[i]->GetActor()->GetProperty()->SetColor(0.9, 0.9, 0.9);
+      //models_[i]->GetActor()->GetProperty()->SetOpacity(1.0);
+      models_[i]->GetActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
+      models_[i]->GetActor()->GetProperty()->EdgeVisibilityOn();
 
-      if (pModels[i]->getFEMesh()->getUGrid()->GetCellType(0) == 4)
-        pModels[i]->getActor()->GetProperty()->SetLineWidth(2.5);
+      if (models_[i]->GetFEMesh()->GetUGrid()->GetCellType(0) == 4)
+        models_[i]->GetActor()->GetProperty()->SetLineWidth(2.5);
       else
-        pModels[i]->getActor()->GetProperty()->SetLineWidth(1.0);
+        models_[i]->GetActor()->GetProperty()->SetLineWidth(1.0);
       
-      pModels[i]->getActor()->SetScale(1.0);
+      models_[i]->GetActor()->SetScale(1.0);
 
-      renderer->AddActor(pModels[i]->getActor());
+      renderer_->AddActor(models_[i]->GetActor());
     }
 
     if (!dispFiles.empty()) {
-      data_type |= DATA_DISPL;
+      data_type_ |= DATA_DISPL;
 
-      this->readDispfile(dispFiles);
+      this->ReadDispFile(dispFiles);
 
-      sliderbar = CreateOneOf<Sliderbar>();
-      sliderbar->setSliderBar(renderWindowInteractor, Model::step, Model::stepNum, this->play, this->stepPlay);
+      sliderbar_ = CreateOneOf<SliderBar>();
+      sliderbar_->SetSliderBar(render_window_interactor_, Model::step_, Model::num_step_, this->play_, this->step_play_);
 
-      currenttimer = CreateOneOf<CurrentTimer>();
-      currenttimer->setTextActor(renderWindow);
-      renderer->AddActor2D(currenttimer->getTextActor());
+      currenttimer_ = CreateOneOf<CurrentTimer>();
+      currenttimer_->SetTextActor(render_window_);
+      renderer_->AddActor2D(currenttimer_->GetTextActor());
     }
 
     if (!contFiles.empty()) {
-      data_type |= DATA_CONPR;
+      data_type_ |= DATA_CONPR;
 
-      readContfile(contFiles[0], pContacts, pModels);
-      for (auto& pcontact : pContacts) {
+      ReadContactFile(contFiles[0], contacts_, models_);
+      for (auto& pcontact : contacts_) {
         pcontact->InitializeUGrid();
 
-        pcontact->getPActor()->GetProperty()->SetLineWidth(2.0);
-        pcontact->getNActor()->GetProperty()->SetLineWidth(2.0);
-        pcontact->getPActor()->GetProperty()->SetPointSize(6.0);
-        pcontact->getNActor()->GetProperty()->SetPointSize(6.0);
-        pcontact->getPActor()->GetProperty()->EdgeVisibilityOff();
-        pcontact->getNActor()->GetProperty()->EdgeVisibilityOff();
+        pcontact->GetPrevActor()->GetProperty()->SetLineWidth(2.0);
+        pcontact->GetNextActor()->GetProperty()->SetLineWidth(2.0);
+        pcontact->GetPrevActor()->GetProperty()->SetPointSize(6.0);
+        pcontact->GetNextActor()->GetProperty()->SetPointSize(6.0);
+        pcontact->GetPrevActor()->GetProperty()->EdgeVisibilityOff();
+        pcontact->GetNextActor()->GetProperty()->EdgeVisibilityOff();
 
-        renderer->AddActor(pcontact->getPActor());
-        renderer->AddActor(pcontact->getNActor());
+        renderer_->AddActor(pcontact->GetPrevActor());
+        renderer_->AddActor(pcontact->GetNextActor());
       }
     }
 
     if (!nodeDataFiles.empty()) {
-      data_type |= DATA_NODVL;
-      readNodeDatafile(nodeDataFiles[0], pModels);
+      data_type_ |= DATA_NODVL;
+      ReadNodalDataFile(nodeDataFiles[0], models_);
     }			
   }
   return 0;
@@ -317,29 +317,29 @@ void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(even
 	int* windowSize = window->GetSize();
 	ControlView* pCtr = static_cast<ControlView*>(clientData);
 	
-	if(Model::stepNum!=0){
+	if(Model::num_step_!=0){
     
-		pCtr->getCurrentTimer()->getTextActor()->SetPosition(windowSize[0] - 180, windowSize[1] - 25);
+		pCtr->GetCurrentTimer()->GetTextActor()->SetPosition(windowSize[0] - 180, windowSize[1] - 25);
 
-		pCtr->getSliderbar()->getSliderRep()->GetPoint1Coordinate()->SetValue(windowSize[0] - 260 - windowSize[0]/4.0, windowSize[1] - 15);
-		pCtr->getSliderbar()->getSliderRep()->GetPoint2Coordinate()->SetValue(windowSize[0] - 260, windowSize[1] - 15);
+		pCtr->GetSliderbar()->GetSliderRep()->GetPoint1Coordinate()->SetValue(windowSize[0] - 260 - windowSize[0]/4.0, windowSize[1] - 15);
+		pCtr->GetSliderbar()->GetSliderRep()->GetPoint2Coordinate()->SetValue(windowSize[0] - 260, windowSize[1] - 15);
 
 		int width = 20, height = 20;
-		pCtr->getSliderbar()->getPlayButton()->setButtonSizePosition(width, height, windowSize[0] - 235 - width, windowSize[1] - 5 - height);
-		pCtr->getSliderbar()->getNextButton()->setButtonSizePosition(width, height, windowSize[0] - 210 - width, windowSize[1] - 5 - height);
-		pCtr->getSliderbar()->getPrevButton()->setButtonSizePosition(width, height, windowSize[0] - 185 - width, windowSize[1] - 5 - height);
+		pCtr->GetSliderbar()->GetPlayButton()->SetButtonSizePosition(width, height, windowSize[0] - 235 - width, windowSize[1] - 5 - height);
+		pCtr->GetSliderbar()->GetNextButton()->SetButtonSizePosition(width, height, windowSize[0] - 210 - width, windowSize[1] - 5 - height);
+		pCtr->GetSliderbar()->GetPrevButton()->SetButtonSizePosition(width, height, windowSize[0] - 185 - width, windowSize[1] - 5 - height);
 	}
 
-	pCtr->getCommandText()->setTextSizePosition(10, windowSize[1] - 30, 20);
-	for (unsigned i = 0; i < pCtr->getModels().size(); ++i) {
-		pCtr->getCommandTextBodies()[i]->setTextSizePosition(10, windowSize[1] - 30 - 15 * (i+1), 15);
+	pCtr->GetCommandText()->SetTextSizePosition(10, windowSize[1] - 30, 20);
+	for (unsigned i = 0; i < pCtr->GetModels().size(); ++i) {
+		pCtr->GetCommandTextBodies()[i]->SetTextSizePosition(10, windowSize[1] - 30 - 15 * (i+1), 15);
 	}
 
-	if (pCtr->getLookuptable()) {
+	if (pCtr->GetLookuptable()) {
 		double w = windowSize[0] * 70.0 / 800.0;
 		double h = windowSize[1] * 300.0 / 640.0;
-		pCtr->getLookuptable()->getScalarBar()->SetPosition(windowSize[0] - w - 10, 10);
-		pCtr->getLookuptable()->getScalarBar()->SetPosition2(w, h);
+		pCtr->GetLookuptable()->GetScalarBar()->SetPosition(windowSize[0] - w - 10, 10);
+		pCtr->GetLookuptable()->GetScalarBar()->SetPosition2(w, h);
 	}
 
 }
@@ -352,50 +352,50 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 
 	ControlView* pCtr = static_cast<ControlView*>(clientData);
 
-    if(Model::stepNum!=0){
+    if(Model::num_step_!=0){
 	    if (strcmp(iren->GetKeySym(), "space") == 0){
 	        pCtr->IsPlay() = !pCtr->IsPlay();
 			if (pCtr->IsPlay()) {
-				pCtr->getSliderbar()->getPlayButton()->setState(1);
+				pCtr->GetSliderbar()->GetPlayButton()->SetState(1);
 				pCtr->IsStepPlay() = false;
 			}
 			else {
-				pCtr->getSliderbar()->getPlayButton()->setState(0);
+				pCtr->GetSliderbar()->GetPlayButton()->SetState(0);
 			}
 				
 	    }
 
 		if (strcmp(iren->GetKeySym(), "b") == 0) {
 			pCtr->IsPlay() = false;
-			pCtr->getSliderbar()->getPlayButton()->setState(0);
-			Model::step = (Model::step == Model::stepNum - 1) ? Model::stepNum - 1 : Model::step + 1;
+			pCtr->GetSliderbar()->GetPlayButton()->SetState(0);
+			Model::step_ = (Model::step_ == Model::num_step_ - 1) ? Model::num_step_ - 1 : Model::step_ + 1;
 			pCtr->IsStepPlay() = true;
 		}
 
 		if (strcmp(iren->GetKeySym(), "v") == 0) {
 			pCtr->IsPlay() = false;
-			pCtr->getSliderbar()->getPlayButton()->setState(0);
-			Model::step = (Model::step == 0) ? 0 : Model::step - 1;
+			pCtr->GetSliderbar()->GetPlayButton()->SetState(0);
+			Model::step_ = (Model::step_ == 0) ? 0 : Model::step_ - 1;
 			pCtr->IsStepPlay() = true;
 		}
     }
 	if (strcmp(iren->GetKeySym(), "i") == 0) {
 		if (pCtr->IsShowMarker())
-            pCtr->getAxesline()->getAxesActor()->VisibilityOff();
+            pCtr->GetAxesline()->GetAxesActor()->VisibilityOff();
 		else
-			pCtr->getAxesline()->getAxesActor()->VisibilityOn();
+			pCtr->GetAxesline()->GetAxesActor()->VisibilityOn();
 
 		pCtr->IsShowMarker() = !pCtr->IsShowMarker();
 	}
 
 	if (strcmp(iren->GetKeySym(), "u") == 0) {
 		if (pCtr->IsShowMesh()) {
-			for(auto &pmodel: pCtr->getModels())
-				pmodel->getActor()->GetProperty()->EdgeVisibilityOff();
+			for(auto &pmodel: pCtr->GetModels())
+				pmodel->GetActor()->GetProperty()->EdgeVisibilityOff();
 		}
 		else {
-			for (auto &pmodel : pCtr->getModels())
-				pmodel->getActor()->GetProperty()->EdgeVisibilityOn();
+			for (auto &pmodel : pCtr->GetModels())
+				pmodel->GetActor()->GetProperty()->EdgeVisibilityOn();
 		}
 			
 		pCtr->IsShowMesh() = !pCtr->IsShowMesh();
@@ -404,12 +404,12 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 	if (strcmp(iren->GetKeySym(), "l") == 0) {
 
 		if (pCtr->IsShowLabel()) {
-			for(auto& pmodel : pCtr->getModels())
-				pmodel->getLabelactor()->VisibilityOff();
+			for(auto& pmodel : pCtr->GetModels())
+				pmodel->GetLabelActor()->VisibilityOff();
 		}
 		else {
-			for (auto& pmodel : pCtr->getModels())
-				pmodel->getLabelactor()->VisibilityOn();
+			for (auto& pmodel : pCtr->GetModels())
+				pmodel->GetLabelActor()->VisibilityOn();
 		}
 
 		pCtr->IsShowLabel() = !pCtr->IsShowLabel();

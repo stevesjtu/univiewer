@@ -2,7 +2,7 @@
 
 namespace univiewer {
 
-void argParser(std::vector<std::string> &argv,
+void ArgParser(std::vector<std::string> &argv,
                         std::vector<std::string> &simple_output_result,
                         std::vector<std::string> &modelFiles,
 											  std::vector<std::string> &dispFiles,

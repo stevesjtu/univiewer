@@ -28,14 +28,14 @@ int main(int argc, char *argv[]) {
 #endif
 
   sptr<ControlView> pControlView = CreateOneOf<ControlView>();
-  pControlView->setRender();
+  pControlView->SetRender();
 
   if (!argv_str.empty())
-    pControlView->inputModelfiles(argv_str);
+    pControlView->InputModelfiles(argv_str);
 
-  pControlView->setAnimationMethod(DEFAULT_TIMERCALLBACK);
-  pControlView->setKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
-  pControlView->setWindowMethod(DEFAULT_WINDOWCALLBACK);
+  pControlView->SetAnimationMethod(DEFAULT_TIMERCALLBACK);
+  pControlView->SetKeyboardMethod(DEFAULT_KEYPRESSCALLBACK);
+  pControlView->SetWindowMethod(DEFAULT_WINDOWCALLBACK);
   pControlView->Display();
 
   return EXIT_SUCCESS;

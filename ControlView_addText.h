@@ -10,22 +10,22 @@ class ControlView_addText : public ControlView
 {
 protected:
 
-	vtkSmartPointer<vtkTextActor> addTextActor;
-    vector<string> *modelfiles;
-    vector<string> *dispfiles;
+	vtkSmartPointer<vtkTextActor> add_text_actor_;
+  std::vector<std::string> *modelfiles;
+  std::vector<std::string> *dispfiles;
     
 public:
 	virtual ~ControlView_addText() {};
 	ControlView_addText() {};
 
-	vtkSmartPointer<vtkTextActor> & getAddTextActor() { return addTextActor; }
-    void setfileName(vector<string> *model, vector<string> *disp){
+	vtkSmartPointer<vtkTextActor> & getAddTextActor() { return add_text_actor_; }
+    void setfileName(std::vector<std::string> *model, std::vector<std::string> *disp){
         modelfiles = model;
         dispfiles = disp;
     }
     
 	void AddText() {
-		addTextActor = vtkSmartPointer<vtkTextActor>::New();
+		add_text_actor_ = vtkSmartPointer<vtkTextActor>::New();
         
         std::stringstream ss("");
         ss << "Model from: ";
@@ -37,12 +37,12 @@ public:
         if(!dispfiles->empty())
             ss<< dispfiles->at(0);
         
-		addTextActor->SetInput(ss.str().c_str());
-		addTextActor->SetPosition(240, 40);
-		addTextActor->GetTextProperty()->SetFontSize(16);
-		addTextActor->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
-		addTextActor->GetTextProperty()->SetOpacity(0.2);
-		renderer->AddActor2D(addTextActor);
+		add_text_actor_->SetInput(ss.str().c_str());
+		add_text_actor_->SetPosition(240, 40);
+		add_text_actor_->GetTextProperty()->SetFontSize(16);
+		add_text_actor_->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
+		add_text_actor_->GetTextProperty()->SetOpacity(0.2);
+		renderer_->AddActor2D(add_text_actor_);
 	}
     
 
