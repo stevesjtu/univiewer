@@ -177,7 +177,9 @@ private:
 
 public:
 	CurrentTimer() {};
-	virtual ~CurrentTimer() {};
+	virtual ~CurrentTimer() {
+    std::cout << "Disconstruct Current timer" << std::endl;
+  };
 
 	vtkSmartPointer<vtkTextActor> &GetTextActor() { return text_actor_; }
 	void SetTextActor(vtkSmartPointer<vtkRenderWindow> &render_window_) {

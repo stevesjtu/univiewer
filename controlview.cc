@@ -2,6 +2,37 @@
 
 namespace univiewer {
 
+///////////////////////////////////////////////////////////////////////////
+// Reset data base
+///////////////////////////////////////////////////////////////////////////
+void ControlView::Reset() {
+  
+  renderer_->RemoveActor2D(currenttimer_->GetTextActor());
+  currenttimer_ = nullptr;
+
+  //sliderbar_ = nullptr;
+  //lookuptable_ = nullptr;
+
+  //for (auto & model : models_) {
+  //  renderer_->RemoveActor(model->GetActor());
+  //  renderer_->RemoveActor2D(model->GetLabelActor());
+  //}
+  //
+  //ctext_bodies_.clear();
+
+  //if (!models_.empty()) models_.clear();
+  //if (!contacts_.empty()) contacts_.clear();
+
+  ///////////////////
+  data_type_ = DATA_RESET;
+  play_ = false;
+  step_play_ = false;
+  show_marker_ = true;
+  show_mesh_ = true;
+  show_label_ = false;
+
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // old reader for dispfile
 ////////////////////////////////////////////////////////////////////////////
@@ -414,6 +445,10 @@ void KeypressCallback(vtkObject* caller, long unsigned int vtkNotUsed(eventId), 
 
 		pCtr->IsShowLabel() = !pCtr->IsShowLabel();
 	}
+
+  if (strcmp(iren->GetKeySym(), "K") == 0) {
+    pCtr->Reset();
+  }
 
 	iren->Render();
 }  

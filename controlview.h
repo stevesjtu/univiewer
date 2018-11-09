@@ -101,6 +101,8 @@ public:
     show_label_(false),
     data_type_(DATA_RESET) {};
 	
+  virtual void Reset();
+
 	inline bool & IsPlay() { return play_; }
 	inline bool & IsStepPlay() { return step_play_; }
 	inline bool & IsShowMarker() { return show_marker_; }
