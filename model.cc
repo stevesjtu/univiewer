@@ -138,10 +138,10 @@ void Model::ReadTxtModel(const std::string& file) {
 
   if (file.substr(file.size() - 3).compare(".md") == 0) {
 	  Mdfile txtfile(file);
-	  modelinfo = txtfile.GetUintArrayFrom("model info");
-	  elemlist = txtfile.GetUintArrayFrom("element list");
-	  nodelist = txtfile.GetDoubleArrayFrom("node list");
-		for(unsigned &el : elemlist) el--;
+	  modelinfo = txtfile.GetUintArrayFrom("elem_node_nodeOfElem");
+	  elemlist = txtfile.GetUintArrayFrom("element_list");
+	  nodelist = txtfile.GetDoubleArrayFrom("node_coordinate_list");
+		//for(unsigned &el : elemlist) el--;
 	  txtfile.Close();
   } else if (file.substr(file.size() - 3).compare("txt") == 0 ){
     ifstream txtfile(file);
@@ -157,7 +157,7 @@ void Model::ReadTxtModel(const std::string& file) {
 
     for (unsigned eln = 0; eln < num_elem* nofe; ++eln) {
       txtfile >> elemlist[eln];
-      elemlist[eln]--;
+      //elemlist[eln]--;
     }
 
     for (unsigned ndn = 0; ndn < 3 * num_node; ++ndn) {
