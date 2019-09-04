@@ -155,8 +155,8 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
     models_[i]->CreateModel(modelinfo, elemlist, nodelist);
   }
 
-  std::vector<unsigned> nodaldofs(bodynum);
-  infile.read((char*)nodaldofs.data(), sizeof(unsigned)* nodaldofs.size());
+  std::vector<unsigned> bodydofs(bodynum);
+  infile.read((char*)bodydofs.data(), sizeof(unsigned)* bodydofs.size());
 
   if (infile.fail()) {
     infile.close();
@@ -168,7 +168,7 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
   //////////////////////////////////////////////////////////////
   unsigned alldofs = 0;
   for(unsigned b=0; b< bodynum; ++b) { 
-    alldofs += models_[b]->GetNumOfNode()* nodaldofs[b];
+    alldofs += bodydofs[b];
   }
 
   std::vector<std::vector<double> > dispdata;
@@ -185,8 +185,8 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
     unsigned start = 0;
     for(unsigned b=0; b< bodynum; ++b) { // for each body
       models_[b]->SetOffset(start);
-      infile.read((char*) (disptemp.data() + start), sizeof(double)* models_[b]->GetNumOfNode()* nodaldofs[b]);
-      start += models_[b]->GetNumOfNode()* nodaldofs[b];
+      infile.read((char*) (disptemp.data() + start), sizeof(double)* bodydofs[b]);
+      start += bodydofs[b];
     }
     dispdata.push_back(disptemp);
   } 
@@ -222,10 +222,11 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
         position[0] = node0[n * 3] + dispdata[s][index];
         position[1] = node0[n * 3 + 1] + dispdata[s][index + 1];
         position[2] = node0[n * 3 + 2] + dispdata[s][index + 2];
-        index += nodaldofs[b];
+        index += 3;
         fe_mesh_->GetPvtkpnts(s)->SetPoint(n, position);
       }
     }
+    models_[b]->UpdateDisp(0);
   }
 
   return (DATA_MODEL | DATA_DISPL); // means including displacement data for animation
