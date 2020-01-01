@@ -3,6 +3,7 @@
 namespace univiewer {
 
 void ArgParser(std::vector<std::string> &argv,
+                        std::vector<std::string> &hdf5files,
                         std::vector<std::string> &simple_output_result,
                         std::vector<std::string> &modelFiles,
 											  std::vector<std::string> &dispFiles,
@@ -26,6 +27,9 @@ void ArgParser(std::vector<std::string> &argv,
 			case 'r':
 				ptr_vector_name = &simple_output_result;
 				break;
+      case '5':
+        ptr_vector_name = &hdf5files;
+        break;
 			case 's':
 				ptr_vector_name = &nodeDatafiles;
 				break;
@@ -61,20 +65,20 @@ bool OpenFileDlg(std::string &fpathname, std::string &fname) {
   TCHAR fileTitleBuffer[MAX_PATH] = { 0 };
   OPENFILENAME ofn = { 0 };
 
-  hwnd = GetForegroundWindow(); //��ȡǰ̨���ھ�����������е�ǰ̨���ھ��ǿ���̨���ڡ� 
+  hwnd = GetForegroundWindow();
   ofn.lStructSize = sizeof(ofn);
   ofn.hwndOwner = hwnd;
-  ofn.lpstrFilter = TEXT("simple result(*.dat)\0*.dat\0all type(*.*)\0*.*\0");//Ҫѡ����ļ���׺
-  ofn.lpstrInitialDir = NULL;//Ĭ�ϵ��ļ�·��   
-  ofn.lpstrFile = filePathBuffer;//����ļ��Ļ�����
+  ofn.lpstrFilter = TEXT("simple result(*.dat)\0*.dat\0all type(*.*)\0*.*\0");
+  ofn.lpstrInitialDir = NULL;
+  ofn.lpstrFile = filePathBuffer;
   ofn.lpstrFileTitle = fileTitleBuffer;
   ofn.nMaxFile = MAX_PATH;
   ofn.nMaxFileTitle = MAX_PATH;
   ofn.nFilterIndex = 0;
-  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;//��־����Ƕ�ѡҪ����OFN_ALLOWMULTISELECT  
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;
   GetOpenFileName(&ofn);
 
-#ifdef  UNICODE                     // r_winnt
+#ifdef  UNICODE
   int len, len1;
   len = WideCharToMultiByte(CP_ACP, 0, filePathBuffer, -1, NULL, 0, NULL, NULL);
   char * ptr1 = new char[len];

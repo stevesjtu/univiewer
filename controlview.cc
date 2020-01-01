@@ -1,4 +1,5 @@
 #include"controlview.h"
+#include"omegafile.h"
 
 namespace univiewer {
 
@@ -224,6 +225,9 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
         position[2] = node0[n * 3 + 2] + dispdata[s][index + 2];
         index += 3;
         fe_mesh_->GetPvtkpnts(s)->SetPoint(n, position);
+
+        //std::cout << "(" << position[0] << ", " << position[1] << ", " << position[2] << ")" << std::endl;
+
       }
     }
     models_[b]->UpdateDisp(0);
@@ -233,16 +237,100 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
 
 }
 
+int ControlView::ReadHDF5Result(const std::string &filename) {
+  OmegaFile oft(filename);
+  oft.Initialize();
+
+  std::string meshtype;
+  std::vector<unsigned> meshinfo, elem;
+  std::vector<double> node;
+  
+  models_.resize(oft.GetBodyName().size());
+
+  for (unsigned i = 0, isize = oft.GetBodyName().size(); i < isize; ++i) {
+    meshtype.clear();
+    meshinfo.clear();
+    elem.clear();
+    node.clear();
+    oft.GetMeshByBodyName(oft.GetBodyName(i), meshtype, meshinfo, elem, node);
+    models_[i] = CreateOneOf<Model>();
+    models_[i]->CreateModel(meshinfo, elem, node);
+  }
+  
+  oft.GetTimeSeries(Model::step_collection_);
+  Model::num_step_ = (unsigned)Model::step_collection_.size();
+
+  if (Model::num_step_ == 0) return DATA_MODEL;
+  
+  // read nodal position at each step
+  std::vector<std::vector<double>> nodepos;
+  double position[3];
+
+  for (unsigned i = 0, isize = oft.GetBodyName().size(); i < isize; ++i) {
+    nodepos.clear();
+    oft.GetNodalPositionByBodyName(oft.GetBodyName(i), nodepos);
+
+    const auto &fe_mesh_ = models_[i]->GetFEMesh();
+    fe_mesh_->GetPvtkpnts().resize(Model::num_step_);
+
+    for (unsigned s = 0; s < Model::num_step_; ++s) {
+      fe_mesh_->GetPvtkpnts(s) = vtkSmartPointer<vtkPoints>::New();
+      fe_mesh_->GetPvtkpnts(s)->SetNumberOfPoints(models_[i]->GetNumOfNode());
+      for (unsigned n = 0; n < models_[i]->GetNumOfNode(); ++n) {
+        position[0] = nodepos[s][n * 3];
+        position[1] = nodepos[s][n * 3 + 1];
+        position[2] = nodepos[s][n * 3 + 2];
+
+        fe_mesh_->GetPvtkpnts(s)->SetPoint(n, position);
+
+        //std::cout << "(" << position[0] << ", " << position[1] << ", " << position[2] << ")" << std::endl;
+
+      }
+    }
+    models_[i]->UpdateDisp(0);
+  }
+
+
+
+  return (DATA_MODEL | DATA_DISPL);
+}
+
 int ControlView::InputModelfiles(std::vector<std::string> &argv) {
+  std::vector<std::string> hdf5files;
   std::vector<std::string> simple_out_result;
   std::vector<std::string> modelFiles;
   std::vector<std::string> dispFiles;
   std::vector<std::string> contFiles;
   std::vector<std::string> nodeDataFiles;
-  ArgParser(argv, simple_out_result, modelFiles, dispFiles, contFiles, nodeDataFiles);
+  ArgParser(argv, hdf5files, simple_out_result, modelFiles, dispFiles, contFiles, nodeDataFiles);
   
   data_type_ = DATA_RESET;
-  if (!simple_out_result.empty()) {
+  if (!hdf5files.empty()) {
+    data_type_ = this->ReadHDF5Result(hdf5files[0]);
+
+    for(unsigned i=0; i < models_.size(); ++i) {
+      models_[i]->GetActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
+      models_[i]->GetActor()->GetProperty()->EdgeVisibilityOn();
+
+      if (models_[i]->GetFEMesh()->GetUGrid()->GetCellType(0) == 4)
+        models_[i]->GetActor()->GetProperty()->SetLineWidth(2.5);
+      else
+        models_[i]->GetActor()->GetProperty()->SetLineWidth(1.0);
+      
+      models_[i]->GetActor()->SetScale(1.0);
+      renderer_->AddActor(models_[i]->GetActor());
+    }
+
+    if (data_type_ & DATA_DISPL) {
+      sliderbar_ = CreateOneOf<SliderBar>();
+      sliderbar_->SetSliderBar(render_window_interactor_, Model::step_, Model::num_step_, this->play_, this->step_play_);
+
+      currenttimer_ = CreateOneOf<CurrentTimer>();
+      currenttimer_->SetTextActor(render_window_);
+      renderer_->AddActor2D(currenttimer_->GetTextActor());
+    }
+
+  } else if (!simple_out_result.empty()) {
     data_type_ = this->ReadSimpleOutResult(simple_out_result[0]);
 
     for(unsigned i=0; i < models_.size(); ++i) {

@@ -2,6 +2,7 @@
 #define AUXFUNC_H
 
 #include<vector>
+#include<array>
 #include<string>
 #include<iostream>
 #include<fstream>
@@ -16,6 +17,7 @@
 namespace univiewer {
 
 void ArgParser(std::vector<std::string> &,
+                        std::vector<std::string> &hdf5files,
                         std::vector<std::string> &simple_output_result,
                         std::vector<std::string> &modelFiles,
 											  std::vector<std::string> &dispFiles,

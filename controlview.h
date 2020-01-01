@@ -127,6 +127,8 @@ public:
 
   int ReadSimpleOutResult(const std::string& filename);
 
+  int ReadHDF5Result(const std::string &filename);
+
 	int InputModelfiles(std::vector<std::string> &argv);
 
 	virtual void SetAnimationMethod( void(*f)(void*)) {
@@ -160,7 +162,7 @@ public:
 		currenttimer_->GetTextActor()->SetInput(ss.str().c_str());
 
 		sliderbar_->GetSliderRep()->SetValue(step_);
-
+    
 		for (auto &pmodel : models_) {
 			pmodel->UpdateDisp(step_);
 		}
