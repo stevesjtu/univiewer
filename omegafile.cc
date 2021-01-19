@@ -9,7 +9,7 @@ std::ostream & operator<<(std::ostream &ss, std::vector<T>c) {
 
 herr_t Op(hid_t group, const char *name, void *data) {
   H5G_stat_t statbuf;
-  H5Gget_objinfo(group, name, false, &statbuf); //nameÊÇÃ¿Ò»ÂÖ±éÀúµÄÃû³Æ£¬statbuf´æ´¢ÎÄ¼þÐÅÏ¢£¬ÄÚ²¿µÄH5G_obj_t¿ÉÒÔ¼ø±ðÊÇÊý¾Ý¼¯»¹ÊÇgroupÀàÐÍ¡£dataÊÇÍâ²¿´«ÈëµÄÊý¾Ý£¬¿ÉÒÔ°Ñ±éÀúÎÄ¼þµÄÐÅÏ¢µ¼³öÈ¥
+  H5Gget_objinfo(group, name, false, &statbuf); //nameï¿½ï¿½Ã¿Ò»ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½statbufï¿½æ´¢ï¿½Ä¼ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½H5G_obj_tï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½ï¿½ï¿½groupï¿½ï¿½ï¿½Í¡ï¿½dataï¿½ï¿½ï¿½â²¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½Ô°Ñ±ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½È¥
   std::vector<std::string> *opdata = (std::vector<std::string> *)data;
   opdata->push_back(name);
   return 0;
@@ -171,8 +171,9 @@ void OmegaFile::GetNodalPositionByBodyName(const std::string & bodyname, std::ve
 
   nodepos.resize(stepnum);
 
-  if (bodytype.compare("RigidBody") == 0) {
+  if (bodytype.compare("RigidBodyEulerQuaternion") == 0) {
     GetMeshByBodyName(bodyname, meshtype, meshinfo, elem, node);
+
     double r0[3], r[3], rc[3], p[4], R[3][3];
     for (unsigned s = 0; s < stepnum; ++s) {
       nodepos[s].resize(meshinfo[1]* 3);

@@ -256,12 +256,12 @@ int ControlView::ReadHDF5Result(const std::string &filename) {
     models_[i] = CreateOneOf<Model>();
     models_[i]->CreateModel(meshinfo, elem, node);
   }
-  
+
   oft.GetTimeSeries(Model::step_collection_);
   Model::num_step_ = (unsigned)Model::step_collection_.size();
 
   if (Model::num_step_ == 0) return DATA_MODEL;
-  
+
   // read nodal position at each step
   std::vector<std::vector<double>> nodepos;
   double position[3];
@@ -276,21 +276,23 @@ int ControlView::ReadHDF5Result(const std::string &filename) {
     for (unsigned s = 0; s < Model::num_step_; ++s) {
       fe_mesh_->GetPvtkpnts(s) = vtkSmartPointer<vtkPoints>::New();
       fe_mesh_->GetPvtkpnts(s)->SetNumberOfPoints(models_[i]->GetNumOfNode());
+
+
       for (unsigned n = 0; n < models_[i]->GetNumOfNode(); ++n) {
         position[0] = nodepos[s][n * 3];
         position[1] = nodepos[s][n * 3 + 1];
         position[2] = nodepos[s][n * 3 + 2];
 
+        // std::cout << "(" << position[0] << ", " << position[1] << ", " << position[2] << ")" << std::endl;
         fe_mesh_->GetPvtkpnts(s)->SetPoint(n, position);
-
-        //std::cout << "(" << position[0] << ", " << position[1] << ", " << position[2] << ")" << std::endl;
-
+        
       }
+
     }
+
     models_[i]->UpdateDisp(0);
+
   }
-
-
 
   return (DATA_MODEL | DATA_DISPL);
 }

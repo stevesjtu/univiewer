@@ -144,7 +144,7 @@ void Model::ReadTxtModel(const std::string& file) {
 		//for(unsigned &el : elemlist) el--;
 	  txtfile.Close();
   } else if (file.substr(file.size() - 3).compare("txt") == 0 ){
-    ifstream txtfile(file);
+    std::ifstream txtfile(file);
     if (!txtfile.is_open()) std::cout << "Error in open file: " << file << std::endl;
     unsigned num_elem, num_node, nofe;
     txtfile >> num_elem >> num_node >> nofe;

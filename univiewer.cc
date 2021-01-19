@@ -2,7 +2,7 @@
 
 using namespace univiewer;
 
-#if defined(WIN32) && !defined(_DEBUG) 
+#if defined(WIN321) && !defined(_DEBUG) 
 int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
   std::vector<std::string> argv_str;
@@ -24,6 +24,9 @@ int main(int argc, char *argv[]) {
   for (int i = 1; i < argc; ++i) {
     argv_str.push_back(argv[i]);
   }
+
+  // argv_str.push_back("/5");
+  // argv_str.push_back("D:/repos/omega-py/data/sln_rigidbody3.hdf5");
 
 #endif
 
