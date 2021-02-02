@@ -43,11 +43,11 @@ void ControlView::ReadDispFile(const std::vector<std::string> & filename) {
 
   if (infile.is_open()) {
     std::vector<std::vector<double> > dispvecCollection;
-    unsigned nodedeg = 3;
+    Uint nodedeg = 3;
     if (filename.size() == 2) {
       nodedeg = atoi(filename[1].c_str());
     }
-    unsigned dofs = Model::num_nodes_ * nodedeg;
+    Uint dofs = Model::num_nodes_ * nodedeg;
 
     std::vector<double> datavec(dofs);
     double steptime;
@@ -61,16 +61,16 @@ void ControlView::ReadDispFile(const std::vector<std::string> & filename) {
       Model::step_collection_.push_back(steptime);
     }
 
-    Model::num_step_ = (unsigned)dispvecCollection.size();
+    Model::num_step_ = (Uint)dispvecCollection.size();
 
     if (filename.size() == 2) {
-      unsigned index;
+      Uint index;
       std::vector<double> dataPosition;
-      for (unsigned s = 0; s < Model::num_step_; ++s) {
+      for (Uint s = 0; s < Model::num_step_; ++s) {
         auto &data = dispvecCollection[s];
         index = 0;
         dataPosition.clear();
-        for (unsigned i = 0; i < Model::num_nodes_; ++i) {
+        for (Uint i = 0; i < Model::num_nodes_; ++i) {
           dataPosition.push_back(data[index]);
           dataPosition.push_back(data[index + 1]);
           dataPosition.push_back(data[index + 2]);
@@ -87,8 +87,8 @@ void ControlView::ReadDispFile(const std::vector<std::string> & filename) {
       const auto &fe_mesh_ = pmodel->GetFEMesh();
 
       node0.resize(pmodel->GetNumOfNode() * 3);
-      unsigned index = 0;
-      for (unsigned n = 0; n < pmodel->GetNumOfNode(); ++n) {
+      Uint index = 0;
+      for (Uint n = 0; n < pmodel->GetNumOfNode(); ++n) {
         double *xyz = fe_mesh_->GetUGrid()->GetPoint(n);
         node0[index++] = *xyz;
         node0[index++] = *(xyz + 1);
@@ -98,11 +98,11 @@ void ControlView::ReadDispFile(const std::vector<std::string> & filename) {
       fe_mesh_->GetPvtkpnts().resize(Model::num_step_);
 
       double position[3];
-      for (unsigned s = 0; s < Model::num_step_; ++s) {
+      for (Uint s = 0; s < Model::num_step_; ++s) {
         fe_mesh_->GetPvtkpnts(s) = vtkSmartPointer<vtkPoints>::New();
         fe_mesh_->GetPvtkpnts(s)->SetNumberOfPoints(pmodel->GetNumOfNode());
         index = pmodel->GetOffset();
-        for (unsigned n = 0; n < pmodel->GetNumOfNode(); ++n) {
+        for (Uint n = 0; n < pmodel->GetNumOfNode(); ++n) {
           position[0] = node0[n * 3] + dispvecCollection[s][index];
           position[1] = node0[n * 3 + 1] + dispvecCollection[s][index + 1];
           position[2] = node0[n * 3 + 2] + dispvecCollection[s][index + 2];
@@ -122,13 +122,13 @@ void ControlView::ReadDispFile(const std::vector<std::string> & filename) {
 ////////////////////////////////////////////////////////////////////////
 // read model mesh
 ////////////////////////////////////////////////////////////////////////
-void ControlView::ReadSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo, std::vector<unsigned int> &elemlist, std::vector<double> &nodelist) {
-  infile.read((char*)modelinfo.data(), sizeof(unsigned int) * 3);
+void ControlView::ReadSimpleOutModel(std::ifstream &infile, std::vector<Uint> &modelinfo, std::vector<Uint> &elemlist, std::vector<double> &nodelist) {
+  infile.read((char*)modelinfo.data(), sizeof(Uint) * 3);
 
   elemlist.resize(modelinfo[0] * modelinfo[2]);
   nodelist.resize(modelinfo[1] * 3);
 
-  infile.read((char*)elemlist.data(), sizeof(unsigned int)* elemlist.size());
+  infile.read((char*)elemlist.data(), sizeof(Uint)* elemlist.size());
   infile.read((char*)nodelist.data(), sizeof(double)* nodelist.size());
 }
 
@@ -142,22 +142,22 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
     exit(1);
   }
 
-  unsigned bodynum;
-  infile.read((char*)&bodynum, sizeof(unsigned));
+  Uint bodynum;
+  infile.read((char*)&bodynum, sizeof(Uint));
 
-  std::vector<unsigned int> modelinfo(3);
-  std::vector<unsigned int> elemlist;
+  std::vector<Uint> modelinfo(3);
+  std::vector<Uint> elemlist;
   std::vector<double> nodelist;
 
   models_.resize(bodynum);
-  for (unsigned i = 0; i < bodynum; ++i) {
+  for (Uint i = 0; i < bodynum; ++i) {
     this->ReadSimpleOutModel(infile, modelinfo, elemlist, nodelist);
     models_[i] = CreateOneOf<Model>();
     models_[i]->CreateModel(modelinfo, elemlist, nodelist);
   }
 
-  std::vector<unsigned> bodydofs(bodynum);
-  infile.read((char*)bodydofs.data(), sizeof(unsigned)* bodydofs.size());
+  std::vector<Uint> bodydofs(bodynum);
+  infile.read((char*)bodydofs.data(), sizeof(Uint)* bodydofs.size());
 
   if (infile.fail()) {
     infile.close();
@@ -167,8 +167,8 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
   //////////////////////////////////////////////////////////////
   // if goes here, read disp data 
   //////////////////////////////////////////////////////////////
-  unsigned alldofs = 0;
-  for(unsigned b=0; b< bodynum; ++b) { 
+  Uint alldofs = 0;
+  for(Uint b=0; b< bodynum; ++b) { 
     alldofs += bodydofs[b];
   }
 
@@ -183,8 +183,8 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
 
     Model::step_collection_.push_back(temp);
     
-    unsigned start = 0;
-    for(unsigned b=0; b< bodynum; ++b) { // for each body
+    Uint start = 0;
+    for(Uint b=0; b< bodynum; ++b) { // for each body
       models_[b]->SetOffset(start);
       infile.read((char*) (disptemp.data() + start), sizeof(double)* bodydofs[b]);
       start += bodydofs[b];
@@ -192,7 +192,7 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
     dispdata.push_back(disptemp);
   } 
 
-  Model::num_step_ = (unsigned)Model::step_collection_.size();
+  Model::num_step_ = (Uint)Model::step_collection_.size();
   infile.close();
   // finish reading disp data
 
@@ -201,12 +201,12 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
   //////////////////////////////////////////////////////////////
   std::vector<double> node0;
   
-  for (unsigned b=0; b< bodynum; ++b) {
+  for (Uint b=0; b< bodynum; ++b) {
     const auto &fe_mesh_ = models_[b]->GetFEMesh();
 
     node0.resize(models_[b]->GetNumOfNode() * 3);
-    unsigned index = 0;
-    for (unsigned n = 0; n < models_[b]->GetNumOfNode(); ++n) {
+    Uint index = 0;
+    for (Uint n = 0; n < models_[b]->GetNumOfNode(); ++n) {
       double *xyz = fe_mesh_->GetUGrid()->GetPoint(n);
       node0[index++] = *xyz;
       node0[index++] = *(xyz + 1);
@@ -215,11 +215,11 @@ int ControlView::ReadSimpleOutResult(const std::string& filename) {
 
     fe_mesh_->GetPvtkpnts().resize(Model::num_step_);
     double position[3];
-    for (unsigned s = 0; s < Model::num_step_; ++s) {
+    for (Uint s = 0; s < Model::num_step_; ++s) {
       fe_mesh_->GetPvtkpnts(s) = vtkSmartPointer<vtkPoints>::New();
       fe_mesh_->GetPvtkpnts(s)->SetNumberOfPoints(models_[b]->GetNumOfNode());
       index = models_[b]->GetOffset();
-      for (unsigned n = 0; n < models_[b]->GetNumOfNode(); ++n) {
+      for (Uint n = 0; n < models_[b]->GetNumOfNode(); ++n) {
         position[0] = node0[n * 3] + dispdata[s][index];
         position[1] = node0[n * 3 + 1] + dispdata[s][index + 1];
         position[2] = node0[n * 3 + 2] + dispdata[s][index + 2];
@@ -242,12 +242,11 @@ int ControlView::ReadHDF5Result(const std::string &filename) {
   oft.Initialize();
 
   std::string meshtype;
-  std::vector<unsigned> meshinfo, elem;
+  std::vector<Uint> meshinfo, elem;
   std::vector<double> node;
-  
   models_.resize(oft.GetBodyName().size());
 
-  for (unsigned i = 0, isize = oft.GetBodyName().size(); i < isize; ++i) {
+  for (Uint i = 0, isize = oft.GetBodyName().size(); i < isize; ++i) {
     meshtype.clear();
     meshinfo.clear();
     elem.clear();
@@ -258,7 +257,7 @@ int ControlView::ReadHDF5Result(const std::string &filename) {
   }
 
   oft.GetTimeSeries(Model::step_collection_);
-  Model::num_step_ = (unsigned)Model::step_collection_.size();
+  Model::num_step_ = (Uint)Model::step_collection_.size();
 
   if (Model::num_step_ == 0) return DATA_MODEL;
 
@@ -266,19 +265,19 @@ int ControlView::ReadHDF5Result(const std::string &filename) {
   std::vector<std::vector<double>> nodepos;
   double position[3];
 
-  for (unsigned i = 0, isize = oft.GetBodyName().size(); i < isize; ++i) {
+  for (Uint i = 0, isize = oft.GetBodyName().size(); i < isize; ++i) {
     nodepos.clear();
     oft.GetNodalPositionByBodyName(oft.GetBodyName(i), nodepos);
 
     const auto &fe_mesh_ = models_[i]->GetFEMesh();
     fe_mesh_->GetPvtkpnts().resize(Model::num_step_);
 
-    for (unsigned s = 0; s < Model::num_step_; ++s) {
+    for (Uint s = 0; s < Model::num_step_; ++s) {
       fe_mesh_->GetPvtkpnts(s) = vtkSmartPointer<vtkPoints>::New();
       fe_mesh_->GetPvtkpnts(s)->SetNumberOfPoints(models_[i]->GetNumOfNode());
 
 
-      for (unsigned n = 0; n < models_[i]->GetNumOfNode(); ++n) {
+      for (Uint n = 0; n < models_[i]->GetNumOfNode(); ++n) {
         position[0] = nodepos[s][n * 3];
         position[1] = nodepos[s][n * 3 + 1];
         position[2] = nodepos[s][n * 3 + 2];
@@ -310,7 +309,7 @@ int ControlView::InputModelfiles(std::vector<std::string> &argv) {
   if (!hdf5files.empty()) {
     data_type_ = this->ReadHDF5Result(hdf5files[0]);
 
-    for(unsigned i=0; i < models_.size(); ++i) {
+    for(Uint i=0; i < models_.size(); ++i) {
       models_[i]->GetActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
       models_[i]->GetActor()->GetProperty()->EdgeVisibilityOn();
 
@@ -335,7 +334,7 @@ int ControlView::InputModelfiles(std::vector<std::string> &argv) {
   } else if (!simple_out_result.empty()) {
     data_type_ = this->ReadSimpleOutResult(simple_out_result[0]);
 
-    for(unsigned i=0; i < models_.size(); ++i) {
+    for(Uint i=0; i < models_.size(); ++i) {
       models_[i]->GetActor()->GetProperty()->SetEdgeColor(0.0, 0.0, 0.0);
       models_[i]->GetActor()->GetProperty()->EdgeVisibilityOn();
 
@@ -359,7 +358,7 @@ int ControlView::InputModelfiles(std::vector<std::string> &argv) {
 
   } else { // using simple output results or old fasion type input.
     models_.resize(modelFiles.size());
-    for (unsigned i = 0; i< (unsigned)modelFiles.size(); ++i) {
+    for (Uint i = 0; i< (Uint)modelFiles.size(); ++i) {
       models_[i] = CreateOneOf<Model>();
       models_[i]->SetOffset(Model::num_nodes_* 3);
 
@@ -453,7 +452,7 @@ void WindowModifiedCallback(vtkObject* caller, long unsigned int vtkNotUsed(even
 	}
 
 	pCtr->GetCommandText()->SetTextSizePosition(10, windowSize[1] - 30, 20);
-	for (unsigned i = 0; i < pCtr->GetModels().size(); ++i) {
+	for (Uint i = 0; i < pCtr->GetModels().size(); ++i) {
 		pCtr->GetCommandTextBodies()[i]->SetTextSizePosition(10, windowSize[1] - 30 - 15 * (i+1), 15);
 	}
 

@@ -146,13 +146,13 @@ std::vector<int> Mdfile::GetIntArrayFrom(const std::string &title) {
 	return int_list;
 }
 
-std::vector<unsigned int> Mdfile::GetUintArrayFrom(const std::string &title) {
+std::vector<Uint> Mdfile::GetUintArrayFrom(const std::string &title) {
 	JumpTo(title);
-	std::vector<unsigned int> int_list;
+	std::vector<Uint> int_list;
 	std::string temp_str;
 	while (infile >> temp_str) {
 		if (temp_str[0] == '#') break;
-		int_list.push_back((unsigned int)std::stoi(temp_str));
+		int_list.push_back((Uint)std::stoi(temp_str));
 	}
 	return int_list;
 }

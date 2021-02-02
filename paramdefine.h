@@ -40,6 +40,8 @@ const unsigned char green[3] = { 0, 255, 0 };
 const unsigned char blue[3] = { 0, 0, 255 };
 const unsigned char cyan[3] = { 0, 255, 255 };
 
+using Uint = std::size_t;
+
 }
 
 

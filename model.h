@@ -46,19 +46,19 @@ private:
 	bool is_calc_edge;
 	vtkSmartPointer<vtkUnstructuredGrid> ugrid_;
 	std::vector<vtkSmartPointer<vtkPoints> > pvtk_pnts_;
-	std::vector<std::array<unsigned, 2> > edges_bynodes_;
-	std::vector<std::array<unsigned, 3> > elems_bynodes_;
+	std::vector<std::array<Uint, 2> > edges_bynodes_;
+	std::vector<std::array<Uint, 3> > elems_bynodes_;
 public:
 	FEMesh():is_calc_edge(false) {};
 	virtual ~FEMesh() {};
 
 	inline vtkSmartPointer<vtkUnstructuredGrid> &GetUGrid() { return ugrid_; }
 	std::vector<vtkSmartPointer<vtkPoints> > &GetPvtkpnts() { return pvtk_pnts_; }
-	vtkSmartPointer<vtkPoints> &GetPvtkpnts(unsigned i) { return pvtk_pnts_[i]; }
-	std::vector<std::array<unsigned, 2> > &GetEdges() { return edges_bynodes_; }
-	std::vector<std::array<unsigned, 3> > &GetElems() { return elems_bynodes_; }
-	std::array<unsigned, 2> &GetEdges(unsigned i) { return edges_bynodes_[i]; }
-	std::array<unsigned, 3> &GetElems(unsigned i) { return elems_bynodes_[i]; }
+	vtkSmartPointer<vtkPoints> &GetPvtkpnts(Uint i) { return pvtk_pnts_[i]; }
+	std::vector<std::array<Uint, 2> > &GetEdges() { return edges_bynodes_; }
+	std::vector<std::array<Uint, 3> > &GetElems() { return elems_bynodes_; }
+	std::array<Uint, 2> &GetEdges(Uint i) { return edges_bynodes_[i]; }
+	std::array<Uint, 3> &GetElems(Uint i) { return elems_bynodes_[i]; }
 
 	bool getIsCalcEdge() { return is_calc_edge; }
 	void MakeEdges();
@@ -71,7 +71,7 @@ public:
 class Model // base class
 {
 protected:
-	unsigned id_, num_node_, num_elem_, offset_;
+	Uint id_, num_node_, num_elem_, offset_;
 	
 	vtkSmartPointer<vtkActor> actor_;
 	vtkSmartPointer<vtkActor2D> label_actor_;
@@ -83,7 +83,7 @@ protected:
 	std::vector<vtkSmartPointer<vtkDoubleArray> > nodal_scalars_;
 	
 public:
-	static unsigned count_, num_nodes_, num_elems_, num_step_, step_;
+	static Uint count_, num_nodes_, num_elems_, num_step_, step_;
 	static std::vector<double> step_collection_;
 	static std::vector<std::pair<double, double> > ranges_;
 
@@ -94,26 +94,26 @@ public:
 		++count_;
 	}
 
-	inline unsigned GetNumOfNode() { return num_node_; }
-	inline unsigned GetOffset() { return offset_; }
+	inline Uint GetNumOfNode() { return num_node_; }
+	inline Uint GetOffset() { return offset_; }
 	inline vtkSmartPointer<vtkActor2D> GetLabelActor() { return label_actor_; }
 	inline vtkSmartPointer<vtkActor> GetActor() { return actor_; }
 	inline vtkSmartPointer<vtkDataSetMapper> GetMapper() { return mapper_; }
 	
 	inline sptr<FEMesh> GetFEMesh() { return fe_mesh_; }
 	inline std::vector<vtkSmartPointer<vtkDoubleArray> > &GetNodelScalars() { return nodal_scalars_; }
-	inline vtkSmartPointer<vtkDoubleArray> &GetNodelScalars(int s) { return nodal_scalars_[s]; }
+	inline vtkSmartPointer<vtkDoubleArray> &GetNodelScalars(Uint s) { return nodal_scalars_[s]; }
 
-	void SetOffset(unsigned index) { offset_ = index; }
+	void SetOffset(Uint index) { offset_ = index; }
 	void ReadXmlModel(const std::string&);
   void ReadTxtModel(const std::string&);
 
-  void CreateModel(const std::vector<unsigned int> &modelinfo,
-                  const std::vector<unsigned int> &elemlist, const std::vector<double> &nodelist);
+  void CreateModel(const std::vector<Uint> &modelinfo,
+                  const std::vector<Uint> &elemlist, const std::vector<double> &nodelist);
 
 	void SetLabelnode();
 	
-	void UpdateDisp(unsigned);
+	void UpdateDisp(Uint);
 };
 
 
@@ -124,7 +124,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////
 
-typedef std::vector<std::pair<unsigned, unsigned> > PairCollect;
+typedef std::vector<std::pair<Uint, Uint> > PairCollect;
 // ConstactInfo
 class ContactData
 {
@@ -145,17 +145,17 @@ private:
 	vtkSmartPointer<vtkActor> next_actor_;
 
 	inline void InsertNode(	
-		unsigned n, 
+		Uint n, 
 		vtkSmartPointer<vtkCellArray> &Cells,
 		vtkSmartPointer<vtkUnsignedCharArray> &Colors,
 		std::vector<int> &Types);
 	inline void InsertEdge(
-		std::array<unsigned, 2> edge,
+		std::array<Uint, 2> edge,
 		vtkSmartPointer<vtkCellArray> &Cells,
 		vtkSmartPointer<vtkUnsignedCharArray> &Colors,
 		std::vector<int> &Types);
 	inline void InsertTriangle(
-		std::array<unsigned, 3> elem,
+		std::array<Uint, 3> elem,
 		vtkSmartPointer<vtkCellArray> &Cells,
 		vtkSmartPointer<vtkUnsignedCharArray> &Colors,
 		std::vector<int> &Types);
@@ -165,7 +165,7 @@ public:
 	virtual ~ContactData() {};
 
 	void SetModels(sptr<Model>& p, sptr<Model> &n) { prev_model_ = p; next_model_ = n; }
-	PairCollect &GetPrimitivesPairs(int type, unsigned step_)
+	PairCollect &GetPrimitivesPairs(int type, Uint step_)
 	{
 		switch (type)
 		{
@@ -210,7 +210,7 @@ public:
 	}
 
 	void InitializeUGrid();
-	void UpdateUGrid(unsigned s);
+	void UpdateUGrid(Uint s);
 	vtkSmartPointer<vtkActor> &GetPrevActor() { return prev_actor_; }
 	vtkSmartPointer<vtkActor> &GetNextActor() { return next_actor_; }
 };

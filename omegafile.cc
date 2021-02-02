@@ -1,8 +1,10 @@
 #include "omegafile.h"
 
+namespace univiewer {
+
 template<typename T>
 std::ostream & operator<<(std::ostream &ss, std::vector<T>c) {
-  for (unsigned i = 0, isize = c.size(); i < isize; ++i)
+  for (Uint i = 0, isize = c.size(); i < isize; ++i)
     ss << c[i] << " ";
   return ss;
 }
@@ -44,16 +46,16 @@ void AddVector(double r[3], double rin[3]) {
 //############################################################################
 // member functions
 //############################################################################
-const unsigned OmegaFile::GetBodyNum() const {
-  return (unsigned)_bodygp.getNumObjs();
+const Uint OmegaFile::GetBodyNum() const {
+  return (Uint)_bodygp.getNumObjs();
 }
 
-const unsigned OmegaFile::GetConstraintNum() const {
-  return (unsigned)_consgp.getNumObjs();
+const Uint OmegaFile::GetConstraintNum() const {
+  return (Uint)_consgp.getNumObjs();
 }
 
 void OmegaFile::Initialize() {
-  unsigned int num = GetBodyNum();
+  Uint num = GetBodyNum();
   std::vector<int> idbody(num);
   _bodygp.iterateElems("./", idbody.data(), Op, &_bodyname_list);
 
@@ -62,9 +64,9 @@ void OmegaFile::Initialize() {
   _consgp.iterateElems("./", idcons.data(), Op, &_consname_list);
 }
 
-void OmegaFile::GetUnsignedData(H5::DataSet &dset, std::vector<unsigned> &val_out, 
-                                unsigned row_offset, unsigned col_offset,
-                                unsigned row_count, unsigned col_count) {
+void OmegaFile::GetUnsignedData(H5::DataSet &dset, std::vector<Uint> &val_out, 
+                                Uint row_offset, Uint col_offset,
+                                Uint row_count, Uint col_count) {
   H5::DataSpace val_dspace = dset.getSpace();
   hsize_t dims[2];
   val_dspace.getSimpleExtentDims(dims, NULL);
@@ -75,12 +77,12 @@ void OmegaFile::GetUnsignedData(H5::DataSet &dset, std::vector<unsigned> &val_ou
   H5::DataSpace mspace(2, dims, NULL);
   val_dspace.selectHyperslab(H5S_SELECT_SET, dims, offset);
   val_out.resize(dims[0] * dims[1]);
-  dset.read(val_out.data(), H5::PredType::NATIVE_UINT, mspace, val_dspace);
+  dset.read(val_out.data(), H5::PredType::NATIVE_ULLONG, mspace, val_dspace);
 }
 
 void OmegaFile::GetDoubleData(H5::DataSet &dset, std::vector<double> &val_out,
-                              unsigned row_offset, unsigned col_offset,
-                              unsigned row_count, unsigned col_count) {
+                              Uint row_offset, Uint col_offset,
+                              Uint row_count, Uint col_count) {
   H5::DataSpace val_dspace = dset.getSpace();
   hsize_t dims[2];
   val_dspace.getSimpleExtentDims(dims, NULL);
@@ -94,7 +96,7 @@ void OmegaFile::GetDoubleData(H5::DataSet &dset, std::vector<double> &val_out,
   dset.read(val_out.data(), H5::PredType::NATIVE_DOUBLE, mspace, val_dspace);
 }
 
-void OmegaFile::GetDataDimension(H5::DataSet &dset, unsigned &rows, unsigned &cols) {
+void OmegaFile::GetDataDimension(H5::DataSet &dset, Uint &rows, Uint &cols) {
   H5::DataSpace val_dspace = dset.getSpace();
   hsize_t dims[2];
   val_dspace.getSimpleExtentDims(dims, NULL);
@@ -113,22 +115,22 @@ void OmegaFile::GetDoubleAttribute(H5::H5Object & h5obj, const std::string & att
   attr.read(attr.getDataType(), &attr_out);
 }
 
-void OmegaFile::GetUnsignedAttribute(H5::H5Object & h5obj, const std::string & attrname, unsigned & attr_out) {
+void OmegaFile::GetUnsignedAttribute(H5::H5Object & h5obj, const std::string & attrname, Uint & attr_out) {
   H5::Attribute attr = h5obj.openAttribute(attrname);
   attr.read(attr.getDataType(), &attr_out);
 }
 
 void OmegaFile::GetMeshByBodyName(const std::string & bodyname, 
                                   std::string &meshtype,
-                                  std::vector<unsigned> &meshinfo, 
-                                  std::vector<unsigned> &elem, 
+                                  std::vector<Uint> &meshinfo, 
+                                  std::vector<Uint> &elem, 
                                   std::vector<double> &node) {
   H5::Group body = _bodygp.openGroup(bodyname);
   H5::Group mesh = body.openGroup("mesh");
 
   // read mesh attribute
   GetStringAttribute(mesh, "mesh type", meshtype);
-  unsigned elemnum, nodenum, nofe;
+  Uint elemnum, nodenum, nofe;
   GetUnsignedAttribute(mesh, "num elem", elemnum);
   GetUnsignedAttribute(mesh, "num node", nodenum);
   GetUnsignedAttribute(mesh, "num elemental node", nofe);
@@ -143,12 +145,13 @@ void OmegaFile::GetMeshByBodyName(const std::string & bodyname,
   GetDoubleData(mesh.openDataSet("node"), buffnode);
   node.resize(buffnode.size());
 
-  unsigned buffidx = 0, buffidy = nodenum, buffidz = 2* nodenum;
-  for (unsigned i = 0; i < nodenum; ++i) {
-    node[i * 3] = buffnode[buffidx++];
-    node[i * 3 + 1] = buffnode[buffidy++];
-    node[i * 3 + 2] = buffnode[buffidz++];
-  }
+  // Uint buffidx = 0, buffidy = nodenum, buffidz = 2* nodenum;
+  // for (Uint i = 0; i < nodenum; ++i) {
+  //   node[i * 3] = buffnode[buffidx++];
+  //   node[i * 3 + 1] = buffnode[buffidy++];
+  //   node[i * 3 + 2] = buffnode[buffidz++];
+  // }
+  node = buffnode;
 
 }
 
@@ -157,16 +160,16 @@ void OmegaFile::GetNodalPositionByBodyName(const std::string & bodyname, std::ve
   std::string bodytype;
   GetStringAttribute(body, "type", bodytype);
   
-  H5::DataSet val_dset = body.openDataSet("val");
+  H5::DataSet val_dset = body.openDataSet("value");
 
   std::vector<double> nodepos_buff;
   GetDoubleData(val_dset, nodepos_buff);
 
-  unsigned stepnum, dofs;
+  Uint stepnum, dofs;
   GetDataDimension(val_dset, stepnum, dofs);
   
   std::string meshtype;
-  std::vector<unsigned> meshinfo, elem;
+  std::vector<Uint> meshinfo, elem;
   std::vector<double> node;
 
   nodepos.resize(stepnum);
@@ -175,10 +178,10 @@ void OmegaFile::GetNodalPositionByBodyName(const std::string & bodyname, std::ve
     GetMeshByBodyName(bodyname, meshtype, meshinfo, elem, node);
 
     double r0[3], r[3], rc[3], p[4], R[3][3];
-    for (unsigned s = 0; s < stepnum; ++s) {
+    for (Uint s = 0; s < stepnum; ++s) {
       nodepos[s].resize(meshinfo[1]* 3);
       
-      for (unsigned i = 0; i < meshinfo[1]; ++i) {
+      for (Uint i = 0; i < meshinfo[1]; ++i) {
         r0[0] = node[i * 3];
         r0[1] = node[i * 3 + 1];
         r0[2] = node[i * 3 + 2];
@@ -211,3 +214,6 @@ void OmegaFile::GetTimeSeries(std::vector<double> &times) {
   H5::DataSet time_series = _solution.openDataSet("time");
   GetDoubleData(time_series, times);
 }
+
+}
+

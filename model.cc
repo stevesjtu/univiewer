@@ -6,22 +6,22 @@ namespace univiewer {
 void FEMesh::MakeEdges()
 {
 	// edgeSet should be a set of edges without duplicated edges.
-	unsigned elem_num = ugrid_->GetNumberOfCells();
+	Uint elem_num = ugrid_->GetNumberOfCells();
 	elems_bynodes_.resize(elem_num);
 
 	vtkSmartPointer<vtkCellArray> cellarray = ugrid_->GetCells();
 	vtkSmartPointer<vtkIdList> idlist = vtkSmartPointer<vtkIdList>::New();
-	for (unsigned e = 0; e < elem_num; ++e) {
+	for (Uint e = 0; e < elem_num; ++e) {
 		cellarray->GetNextCell(idlist);
-		elems_bynodes_[e] = { (unsigned)idlist->GetId(0), (unsigned)idlist->GetId(1), (unsigned)idlist->GetId(2) };
+		elems_bynodes_[e] = { (Uint)idlist->GetId(0), (Uint)idlist->GetId(1), (Uint)idlist->GetId(2) };
 	}
 	
-	typedef std::set<unsigned> edge;
+	typedef std::set<Uint> edge;
 	edge oneEdge;
 	std::set<edge> edgeSet;
-	unsigned ind1;
-	for (unsigned e = 0; e < elem_num; ++e) {
-		for (unsigned ind = 0; ind < 3; ++ind) {
+	Uint ind1;
+	for (Uint e = 0; e < elem_num; ++e) {
+		for (Uint ind = 0; ind < 3; ++ind) {
 			ind == 3 - 1 ? ind1 = 0 : ind1 = ind + 1;
 			oneEdge.insert(elems_bynodes_[e][ind]);
 			oneEdge.insert(elems_bynodes_[e][ind1]);
@@ -31,9 +31,9 @@ void FEMesh::MakeEdges()
 	}
 
 	//// fill the edges_bynodes_
-	unsigned edge_num = static_cast<unsigned>(edgeSet.size());
+	Uint edge_num = static_cast<Uint>(edgeSet.size());
 	edges_bynodes_.resize(edge_num);
-	unsigned index = 0;
+	Uint index = 0;
 	for (std::set<edge>::iterator it = edgeSet.begin(); it != edgeSet.end(); it++) {
 		edge::iterator nodeit = it->begin();
 		edges_bynodes_[index][0] = *nodeit++;
@@ -44,22 +44,22 @@ void FEMesh::MakeEdges()
 }
 
 
-unsigned Model::count_ = 0;
-unsigned Model::num_nodes_ = 0;
-unsigned Model::num_elems_ = 0;
-unsigned Model::num_step_ = 0;
-unsigned Model::step_ = 0;
+Uint Model::count_ = 0;
+Uint Model::num_nodes_ = 0;
+Uint Model::num_elems_ = 0;
+Uint Model::num_step_ = 0;
+Uint Model::step_ = 0;
 std::vector<double> Model::step_collection_ = std::vector<double>(0);
 std::vector<std::pair<double, double> > Model::ranges_ = std::vector<std::pair<double, double> >(0);
 
-void Model::CreateModel(const std::vector<unsigned int> &modelinfo,
-  const std::vector<unsigned int> &elemlist, const std::vector<double> &nodelist) {
+void Model::CreateModel(const std::vector<Uint> &modelinfo,
+  const std::vector<Uint> &elemlist, const std::vector<double> &nodelist) {
   
   fe_mesh_ = CreateOneOf<FEMesh>();
   fe_mesh_->GetUGrid() = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-  for (unsigned i = 0; i < modelinfo[1]; ++i) {
+  for (Uint i = 0; i < modelinfo[1]; ++i) {
     double nodes[3] = { nodelist[i * 3], nodelist[i * 3 + 1], nodelist[i * 3 + 2] };
     points->InsertPoint(i, nodes);
   }
@@ -83,9 +83,9 @@ void Model::CreateModel(const std::vector<unsigned int> &modelinfo,
     break;
   }
   
-  for (unsigned i = 0; i < modelinfo[0]; ++i) {
+  for (Uint i = 0; i < modelinfo[0]; ++i) {
     std::vector<vtkIdType> element(modelinfo[2]);
-    for (unsigned j = 0; j < modelinfo[2]; ++j) {
+    for (Uint j = 0; j < modelinfo[2]; ++j) {
       element[j] = (vtkIdType)(*(elemlist.data() + i * modelinfo[2] + j) );
     }
 
@@ -132,8 +132,8 @@ void Model::ReadXmlModel(const std::string&file)
 void Model::ReadTxtModel(const std::string& file) {
   fe_mesh_ = CreateOneOf<FEMesh>();
 
-  std::vector<unsigned int> modelinfo;
-  std::vector<unsigned int> elemlist;
+  std::vector<Uint> modelinfo;
+  std::vector<Uint> elemlist;
   std::vector<double> nodelist;
 
   if (file.substr(file.size() - 3).compare(".md") == 0) {
@@ -141,12 +141,12 @@ void Model::ReadTxtModel(const std::string& file) {
 	  modelinfo = txtfile.GetUintArrayFrom("elem_node_nodeOfElem");
 	  elemlist = txtfile.GetUintArrayFrom("element_list");
 	  nodelist = txtfile.GetDoubleArrayFrom("node_coordinate_list");
-		//for(unsigned &el : elemlist) el--;
+		//for(Uint &el : elemlist) el--;
 	  txtfile.Close();
   } else if (file.substr(file.size() - 3).compare("txt") == 0 ){
     std::ifstream txtfile(file);
     if (!txtfile.is_open()) std::cout << "Error in open file: " << file << std::endl;
-    unsigned num_elem, num_node, nofe;
+    Uint num_elem, num_node, nofe;
     txtfile >> num_elem >> num_node >> nofe;
     modelinfo.push_back(num_elem);
     modelinfo.push_back(num_node);
@@ -155,12 +155,12 @@ void Model::ReadTxtModel(const std::string& file) {
     elemlist.resize(nofe* num_elem);
     nodelist.resize(3 * num_node);
 
-    for (unsigned eln = 0; eln < num_elem* nofe; ++eln) {
+    for (Uint eln = 0; eln < num_elem* nofe; ++eln) {
       txtfile >> elemlist[eln];
       //elemlist[eln]--;
     }
 
-    for (unsigned ndn = 0; ndn < 3 * num_node; ++ndn) {
+    for (Uint ndn = 0; ndn < 3 * num_node; ++ndn) {
       txtfile >> nodelist[ndn];
     }
     txtfile.close();
@@ -183,7 +183,7 @@ void Model::SetLabelnode()
 
 }
 
-void Model::UpdateDisp(unsigned s)
+void Model::UpdateDisp(Uint s)
 {
 	fe_mesh_->GetUGrid()->SetPoints(fe_mesh_->GetPvtkpnts(s));
 
@@ -197,7 +197,7 @@ void Model::UpdateDisp(unsigned s)
 
 
 void ContactData::InsertNode(
-	unsigned n,
+	Uint n,
 	vtkSmartPointer<vtkCellArray> &Cells,
 	vtkSmartPointer<vtkUnsignedCharArray> &Colors,
 	std::vector<int> &Types)
@@ -211,7 +211,7 @@ void ContactData::InsertNode(
 }
 
 void ContactData::InsertEdge(
-	std::array<unsigned, 2> edge,
+	std::array<Uint, 2> edge,
 	vtkSmartPointer<vtkCellArray> &Cells,
 	vtkSmartPointer<vtkUnsignedCharArray> &Colors,
 	std::vector<int> &Types)
@@ -226,7 +226,7 @@ void ContactData::InsertEdge(
 }
 
 void ContactData::InsertTriangle(
-	std::array<unsigned, 3> elem,
+	std::array<Uint, 3> elem,
 	vtkSmartPointer<vtkCellArray> &Cells,
 	vtkSmartPointer<vtkUnsignedCharArray> &Colors,
 	std::vector<int> &Types)
@@ -260,7 +260,7 @@ void ContactData::InitializeUGrid()
 	vtkSmartPointer<vtkUnsignedCharArray> nColors;
 	std::vector<int> pTypes, nTypes;
 
-	for (unsigned s = 0; s < Model::num_step_; ++s) {
+	for (Uint s = 0; s < Model::num_step_; ++s) {
 		vtkSmartPointer<vtkUnstructuredGrid> pUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 		vtkSmartPointer<vtkUnstructuredGrid> nUGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 		
@@ -278,43 +278,43 @@ void ContactData::InitializeUGrid()
 		pTypes.clear();
 		nTypes.clear();
 		// add the primitives to UnstructuredGurd
-		unsigned n0, n1, e0, e1, t0, t1;
-		for (unsigned i = 0; i < node_triangles_[s].size(); ++i) {
+		Uint n0, n1, e0, e1, t0, t1;
+		for (Uint i = 0; i < node_triangles_[s].size(); ++i) {
 			n0 = node_triangles_[s][i].first;
 			t1 = node_triangles_[s][i].second;
 			InsertNode(n0, pCells, pColors, pTypes);
 			InsertTriangle(nfeMesh->GetElems(t1), nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < triangle_nodes_[s].size(); ++i) {
+		for (Uint i = 0; i < triangle_nodes_[s].size(); ++i) {
 			t0 = triangle_nodes_[s][i].first;
 			n1 = triangle_nodes_[s][i].second;
 			InsertTriangle(pfeMesh->GetElems(t0), pCells, pColors, pTypes);
 			InsertNode(n1, nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < edge_edges_[s].size(); ++i) {
+		for (Uint i = 0; i < edge_edges_[s].size(); ++i) {
 			e0 = edge_edges_[s][i].first;
 			e1 = edge_edges_[s][i].second;
 			InsertEdge(pfeMesh->GetEdges(e0), pCells, pColors, pTypes);
 			InsertEdge(nfeMesh->GetEdges(e1), nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < node_edges_[s].size(); ++i) {
+		for (Uint i = 0; i < node_edges_[s].size(); ++i) {
 			n0 = node_edges_[s][i].first;
 			e1 = node_edges_[s][i].second;
 			InsertNode(n0, pCells, pColors, pTypes);
 			InsertEdge(nfeMesh->GetEdges(e1), nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < edge_nodes_[s].size(); ++i) {
+		for (Uint i = 0; i < edge_nodes_[s].size(); ++i) {
 			e0 = edge_nodes_[s][i].first;
 			n1 = edge_nodes_[s][i].second;
 			InsertEdge(pfeMesh->GetEdges(e0), pCells, pColors, pTypes);
 			InsertNode(n1, nCells, nColors, nTypes);
 		}
 
-		for (unsigned i = 0; i < node_nodes_[s].size(); ++i) {
+		for (Uint i = 0; i < node_nodes_[s].size(); ++i) {
 			n0 = node_nodes_[s][i].first;
 			n1 = node_nodes_[s][i].second;
 			InsertNode(n0, pCells, pColors, pTypes);
@@ -344,7 +344,7 @@ void ContactData::InitializeUGrid()
 
 }
 
-void ContactData::UpdateUGrid(unsigned s)
+void ContactData::UpdateUGrid(Uint s)
 {
 	prev_actor_->SetMapper(prev_mappers_[s]);
 	next_actor_->SetMapper(next_mappers_[s]);
@@ -360,10 +360,10 @@ void ContactData::UpdateUGrid(unsigned s)
 //////////////////////////////////////////////////////////////////////////////////////////////
 void ReadPairs(std::ifstream &infile, PairCollect &pc)
 {
-	unsigned num, pairs[2];
-	infile.read((char*)&num, sizeof(unsigned int));
-	for (unsigned i = 0; i < num; ++i) {
-		infile.read((char*)pairs, sizeof(unsigned int) * 2);
+	Uint num, pairs[2];
+	infile.read((char*)&num, sizeof(Uint));
+	for (Uint i = 0; i < num; ++i) {
+		infile.read((char*)pairs, sizeof(Uint) * 2);
 		pc.push_back(std::make_pair(pairs[0], pairs[1]));
 	}
 }
@@ -374,14 +374,14 @@ void ReadContactFile(const std::string& contfile, std::vector<sptr<ContactData> 
 	infile.open(contfile, std::ios::in | std::ios::binary);
 	if (infile.is_open()) {
 		contacts_.resize(Model::num_step_);
-		unsigned bodyid1, bodyid2, mark;
+		Uint bodyid1, bodyid2, mark;
 
-		infile.read((char*)&mark, sizeof(unsigned int));
+		infile.read((char*)&mark, sizeof(Uint));
 		contacts_.resize(mark);
-		for (unsigned c = 0; c < mark; ++c) {
+		for (Uint c = 0; c < mark; ++c) {
 			contacts_[c] = CreateOneOf<ContactData>();
-			infile.read((char*)&bodyid1, sizeof(unsigned int));
-			infile.read((char*)&bodyid2, sizeof(unsigned int));
+			infile.read((char*)&bodyid1, sizeof(Uint));
+			infile.read((char*)&bodyid2, sizeof(Uint));
 			contacts_[c]->SetModels(models_[bodyid1], models_[bodyid2]);
 			contacts_[c]->GetPrimitivesPairs(NODE_TRIANGLE).resize(Model::num_step_);
 			contacts_[c]->GetPrimitivesPairs(TRIANGLE_NODE).resize(Model::num_step_);
@@ -391,10 +391,10 @@ void ReadContactFile(const std::string& contfile, std::vector<sptr<ContactData> 
 			contacts_[c]->GetPrimitivesPairs(NODE_NODE).resize(Model::num_step_);
 		}
 		
-		for (unsigned s = 0; s < Model::num_step_; ++s) {
+		for (Uint s = 0; s < Model::num_step_; ++s) {
 			//cout << "step_: " << s << "\t eof?: " << infile.eof() << endl;
 			if (!infile.eof()) {
-				for (unsigned c = 0; c < contacts_.size(); ++c) {
+				for (Uint c = 0; c < contacts_.size(); ++c) {
 					// primitives
 					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(NODE_TRIANGLE, s));
 					ReadPairs(infile, contacts_[c]->GetPrimitivesPairs(TRIANGLE_NODE, s));
@@ -446,14 +446,14 @@ void ReadNodalDataFile(const std::string& nodedatafile, std::vector<sptr<Model> 
 				prev_model_->GetNodelScalars().resize(Model::num_step_);
 			}
 
-			for (unsigned s = 0; s < Model::num_step_; ++s) {
-				unsigned nodeoffset = 0;
+			for (Uint s = 0; s < Model::num_step_; ++s) {
+				Uint nodeoffset = 0;
 
 				for (auto &prev_model_ : models_) {
 					prev_model_->GetNodelScalars(s) = vtkSmartPointer<vtkDoubleArray>::New();
 					prev_model_->GetNodelScalars(s)->SetNumberOfValues(prev_model_->GetNumOfNode());
 	
-					for (unsigned n = 0; n < prev_model_->GetNumOfNode(); ++n) {
+					for (Uint n = 0; n < prev_model_->GetNumOfNode(); ++n) {
 						prev_model_->GetNodelScalars(s)->SetValue(n, dataCollect[s][nodeoffset + n]);
 					}
 					

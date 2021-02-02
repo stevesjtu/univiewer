@@ -43,11 +43,11 @@ public:
 	virtual void Execute(vtkObject *caller, unsigned long, void*)
 	{
 		vtkSliderWidget *slider_widget_ = reinterpret_cast<vtkSliderWidget*>(caller);
-		*step_ = (unsigned)static_cast<vtkSliderRepresentation *>(slider_widget_->GetRepresentation())->GetValue();
+		*step_ = (Uint)static_cast<vtkSliderRepresentation *>(slider_widget_->GetRepresentation())->GetValue();
 		if (!(*play_))
 			*step_play_ = true;
 	}
-	unsigned *step_;
+	Uint *step_;
 	bool *play_, *step_play_;
 };
 
@@ -61,7 +61,7 @@ public:
 		*step_ = (*step_ == *num_step_ - 1) ? *num_step_ - 1 : *step_ + 1;
 		*step_play_ = true;
 	}
-	unsigned *step_, *num_step_;
+	Uint *step_, *num_step_;
 	bool *step_play_;
 
 };
@@ -77,7 +77,7 @@ public:
 		*step_ = (*step_ == 0) ? 0 : *step_ - 1;
 		*step_play_ = true;
 	}
-	unsigned *step_;
+	Uint *step_;
 	bool *step_play_;
 };
 
@@ -197,8 +197,8 @@ public:
 	sptr<CommandButton> &GetPrevButton() { return prev_button_; }
 	
 	void SetSliderBar(vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor_, 
-					  unsigned &step_,
-					  unsigned &num_step_,
+					  Uint &step_,
+					  Uint &num_step_,
 					  bool &play_, bool &step_play_)
 	{
 		

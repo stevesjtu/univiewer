@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #endif
 
+#include "paramdefine.h"
+
 namespace univiewer {
 
 void ArgParser(std::vector<std::string> &,
@@ -50,7 +52,7 @@ public:
 	void Close();
   virtual std::vector<double> GetDoubleArrayFrom(const std::string &title);
   virtual std::vector<int> GetIntArrayFrom(const std::string &title);
-  virtual std::vector<unsigned int> GetUintArrayFrom(const std::string &title);
+  virtual std::vector<Uint> GetUintArrayFrom(const std::string &title);
   virtual std::vector<std::string> GetStringFrom(const std::string &title); 
   void tryit();
 

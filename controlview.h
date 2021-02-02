@@ -2,6 +2,7 @@
 #ifndef CONTROLVIEW_H
 #define CONTROLVIEW_H
 
+#include "paramdefine.h"
 #include "model.h"
 #include "axespart.h"
 #include "textpart.h"
@@ -88,8 +89,8 @@ protected:
   bool show_label_;
 
 	//int nextButtonState, prevButtonState;
-  void ReadSimpleOutModel(std::ifstream &infile, std::vector<unsigned int> &modelinfo,
-    std::vector<unsigned int> &elemlist, std::vector<double> &nodelist);
+  void ReadSimpleOutModel(std::ifstream &infile, std::vector<Uint> &modelinfo,
+    std::vector<Uint> &elemlist, std::vector<double> &nodelist);
 
 public:
 	virtual ~ControlView() {}
@@ -155,7 +156,7 @@ public:
 		render_window_->AddObserver(vtkCommand::ModifiedEvent, windowCallback);
 	}
 
-	void PlayThisStep(unsigned &step_)
+	void PlayThisStep(Uint &step_)
 	{
 		std::stringstream ss("");
 		ss << "Current Time = " << Model::step_collection_[step_];
@@ -250,7 +251,7 @@ public:
 		ctext_->SetTextCallback(systemRelease);
 
 		std::stringstream ss("");
-		for (unsigned i = 0; i < models_.size(); ++i) {
+		for (Uint i = 0; i < models_.size(); ++i) {
 			sptr<CommandText> ct = CreateOneOf<CommandText>();
 			ct->SetRenderWindowInteractor(render_window_interactor_);
 			ss.str("");

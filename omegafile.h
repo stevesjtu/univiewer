@@ -7,6 +7,9 @@
 #include<vector>
 #include<iostream>
 
+#include "paramdefine.h"
+
+namespace univiewer {
 
 class OmegaFile {
 public:
@@ -24,11 +27,11 @@ public:
     _consgp = _solution.openGroup("constraint");
   }
 
-  const unsigned GetBodyNum () const;
-  const unsigned GetConstraintNum() const;
+  const Uint GetBodyNum () const;
+  const Uint GetConstraintNum() const;
   void Initialize();
   
-  const std::string GetBodyName(unsigned i) const {
+  const std::string GetBodyName(Uint i) const {
     return _bodyname_list[i];
   }
 
@@ -36,7 +39,7 @@ public:
     return _bodyname_list;
   }
 
-  const std::string GetConsName(unsigned i) const {
+  const std::string GetConsName(Uint i) const {
     return _consname_list[i];
   }
 
@@ -46,24 +49,24 @@ public:
 
   // basic operation
   void GetDoubleData(H5::DataSet &dset, std::vector<double> &val_out,
-                      unsigned row_offset = 0, unsigned col_offset = 0,
-                      unsigned row_count = 0, unsigned col_count = 0);
+                      Uint row_offset = 0, Uint col_offset = 0,
+                      Uint row_count = 0, Uint col_count = 0);
 
-  void GetUnsignedData(H5::DataSet &dset, std::vector<unsigned> &val_out,
-                        unsigned row_offset = 0, unsigned col_offset = 0,
-                        unsigned row_count = 0, unsigned col_count = 0);
+  void GetUnsignedData(H5::DataSet &dset, std::vector<Uint> &val_out,
+                        Uint row_offset = 0, Uint col_offset = 0,
+                        Uint row_count = 0, Uint col_count = 0);
 
-  void GetDataDimension(H5::DataSet &dset, unsigned &rows, unsigned &cols);
+  void GetDataDimension(H5::DataSet &dset, Uint &rows, Uint &cols);
 
   void GetStringAttribute(H5::H5Object &h5obj, const std::string &attrname, std::string &attr_out);
   void GetDoubleAttribute(H5::H5Object &h5obj, const std::string &attrname, double &attr_out);
-  void GetUnsignedAttribute(H5::H5Object &h5obj, const std::string &attrname, unsigned &attr_out);
+  void GetUnsignedAttribute(H5::H5Object &h5obj, const std::string &attrname, Uint &attr_out);
 
   // special operation
   void GetMeshByBodyName(const std::string &bodyname,
                           std::string &meshtype,
-                          std::vector<unsigned> &meshinfo,
-                          std::vector<unsigned> &elem,
+                          std::vector<Uint> &meshinfo,
+                          std::vector<Uint> &elem,
                           std::vector<double> &node);
   void GetNodalPositionByBodyName(const std::string &bodyname, std::vector<std::vector<double>> &nodepos);
   void GetTimeSeries(std::vector<double> &times);
@@ -78,7 +81,11 @@ protected:
   std::vector<std::string> _consname_list;
 
 
-};
+};  
+
+}
+
+
 
 #endif
 
